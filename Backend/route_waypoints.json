@@ -1,0 +1,16 @@
+{
+    "Route D : To FKT(n29)": [
+        {
+            "afterStopId": "N24",
+            "lat": 1.565652,
+            "lon": 103.638103
+        }
+    ],
+    "Route G : To FKT(N29)": [
+        {
+            "afterStopId": "N24",
+            "lat": 1.565652,
+            "lon": 103.638103
+        }
+    ]
+}
