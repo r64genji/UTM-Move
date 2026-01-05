@@ -220,3 +220,452 @@ body {
   gap: 0.5rem;
   margin-bottom: 0;
 }
+
+/* Mode Toggle */
+.mode-toggle {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.mode-btn {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid #444;
+  background-color: #333;
+  color: #ccc;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.mode-btn:hover {
+  background-color: #444;
+}
+
+.mode-btn.active {
+  background-color: #3b82f6;
+  border-color: #3b82f6;
+  color: white;
+}
+
+/* Search Container */
+.search-container {
+  background-color: #333;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.search-title {
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
+  color: #fff;
+}
+
+.search-section {
+  margin-bottom: 1rem;
+}
+
+.search-label {
+  display: block;
+  font-size: 0.85rem;
+  color: #aaa;
+  margin-bottom: 0.5rem;
+}
+
+.origin-toggle {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.toggle-btn {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid #444;
+  background-color: #2a2a2a;
+  color: #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.toggle-btn.active {
+  background-color: #22c55e;
+  border-color: #22c55e;
+  color: white;
+}
+
+.search-input-wrapper {
+  position: relative;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #444;
+  background-color: #2a2a2a;
+  color: white;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  box-sizing: border-box;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.search-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 100;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.search-item {
+  padding: 0.75rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom: 1px solid #333;
+}
+
+.search-item:hover {
+  background-color: #3a3a3a;
+}
+
+.item-icon {
+  font-size: 1rem;
+}
+
+.item-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.item-name {
+  color: white;
+}
+
+.item-category {
+  font-size: 0.75rem;
+  color: #888;
+}
+
+.directions-btn {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: #3b82f6;
+  border: none;
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.directions-btn:hover {
+  background-color: #2563eb;
+}
+
+.directions-btn:disabled {
+  background-color: #555;
+  cursor: not-allowed;
+}
+
+/* Directions Panel */
+.directions-panel {
+  background-color: #333;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-top: 1rem;
+}
+
+.directions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.directions-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: white;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.close-btn:hover {
+  color: white;
+}
+
+.directions-loading {
+  text-align: center;
+  padding: 2rem;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #444;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.directions-error {
+  color: #ef4444;
+  text-align: center;
+}
+
+.directions-error .suggestion {
+  color: #888;
+  font-size: 0.85rem;
+}
+
+.directions-message {
+  text-align: center;
+  padding: 1rem;
+}
+
+.walk-icon {
+  font-size: 2rem;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.distance-info {
+  color: #22c55e;
+  font-weight: 500;
+}
+
+.directions-summary {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  background-color: #2a2a2a;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.route-badge {
+  background-color: #3b82f6;
+  color: white;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.summary-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.departure-time {
+  color: #22c55e;
+  font-weight: 500;
+}
+
+.walk-total {
+  color: #888;
+  font-size: 0.85rem;
+}
+
+.directions-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.step {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background-color: #2a2a2a;
+  border-radius: 4px;
+}
+
+.step-icon {
+  font-size: 1.2rem;
+  width: 24px;
+  text-align: center;
+}
+
+.step-content {
+  flex: 1;
+}
+
+.step-instruction {
+  margin: 0 0 0.25rem 0;
+  color: white;
+}
+
+.step-meta {
+  font-size: 0.85rem;
+  color: #888;
+}
+
+.stop-name {
+  color: #22c55e;
+}
+
+.more-times {
+  display: block;
+  color: #666;
+  font-size: 0.8rem;
+}
+
+.alternatives {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #444;
+}
+
+.alternatives h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.85rem;
+  color: #888;
+}
+
+.alt-route {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem;
+  background-color: #2a2a2a;
+  border-radius: 4px;
+  margin-bottom: 0.25rem;
+}
+
+.alt-badge {
+  color: #3b82f6;
+  font-weight: 500;
+}
+
+.alt-time {
+  color: #888;
+}
+
+.walk-option {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background-color: #22c55e20;
+  border: 1px solid #22c55e40;
+  border-radius: 4px;
+  color: #22c55e;
+  font-size: 0.9rem;
+}
+
+.future-bus-option {
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: #3b82f620;
+  border: 1px solid #3b82f640;
+  border-radius: 8px;
+}
+
+.future-bus-info {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.bus-icon {
+  font-size: 1.5rem;
+}
+
+.future-bus-info strong {
+  color: white;
+}
+
+.future-bus-info p {
+  margin: 0.25rem 0 0;
+  color: #888;
+  font-size: 0.9rem;
+}
+
+.plan-trip-btn {
+  width: 100%;
+  padding: 0.5rem;
+  background-color: #3b82f6;
+  border: none;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.plan-trip-btn:hover {
+  background-color: #2563eb;
+}
+
+/* Toggle Stops Button */
+.toggle-stops-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid #444;
+  background-color: #333;
+  color: #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toggle-stops-btn.active {
+  background-color: #22c55e;
+  border-color: #22c55e;
+  color: white;
+}
+
+.controls {
+  margin-bottom: 1rem;
+}
+
+/* Debug Info */
+.debug-info {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background-color: #2a2a2a;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  text-align: left;
+}
+
+.debug-info p {
+  margin: 0.25rem 0;
+  color: #888;
+}
+
+.debug-info strong {
+  color: #ccc;
+}

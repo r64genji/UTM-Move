@@ -2,6 +2,7 @@
 const express = require('express');
 const cors = require('cors');
 const { getNextBus } = require('./scheduleLogic'); // Import your new logic
+const { getDirections } = require('./directionLogic'); // Import directions logic
 
 const app = express();
 app.use(cors()); // Allow requests from other apps
@@ -75,14 +76,54 @@ app.get('/api/static-data', (req, res) => {
             console.warn("Could not load route_waypoints.json", e);
         }
 
+        const locationsPath = require('path').join(__dirname, 'campus_locations.json');
+        let locationsData = { locations: [] };
+        try {
+            locationsData = JSON.parse(require('fs').readFileSync(locationsPath, 'utf8'));
+        } catch (e) {
+            console.warn("Could not load campus_locations.json", e);
+        }
+
         res.json({
             ...scheduleData,
             route_geometries: geometriesData,
-            route_waypoints: waypointsData
+            route_waypoints: waypointsData,
+            locations: locationsData.locations
         });
     } catch (error) {
         console.error('Error loading static data:', error);
         res.status(500).json({ error: 'Failed to load static data' });
+    }
+});
+
+// Endpoint: Get directions from origin to destination
+// Usage: GET /api/directions?destLocationId=PSZ&time=14:00
+// Optional: originLat, originLon (GPS) OR originStopId (stop-based origin)
+app.get('/api/directions', (req, res) => {
+    try {
+        const { originLat, originLon, originStopId, destLocationId, time, day, forceBus } = req.query;
+
+        if (!destLocationId) {
+            return res.status(400).json({ error: 'Please provide destLocationId' });
+        }
+
+        // Use current time if not provided
+        const currentTime = time || new Date().toTimeString().slice(0, 5);
+
+        const result = getDirections(
+            originLat ? parseFloat(originLat) : null,
+            originLon ? parseFloat(originLon) : null,
+            originStopId || null,
+            destLocationId,
+            currentTime,
+            day || null,
+            forceBus === 'true'
+        );
+
+        res.json(result);
+    } catch (error) {
+        console.error('Error getting directions:', error);
+        res.status(500).json({ error: 'Failed to get directions' });
     }
 });
 

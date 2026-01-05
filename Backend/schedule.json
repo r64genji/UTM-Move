@@ -1131,6 +1131,7 @@
                             "headsign": "To KTR(K01)",
                             "stops_sequence": [
                                 "P19A",
+                                "CP",
                                 "K17",
                                 "K19"
                             ],

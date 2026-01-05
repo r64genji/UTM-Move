@@ -1,0 +1,52 @@
+[directionLogic] Module loaded - version 2.0 with GPS walk path fix
+Server running on http://localhost:3000
+[2026-01-04T15:30:42.256Z] GET /api/directions?lat=1.572235&lon=103.619482&destId=ARKED_LESTARI_UA4&dayOfWeek=monday&time=12:00
+GET /api/directions?destId=ARKED_LESTARI_UA4&fromStop=undefined&lat=1.572235&lon=103.619482&preferBus=undefined
+[SliceDebug] Request: Route E(N24), To K9/10, From: KLG_E, To: K9
+[SliceDebug] Found key: Route E(N24) : To K9/10
+[SliceDebug] Indexes: Start=35, End=351, TotalPoints=359
+[SliceDebug] Success: Returning slice of size 317
+[SliceDebug] Request: Route E(N24), To K9/10, From: KLG_E, To: K10
+[SliceDebug] Found key: Route E(N24) : To K9/10
+[SliceDebug] Indexes: Start=35, End=358, TotalPoints=359
+[SliceDebug] Success: Returning slice of size 324
+[SliceDebug] Request: Route E(N24), To K9/10, From: KLG_E, To: KTC_B1E
+[SliceDebug] Found key: Route E(N24) : To K9/10
+[SliceDebug] Indexes: Start=35, End=309, TotalPoints=359
+[SliceDebug] Success: Returning slice of size 275
+[SliceDebug] Request: Route E(N24), To K9/10, From: KLG_E, To: UI
+[SliceDebug] Found key: Route E(N24) : To K9/10
+[SliceDebug] Indexes: Start=35, End=296, TotalPoints=359
+[SliceDebug] Success: Returning slice of size 262
+[SliceDebug] Request: Route E(N24), To K9/10, From: KDOJ_XB2, To: K9
+[SliceDebug] Found key: Route E(N24) : To K9/10
+[SliceDebug] Indexes: Start=0, End=351, TotalPoints=359
+[SliceDebug] Success: Returning slice of size 352
+[SliceDebug] Request: Route E(N24), To K9/10, From: KDOJ_XB2, To: K10
+[SliceDebug] Found key: Route E(N24) : To K9/10
+[SliceDebug] Indexes: Start=0, End=358, TotalPoints=359
+[SliceDebug] Success: Returning slice of size 359
+[SliceDebug] Request: Route E(N24), To K9/10, From: KDOJ_XB2, To: KTC_B1E
+[SliceDebug] Found key: Route E(N24) : To K9/10
+[SliceDebug] Indexes: Start=0, End=309, TotalPoints=359
+[SliceDebug] Success: Returning slice of size 310
+[SliceDebug] Request: Route E(N24), To K9/10, From: KDOJ_XB2, To: UI
+[SliceDebug] Found key: Route E(N24) : To K9/10
+[SliceDebug] Indexes: Start=0, End=296, TotalPoints=359
+[SliceDebug] Success: Returning slice of size 297
+[SliceDebug] Request: Route E(N24), To K9/10, From: KDOJ, To: K9
+[SliceDebug] Found key: Route E(N24) : To K9/10
+[SliceDebug] Indexes: Start=9, End=351, TotalPoints=359
+[SliceDebug] Success: Returning slice of size 343
+[SliceDebug] Request: Route E(N24), To K9/10, From: KDOJ, To: K10
+[SliceDebug] Found key: Route E(N24) : To K9/10
+[SliceDebug] Indexes: Start=9, End=358, TotalPoints=359
+[SliceDebug] Success: Returning slice of size 350
+[SliceDebug] Request: Route E(N24), To K9/10, From: KDOJ, To: KTC_B1E
+[SliceDebug] Found key: Route E(N24) : To K9/10
+[SliceDebug] Indexes: Start=9, End=309, TotalPoints=359
+[SliceDebug] Success: Returning slice of size 301
+[SliceDebug] Request: Route E(N24), To K9/10, From: KDOJ, To: UI
+[SliceDebug] Found key: Route E(N24) : To K9/10
+[SliceDebug] Indexes: Start=9, End=296, TotalPoints=359
+[SliceDebug] Success: Returning slice of size 288

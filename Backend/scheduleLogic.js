@@ -82,5 +82,19 @@ function getNextBus(routeNameOrId, userTime, stopName) {
 }
 
 
-module.exports = { getNextBus };
+function closeDb() {
+    return new Promise((resolve, reject) => {
+        db.close((err) => {
+            if (err) {
+                console.error('Error closing database', err.message);
+                reject(err);
+            } else {
+                console.log('Database connection closed.');
+                resolve();
+            }
+        });
+    });
+}
+
+module.exports = { getNextBus, closeDb };
 

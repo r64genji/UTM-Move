@@ -23,3 +23,14 @@ export const fetchNextBus = async (route, time, stop) => {
         return null; // Handle smoothly
     }
 };
+
+// Fetch directions from origin to destination
+export const fetchDirections = async (params) => {
+    try {
+        const response = await axios.get(`${API_BASE_URL}/directions`, { params });
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching directions:', error);
+        return { error: 'Failed to get directions. Please try again.' };
+    }
+};
