@@ -52,6 +52,33 @@ db.serialize(() => {
         return `${newH}:${newM}`;
     }
 
+    function addSeconds(time, secondsToAdd) {
+        const [h, m] = time.split(':').map(Number);
+        const date = new Date();
+        date.setHours(h, m, 0, 0);
+        date.setSeconds(date.getSeconds() + secondsToAdd);
+        // Round to nearest minute
+        if (date.getSeconds() >= 30) {
+            date.setMinutes(date.getMinutes() + 1);
+        }
+        const newH = String(date.getHours()).padStart(2, '0');
+        const newM = String(date.getMinutes()).padStart(2, '0');
+        return `${newH}:${newM}`;
+    }
+
+    let routeDurations = {};
+    try {
+        const routeDurationsPath = path.join(__dirname, 'route_durations.json');
+        if (fs.existsSync(routeDurationsPath)) {
+            routeDurations = JSON.parse(fs.readFileSync(routeDurationsPath, 'utf8'));
+            console.log("Loaded route_durations.json");
+        } else {
+            console.warn("route_durations.json not found, using default timings");
+        }
+    } catch (e) {
+        console.warn("Error loading route_durations.json", e.message);
+    }
+
     scheduleData.routes.forEach((route) => {
         // Insert Route - Use callback to get ID
         pendingOperations++;
@@ -74,10 +101,16 @@ db.serialize(() => {
                                 if (err) console.error(err);
                                 const tripId = this.lastID;
 
-                                // Generate stop_times for this trip
+                                const key = `${route.name}_${trip.headsign}`;
+                                const durationData = routeDurations[key];
+                                let cumulativeSecs = 0;
+
                                 trip.stops_sequence.forEach((stopId, idx) => {
-                                    // Simple heuristic: +5 mins per stop
-                                    const time = addMinutes(startTime, idx * 5);
+                                    if (idx > 0 && durationData && durationData.segments && durationData.segments[idx - 1]) {
+                                        cumulativeSecs += durationData.segments[idx - 1].totalSecs;
+                                    }
+
+                                    const time = addSeconds(startTime, cumulativeSecs);
                                     stmtStopTime.run(tripId, stopId, time, idx + 1);
                                 });
 

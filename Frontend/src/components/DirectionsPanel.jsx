@@ -112,8 +112,25 @@ const DirectionsPanel = ({ directions, onClose, loading, onPlanFutureTrip }) => 
                 <div className="route-badge">{directions.summary.route}</div>
                 <div className="summary-details">
                     <span className="departure-time">
-                        🕐 Departs {directions.summary.departureDay ? `${directions.summary.departureDay} ` : ''}at {directions.summary.departure}
+                        🕐 Departs: {directions.summary.departureDay ? `${directions.summary.departureDay} ` : ''}{directions.summary.departure}
                     </span>
+                    {directions.summary.busArrivalTime && (
+                        <span className="arrival-time">
+                            🏁 Bus Arrives: {directions.summary.busArrivalTime}
+                        </span>
+                    )}
+                    {directions.summary.eta && (
+                        <span className="eta-time">
+                            📍 ETA: {directions.summary.eta}
+                        </span>
+                    )}
+                    {directions.summary.totalDuration > 0 && (
+                        <span className="total-duration">
+                            ⏱️ Total: ~{Math.round(directions.summary.totalDuration)} min
+                        </span>
+                    )}
+                </div>
+                <div className="walking-details">
                     <span className="walk-total">🚶 {directions.totalWalkingDistance}m total walking</span>
                 </div>
             </div>

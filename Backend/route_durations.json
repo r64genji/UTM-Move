@@ -1,0 +1,1076 @@
+{
+  "Route A_To Centre Point (CP)": {
+    "allocatedMins": 30,
+    "drivingMins": 4.6049999999999995,
+    "segments": [
+      {
+        "from": "KP1",
+        "to": "KTC_A",
+        "drivingSecs": 117,
+        "totalSecs": 624.9000000000001
+      },
+      {
+        "from": "KTC_A",
+        "to": "P19A",
+        "drivingSecs": 82.7,
+        "totalSecs": 590.6
+      },
+      {
+        "from": "P19A",
+        "to": "CP",
+        "drivingSecs": 76.6,
+        "totalSecs": 584.5
+      }
+    ]
+  },
+  "Route A_To KP": {
+    "allocatedMins": 30,
+    "drivingMins": 4.27,
+    "segments": [
+      {
+        "from": "CP",
+        "to": "JA1",
+        "drivingSecs": 51.5,
+        "totalSecs": 272.04285714285714
+      },
+      {
+        "from": "JA1",
+        "to": "JA2",
+        "drivingSecs": 17.1,
+        "totalSecs": 237.64285714285714
+      },
+      {
+        "from": "JA2",
+        "to": "JA3",
+        "drivingSecs": 20.5,
+        "totalSecs": 241.04285714285714
+      },
+      {
+        "from": "JA3",
+        "to": "JA4",
+        "drivingSecs": 18.5,
+        "totalSecs": 239.04285714285714
+      },
+      {
+        "from": "JA4",
+        "to": "UI",
+        "drivingSecs": 55.1,
+        "totalSecs": 275.64285714285717
+      },
+      {
+        "from": "UI",
+        "to": "KTC_A",
+        "drivingSecs": 51.8,
+        "totalSecs": 272.34285714285716
+      },
+      {
+        "from": "KTC_A",
+        "to": "KP1",
+        "drivingSecs": 41.7,
+        "totalSecs": 262.24285714285713
+      }
+    ]
+  },
+  "Route B_To Cluster (T02)": {
+    "allocatedMins": 10,
+    "drivingMins": 6.010000000000001,
+    "segments": [
+      {
+        "from": "KP1",
+        "to": "K9",
+        "drivingSecs": 101.4,
+        "totalSecs": 181.2
+      },
+      {
+        "from": "K9",
+        "to": "K10",
+        "drivingSecs": 31.2,
+        "totalSecs": 111
+      },
+      {
+        "from": "K10",
+        "to": "T02",
+        "drivingSecs": 228,
+        "totalSecs": 307.8
+      }
+    ]
+  },
+  "Route B_To Kolej Perdana (KP)": {
+    "allocatedMins": 10,
+    "drivingMins": 8.081666666666667,
+    "segments": [
+      {
+        "from": "T02",
+        "to": "T06",
+        "drivingSecs": 104.9,
+        "totalSecs": 127.92000000000002
+      },
+      {
+        "from": "T06",
+        "to": "T08",
+        "drivingSecs": 58.9,
+        "totalSecs": 81.92
+      },
+      {
+        "from": "T08",
+        "to": "K9",
+        "drivingSecs": 129.8,
+        "totalSecs": 152.82000000000002
+      },
+      {
+        "from": "K9",
+        "to": "K10",
+        "drivingSecs": 31.2,
+        "totalSecs": 54.22
+      },
+      {
+        "from": "K10",
+        "to": "KP1",
+        "drivingSecs": 160.1,
+        "totalSecs": 183.12
+      }
+    ]
+  },
+  "Route C_To Centre Point (CP)": {
+    "allocatedMins": 10,
+    "drivingMins": 5.328333333333333,
+    "segments": [
+      {
+        "from": "K9",
+        "to": "K10",
+        "drivingSecs": 31.2,
+        "totalSecs": 77.91666666666667
+      },
+      {
+        "from": "K10",
+        "to": "KTC_B2W",
+        "drivingSecs": 115.9,
+        "totalSecs": 162.61666666666667
+      },
+      {
+        "from": "KTC_B2W",
+        "to": "KTC_B2W",
+        "drivingSecs": 0,
+        "totalSecs": 46.71666666666667
+      },
+      {
+        "from": "KTC_B2W",
+        "to": "UI",
+        "drivingSecs": 61.9,
+        "totalSecs": 108.61666666666667
+      },
+      {
+        "from": "UI",
+        "to": "P19A",
+        "drivingSecs": 34.1,
+        "totalSecs": 80.81666666666666
+      },
+      {
+        "from": "P19A",
+        "to": "CP",
+        "drivingSecs": 76.6,
+        "totalSecs": 123.31666666666666
+      }
+    ]
+  },
+  "Route C_To Kolej 9/10": {
+    "allocatedMins": 10,
+    "drivingMins": 5.76,
+    "segments": [
+      {
+        "from": "CP",
+        "to": "JA1",
+        "drivingSecs": 51.5,
+        "totalSecs": 83.30000000000001
+      },
+      {
+        "from": "JA1",
+        "to": "JA2",
+        "drivingSecs": 17.1,
+        "totalSecs": 48.900000000000006
+      },
+      {
+        "from": "JA2",
+        "to": "JA3",
+        "drivingSecs": 20.5,
+        "totalSecs": 52.300000000000004
+      },
+      {
+        "from": "JA3",
+        "to": "JA4",
+        "drivingSecs": 18.5,
+        "totalSecs": 50.300000000000004
+      },
+      {
+        "from": "JA4",
+        "to": "UI",
+        "drivingSecs": 55.1,
+        "totalSecs": 86.9
+      },
+      {
+        "from": "UI",
+        "to": "KTC_B1E",
+        "drivingSecs": 40.2,
+        "totalSecs": 72
+      },
+      {
+        "from": "KTC_B1E",
+        "to": "K9",
+        "drivingSecs": 111.5,
+        "totalSecs": 143.3
+      },
+      {
+        "from": "K9",
+        "to": "K10",
+        "drivingSecs": 31.2,
+        "totalSecs": 63
+      }
+    ]
+  },
+  "Route D_To FKT(n29)": {
+    "allocatedMins": 30,
+    "drivingMins": 5.278333333333334,
+    "segments": [
+      {
+        "from": "CP",
+        "to": "PGT",
+        "drivingSecs": 67,
+        "totalSecs": 561.4333333333334
+      },
+      {
+        "from": "PGT",
+        "to": "N24",
+        "drivingSecs": 95.4,
+        "totalSecs": 589.8333333333334
+      },
+      {
+        "from": "N24",
+        "to": "FKT",
+        "drivingSecs": 154.3,
+        "totalSecs": 648.7333333333333
+      }
+    ]
+  },
+  "Route D_To CP": {
+    "allocatedMins": 30,
+    "drivingMins": 4.336666666666667,
+    "segments": [
+      {
+        "from": "FKT",
+        "to": "P19",
+        "drivingSecs": 120.1,
+        "totalSecs": 633.3666666666667
+      },
+      {
+        "from": "P19",
+        "to": "P19A",
+        "drivingSecs": 63.5,
+        "totalSecs": 576.7666666666667
+      },
+      {
+        "from": "P19A",
+        "to": "CP",
+        "drivingSecs": 76.6,
+        "totalSecs": 589.8666666666667
+      }
+    ]
+  },
+  "Route E(JA)_To Cluster (T02)": {
+    "allocatedMins": 34,
+    "drivingMins": 16.453333333333333,
+    "segments": [
+      {
+        "from": "KDOJ_XB2",
+        "to": "KDOJ",
+        "drivingSecs": 26,
+        "totalSecs": 91.8
+      },
+      {
+        "from": "KDOJ",
+        "to": "KLG_E",
+        "drivingSecs": 57.5,
+        "totalSecs": 123.3
+      },
+      {
+        "from": "KLG_E",
+        "to": "KDSE_E",
+        "drivingSecs": 148.3,
+        "totalSecs": 214.10000000000002
+      },
+      {
+        "from": "KDSE_E",
+        "to": "PKU_E",
+        "drivingSecs": 95.6,
+        "totalSecs": 161.39999999999998
+      },
+      {
+        "from": "PKU_E",
+        "to": "K6",
+        "drivingSecs": 36.7,
+        "totalSecs": 102.5
+      },
+      {
+        "from": "K6",
+        "to": "KTF",
+        "drivingSecs": 23.9,
+        "totalSecs": 89.69999999999999
+      },
+      {
+        "from": "KTF",
+        "to": "H01",
+        "drivingSecs": 17.4,
+        "totalSecs": 83.19999999999999
+      },
+      {
+        "from": "H01",
+        "to": "CP",
+        "drivingSecs": 68.9,
+        "totalSecs": 134.7
+      },
+      {
+        "from": "CP",
+        "to": "JA1",
+        "drivingSecs": 51.5,
+        "totalSecs": 117.3
+      },
+      {
+        "from": "JA1",
+        "to": "JA2",
+        "drivingSecs": 17.1,
+        "totalSecs": 82.9
+      },
+      {
+        "from": "JA2",
+        "to": "JA3",
+        "drivingSecs": 20.5,
+        "totalSecs": 86.3
+      },
+      {
+        "from": "JA3",
+        "to": "JA4",
+        "drivingSecs": 18.5,
+        "totalSecs": 84.3
+      },
+      {
+        "from": "JA4",
+        "to": "P19A2",
+        "drivingSecs": 83,
+        "totalSecs": 148.8
+      },
+      {
+        "from": "P19A2",
+        "to": "UI",
+        "drivingSecs": 41.8,
+        "totalSecs": 107.6
+      },
+      {
+        "from": "UI",
+        "to": "KTC_B1E",
+        "drivingSecs": 40.2,
+        "totalSecs": 106
+      },
+      {
+        "from": "KTC_B1E",
+        "to": "T02",
+        "drivingSecs": 240.3,
+        "totalSecs": 306.1
+      }
+    ]
+  },
+  "Route E(JA)_To KDOJ": {
+    "allocatedMins": 15,
+    "drivingMins": 14.890000000000002,
+    "segments": [
+      {
+        "from": "T02",
+        "to": "KLUSTER_BN",
+        "drivingSecs": 63,
+        "totalSecs": 63.47142857142857
+      },
+      {
+        "from": "KLUSTER_BN",
+        "to": "T06",
+        "drivingSecs": 41.9,
+        "totalSecs": 42.37142857142857
+      },
+      {
+        "from": "T06",
+        "to": "T08",
+        "drivingSecs": 58.9,
+        "totalSecs": 59.37142857142857
+      },
+      {
+        "from": "T08",
+        "to": "KTC_B2W",
+        "drivingSecs": 143.9,
+        "totalSecs": 144.37142857142857
+      },
+      {
+        "from": "KTC_B2W",
+        "to": "KTC_B1W",
+        "drivingSecs": 18.4,
+        "totalSecs": 18.871428571428563
+      },
+      {
+        "from": "KTC_B1W",
+        "to": "P19A",
+        "drivingSecs": 77.6,
+        "totalSecs": 78.07142857142856
+      },
+      {
+        "from": "P19A",
+        "to": "AM",
+        "drivingSecs": 91.3,
+        "totalSecs": 91.77142857142856
+      },
+      {
+        "from": "AM",
+        "to": "KRP",
+        "drivingSecs": 41.9,
+        "totalSecs": 42.37142857142857
+      },
+      {
+        "from": "KRP",
+        "to": "PKU_W",
+        "drivingSecs": 43.3,
+        "totalSecs": 43.771428571428565
+      },
+      {
+        "from": "PKU_W",
+        "to": "KDSE_W",
+        "drivingSecs": 99.2,
+        "totalSecs": 99.67142857142856
+      },
+      {
+        "from": "KDSE_W",
+        "to": "K11",
+        "drivingSecs": 33.6,
+        "totalSecs": 34.07142857142857
+      },
+      {
+        "from": "K11",
+        "to": "KLG_W",
+        "drivingSecs": 102.9,
+        "totalSecs": 103.37142857142857
+      },
+      {
+        "from": "KLG_W",
+        "to": "KDOJ",
+        "drivingSecs": 51.5,
+        "totalSecs": 51.97142857142857
+      },
+      {
+        "from": "KDOJ",
+        "to": "KDOJ_XB2",
+        "drivingSecs": 26,
+        "totalSecs": 26.471428571428564
+      }
+    ]
+  },
+  "Route E(N24)_To Cluster (T02)": {
+    "allocatedMins": 36,
+    "drivingMins": 19.086666666666666,
+    "segments": [
+      {
+        "from": "KDOJ_XB2",
+        "to": "KDOJ",
+        "drivingSecs": 26,
+        "totalSecs": 93.65333333333334
+      },
+      {
+        "from": "KDOJ",
+        "to": "KLG_E",
+        "drivingSecs": 57.5,
+        "totalSecs": 125.15333333333334
+      },
+      {
+        "from": "KLG_E",
+        "to": "KDSE_E",
+        "drivingSecs": 148.3,
+        "totalSecs": 215.95333333333335
+      },
+      {
+        "from": "KDSE_E",
+        "to": "PKU_E",
+        "drivingSecs": 95.6,
+        "totalSecs": 163.25333333333333
+      },
+      {
+        "from": "PKU_E",
+        "to": "K6",
+        "drivingSecs": 36.7,
+        "totalSecs": 104.35333333333334
+      },
+      {
+        "from": "K6",
+        "to": "KTF",
+        "drivingSecs": 23.9,
+        "totalSecs": 91.55333333333334
+      },
+      {
+        "from": "KTF",
+        "to": "H01",
+        "drivingSecs": 17.4,
+        "totalSecs": 85.05333333333334
+      },
+      {
+        "from": "H01",
+        "to": "CP",
+        "drivingSecs": 68.9,
+        "totalSecs": 136.55333333333334
+      },
+      {
+        "from": "CP",
+        "to": "PGT",
+        "drivingSecs": 67,
+        "totalSecs": 134.65333333333334
+      },
+      {
+        "from": "PGT",
+        "to": "N24",
+        "drivingSecs": 95.4,
+        "totalSecs": 163.05333333333334
+      },
+      {
+        "from": "N24",
+        "to": "P19",
+        "drivingSecs": 108.2,
+        "totalSecs": 175.85333333333335
+      },
+      {
+        "from": "P19",
+        "to": "P19A2",
+        "drivingSecs": 78,
+        "totalSecs": 145.65333333333334
+      },
+      {
+        "from": "P19A2",
+        "to": "UI",
+        "drivingSecs": 41.8,
+        "totalSecs": 109.45333333333333
+      },
+      {
+        "from": "UI",
+        "to": "KTC_B1E",
+        "drivingSecs": 40.2,
+        "totalSecs": 107.85333333333334
+      },
+      {
+        "from": "KTC_B1E",
+        "to": "T02",
+        "drivingSecs": 240.3,
+        "totalSecs": 307.9533333333334
+      }
+    ]
+  },
+  "Route E(N24)_To KDOJ": {
+    "allocatedMins": 15,
+    "drivingMins": 14.890000000000002,
+    "segments": [
+      {
+        "from": "T02",
+        "to": "KLUSTER_BN",
+        "drivingSecs": 63,
+        "totalSecs": 63.47142857142857
+      },
+      {
+        "from": "KLUSTER_BN",
+        "to": "T06",
+        "drivingSecs": 41.9,
+        "totalSecs": 42.37142857142857
+      },
+      {
+        "from": "T06",
+        "to": "T08",
+        "drivingSecs": 58.9,
+        "totalSecs": 59.37142857142857
+      },
+      {
+        "from": "T08",
+        "to": "KTC_B2W",
+        "drivingSecs": 143.9,
+        "totalSecs": 144.37142857142857
+      },
+      {
+        "from": "KTC_B2W",
+        "to": "KTC_B1W",
+        "drivingSecs": 18.4,
+        "totalSecs": 18.871428571428563
+      },
+      {
+        "from": "KTC_B1W",
+        "to": "P19A",
+        "drivingSecs": 77.6,
+        "totalSecs": 78.07142857142856
+      },
+      {
+        "from": "P19A",
+        "to": "AM",
+        "drivingSecs": 91.3,
+        "totalSecs": 91.77142857142856
+      },
+      {
+        "from": "AM",
+        "to": "KRP",
+        "drivingSecs": 41.9,
+        "totalSecs": 42.37142857142857
+      },
+      {
+        "from": "KRP",
+        "to": "PKU_W",
+        "drivingSecs": 43.3,
+        "totalSecs": 43.771428571428565
+      },
+      {
+        "from": "PKU_W",
+        "to": "KDSE_W",
+        "drivingSecs": 99.2,
+        "totalSecs": 99.67142857142856
+      },
+      {
+        "from": "KDSE_W",
+        "to": "K11",
+        "drivingSecs": 33.6,
+        "totalSecs": 34.07142857142857
+      },
+      {
+        "from": "K11",
+        "to": "KLG_W",
+        "drivingSecs": 102.9,
+        "totalSecs": 103.37142857142857
+      },
+      {
+        "from": "KLG_W",
+        "to": "KDOJ",
+        "drivingSecs": 51.5,
+        "totalSecs": 51.97142857142857
+      },
+      {
+        "from": "KDOJ",
+        "to": "KDOJ_XB2",
+        "drivingSecs": 26,
+        "totalSecs": 26.471428571428564
+      }
+    ]
+  },
+  "Route E(N24)_To K9/10": {
+    "allocatedMins": 30,
+    "drivingMins": 18.128333333333334,
+    "segments": [
+      {
+        "from": "KDOJ_XB2",
+        "to": "KDOJ",
+        "drivingSecs": 26,
+        "totalSecs": 70.51875
+      },
+      {
+        "from": "KDOJ",
+        "to": "KLG_E",
+        "drivingSecs": 57.5,
+        "totalSecs": 102.01875
+      },
+      {
+        "from": "KLG_E",
+        "to": "KDSE_E",
+        "drivingSecs": 148.3,
+        "totalSecs": 192.81875000000002
+      },
+      {
+        "from": "KDSE_E",
+        "to": "PKU_E",
+        "drivingSecs": 95.6,
+        "totalSecs": 140.11874999999998
+      },
+      {
+        "from": "PKU_E",
+        "to": "K6",
+        "drivingSecs": 36.7,
+        "totalSecs": 81.21875
+      },
+      {
+        "from": "K6",
+        "to": "KTF",
+        "drivingSecs": 23.9,
+        "totalSecs": 68.41874999999999
+      },
+      {
+        "from": "KTF",
+        "to": "H01",
+        "drivingSecs": 17.4,
+        "totalSecs": 61.918749999999996
+      },
+      {
+        "from": "H01",
+        "to": "CP",
+        "drivingSecs": 68.9,
+        "totalSecs": 113.41875
+      },
+      {
+        "from": "CP",
+        "to": "PGT",
+        "drivingSecs": 67,
+        "totalSecs": 111.51875
+      },
+      {
+        "from": "PGT",
+        "to": "N24",
+        "drivingSecs": 95.4,
+        "totalSecs": 139.91875
+      },
+      {
+        "from": "N24",
+        "to": "P19",
+        "drivingSecs": 108.2,
+        "totalSecs": 152.71875
+      },
+      {
+        "from": "P19",
+        "to": "P19A",
+        "drivingSecs": 63.5,
+        "totalSecs": 108.01875
+      },
+      {
+        "from": "P19A",
+        "to": "UI",
+        "drivingSecs": 96.4,
+        "totalSecs": 140.91875
+      },
+      {
+        "from": "UI",
+        "to": "KTC_B1E",
+        "drivingSecs": 40.2,
+        "totalSecs": 84.71875
+      },
+      {
+        "from": "KTC_B1E",
+        "to": "K9",
+        "drivingSecs": 111.5,
+        "totalSecs": 156.01875
+      },
+      {
+        "from": "K9",
+        "to": "K10",
+        "drivingSecs": 31.2,
+        "totalSecs": 75.71875
+      }
+    ]
+  },
+  "Route E(N24)_To KDOJ (From K9/10)": {
+    "allocatedMins": 30,
+    "drivingMins": 12.213333333333333,
+    "segments": [
+      {
+        "from": "K9",
+        "to": "K10",
+        "drivingSecs": 31.2,
+        "totalSecs": 120.13333333333334
+      },
+      {
+        "from": "K10",
+        "to": "KTC_B2W",
+        "drivingSecs": 115.9,
+        "totalSecs": 204.83333333333334
+      },
+      {
+        "from": "KTC_B2W",
+        "to": "KTC_B1W",
+        "drivingSecs": 18.4,
+        "totalSecs": 107.33333333333334
+      },
+      {
+        "from": "KTC_B1W",
+        "to": "P19A",
+        "drivingSecs": 77.6,
+        "totalSecs": 166.53333333333333
+      },
+      {
+        "from": "P19A",
+        "to": "AM",
+        "drivingSecs": 91.3,
+        "totalSecs": 180.23333333333335
+      },
+      {
+        "from": "AM",
+        "to": "KRP",
+        "drivingSecs": 41.9,
+        "totalSecs": 130.83333333333334
+      },
+      {
+        "from": "KRP",
+        "to": "PKU_W",
+        "drivingSecs": 43.3,
+        "totalSecs": 132.23333333333335
+      },
+      {
+        "from": "PKU_W",
+        "to": "KDSE_W",
+        "drivingSecs": 99.2,
+        "totalSecs": 188.13333333333333
+      },
+      {
+        "from": "KDSE_W",
+        "to": "K11",
+        "drivingSecs": 33.6,
+        "totalSecs": 122.53333333333333
+      },
+      {
+        "from": "K11",
+        "to": "KLG_W",
+        "drivingSecs": 102.9,
+        "totalSecs": 191.83333333333334
+      },
+      {
+        "from": "KLG_W",
+        "to": "KDOJ",
+        "drivingSecs": 51.5,
+        "totalSecs": 140.43333333333334
+      },
+      {
+        "from": "KDOJ",
+        "to": "KDOJ_XB2",
+        "drivingSecs": 26,
+        "totalSecs": 114.93333333333334
+      }
+    ]
+  },
+  "Route F_To P19A": {
+    "allocatedMins": 10,
+    "drivingMins": 8.168333333333333,
+    "segments": [
+      {
+        "from": "K19",
+        "to": "K20",
+        "drivingSecs": 15,
+        "totalSecs": 22.326666666666664
+      },
+      {
+        "from": "K20",
+        "to": "K21",
+        "drivingSecs": 6.3,
+        "totalSecs": 13.626666666666665
+      },
+      {
+        "from": "K21",
+        "to": "K22",
+        "drivingSecs": 7,
+        "totalSecs": 14.326666666666664
+      },
+      {
+        "from": "K22",
+        "to": "K23",
+        "drivingSecs": 32.9,
+        "totalSecs": 40.22666666666667
+      },
+      {
+        "from": "K23",
+        "to": "K26",
+        "drivingSecs": 51.9,
+        "totalSecs": 59.22666666666667
+      },
+      {
+        "from": "K26",
+        "to": "K25",
+        "drivingSecs": 23.3,
+        "totalSecs": 30.626666666666665
+      },
+      {
+        "from": "K25",
+        "to": "K28",
+        "drivingSecs": 68,
+        "totalSecs": 75.32666666666667
+      },
+      {
+        "from": "K28",
+        "to": "K31",
+        "drivingSecs": 70.4,
+        "totalSecs": 77.72666666666667
+      },
+      {
+        "from": "K31",
+        "to": "K30",
+        "drivingSecs": 12.8,
+        "totalSecs": 20.126666666666665
+      },
+      {
+        "from": "K30",
+        "to": "K29",
+        "drivingSecs": 35.9,
+        "totalSecs": 43.22666666666667
+      },
+      {
+        "from": "K29",
+        "to": "JA1",
+        "drivingSecs": 88.5,
+        "totalSecs": 95.82666666666667
+      },
+      {
+        "from": "JA1",
+        "to": "JA2",
+        "drivingSecs": 17.1,
+        "totalSecs": 24.426666666666666
+      },
+      {
+        "from": "JA2",
+        "to": "JA3",
+        "drivingSecs": 20.5,
+        "totalSecs": 27.826666666666664
+      },
+      {
+        "from": "JA3",
+        "to": "JA4",
+        "drivingSecs": 18.5,
+        "totalSecs": 25.826666666666664
+      },
+      {
+        "from": "JA4",
+        "to": "P19A",
+        "drivingSecs": 22,
+        "totalSecs": 29.326666666666664
+      }
+    ]
+  },
+  "Route F_To KTR(K01)": {
+    "allocatedMins": 10,
+    "drivingMins": 2.72,
+    "segments": [
+      {
+        "from": "P19A",
+        "to": "CP",
+        "drivingSecs": 76.6,
+        "totalSecs": 222.2
+      },
+      {
+        "from": "CP",
+        "to": "K17",
+        "drivingSecs": 65.7,
+        "totalSecs": 211.3
+      },
+      {
+        "from": "K17",
+        "to": "K19",
+        "drivingSecs": 20.9,
+        "totalSecs": 166.5
+      }
+    ]
+  },
+  "Route G_To FKT(N29)": {
+    "allocatedMins": 25,
+    "drivingMins": 10.626666666666665,
+    "segments": [
+      {
+        "from": "K19",
+        "to": "K20",
+        "drivingSecs": 15,
+        "totalSecs": 81.33846153846154
+      },
+      {
+        "from": "K20",
+        "to": "K21",
+        "drivingSecs": 6.3,
+        "totalSecs": 72.63846153846154
+      },
+      {
+        "from": "K21",
+        "to": "K22",
+        "drivingSecs": 7,
+        "totalSecs": 73.33846153846154
+      },
+      {
+        "from": "K22",
+        "to": "K23",
+        "drivingSecs": 32.9,
+        "totalSecs": 99.23846153846154
+      },
+      {
+        "from": "K23",
+        "to": "K26",
+        "drivingSecs": 51.9,
+        "totalSecs": 118.23846153846154
+      },
+      {
+        "from": "K26",
+        "to": "K25",
+        "drivingSecs": 23.3,
+        "totalSecs": 89.63846153846154
+      },
+      {
+        "from": "K25",
+        "to": "K28",
+        "drivingSecs": 68,
+        "totalSecs": 134.33846153846156
+      },
+      {
+        "from": "K28",
+        "to": "K31",
+        "drivingSecs": 70.4,
+        "totalSecs": 136.73846153846154
+      },
+      {
+        "from": "K31",
+        "to": "K30",
+        "drivingSecs": 12.8,
+        "totalSecs": 79.13846153846154
+      },
+      {
+        "from": "K30",
+        "to": "K29",
+        "drivingSecs": 35.9,
+        "totalSecs": 102.23846153846154
+      },
+      {
+        "from": "K29",
+        "to": "PGT",
+        "drivingSecs": 64.4,
+        "totalSecs": 130.73846153846154
+      },
+      {
+        "from": "PGT",
+        "to": "N24",
+        "drivingSecs": 95.4,
+        "totalSecs": 161.73846153846154
+      },
+      {
+        "from": "N24",
+        "to": "FKT",
+        "drivingSecs": 154.3,
+        "totalSecs": 220.63846153846157
+      }
+    ]
+  },
+  "Route G_To KTR(K01)": {
+    "allocatedMins": 10,
+    "drivingMins": 5.779999999999999,
+    "segments": [
+      {
+        "from": "FKT",
+        "to": "P19",
+        "drivingSecs": 120.1,
+        "totalSecs": 170.74
+      },
+      {
+        "from": "P19",
+        "to": "P19A",
+        "drivingSecs": 63.5,
+        "totalSecs": 114.14000000000001
+      },
+      {
+        "from": "P19A",
+        "to": "CP",
+        "drivingSecs": 76.6,
+        "totalSecs": 127.24000000000001
+      },
+      {
+        "from": "CP",
+        "to": "K17",
+        "drivingSecs": 65.7,
+        "totalSecs": 116.34
+      },
+      {
+        "from": "K17",
+        "to": "K19",
+        "drivingSecs": 20.9,
+        "totalSecs": 71.54
+      }
+    ]
+  }
+}

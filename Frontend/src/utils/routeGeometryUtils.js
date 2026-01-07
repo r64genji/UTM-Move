@@ -80,11 +80,44 @@ export function extractRouteSegment(routeGeometry, startStop, endStop) {
     }
 
     // Extract the segment (inclusive of both endpoints)
-    const segmentCoords = coords.slice(startIdx, endIdx + 1);
+    let segmentCoords = coords.slice(startIdx, endIdx + 1);
+
+    // TRIM NEARBY POINTS: If the nearest road point is "behind" or just redundant, remove it.
+    // This prevents "backtracking" visual artifacts (Stop -> RoadPoint -> NextPoint).
+    // Threshold: 30 meters.
+    if (segmentCoords.length > 0) {
+        const first = segmentCoords[0];
+        const distFirst = haversineDistance(startStop.lat, startStop.lon, first[1], first[0]);
+        if (distFirst < 30) {
+            segmentCoords.shift(); // Remove first point
+        }
+    }
+
+    if (segmentCoords.length > 0) {
+        const last = segmentCoords[segmentCoords.length - 1];
+        const distLast = haversineDistance(endStop.lat, endStop.lon, last[1], last[0]);
+        if (distLast < 30) {
+            segmentCoords.pop(); // Remove last point
+        }
+    }
+
+    // SNAP TO STOPS: Explicitly add the stop coordinates to start/end
+    const finalCoords = [
+        [startStop.lon, startStop.lat],
+        ...segmentCoords,
+        [endStop.lon, endStop.lat]
+    ];
+
+    // Filter out potential duplicates if stop is practically on the node
+    const uniqueCoords = finalCoords.filter((coord, index) => {
+        if (index === 0) return true;
+        const prev = finalCoords[index - 1];
+        return !(coord[0] === prev[0] && coord[1] === prev[1]);
+    });
 
     return {
         type: 'LineString',
-        coordinates: segmentCoords
+        coordinates: uniqueCoords
     };
 }
 

@@ -15,9 +15,10 @@ app.use((req, res, next) => {
 });
 
 // Root Endpoint check
-app.get('/', (req, res) => {
-    res.send('UTM Move Backend is running. API available at /api/static-data');
-});
+// Root Endpoint check - REMOVED to serve Frontend
+// app.get('/', (req, res) => {
+//    res.send('UTM Move Backend is running. API available at /api/static-data');
+// });
 
 // --- API ROUTES ---
 
@@ -58,7 +59,7 @@ app.get('/api/next-bus', async (req, res) => {
 app.get('/api/static-data', (req, res) => {
     try {
         const schedulePath = require('path').join(__dirname, 'schedule.json');
-        const scheduleData = JSON.parse(require('fs').readFileSync(schedulePath, 'utf8'));
+        const scheduleDataRaw = JSON.parse(require('fs').readFileSync(schedulePath, 'utf8'));
 
         const geometriesPath = require('path').join(__dirname, 'route_geometries.json');
         let geometriesData = {};
@@ -67,6 +68,10 @@ app.get('/api/static-data', (req, res) => {
         } catch (e) {
             console.warn("Could not load route_geometries.json", e);
         }
+
+        // Enrich the schedule with realistic arrival offsets
+        const { enrichSchedule } = require('./enrich_schedule_logic');
+        const scheduleData = enrichSchedule(scheduleDataRaw, geometriesData);
 
         const waypointsPath = require('path').join(__dirname, 'route_waypoints.json');
         let waypointsData = {};
@@ -99,7 +104,7 @@ app.get('/api/static-data', (req, res) => {
 // Endpoint: Get directions from origin to destination
 // Usage: GET /api/directions?destLocationId=PSZ&time=14:00
 // Optional: originLat, originLon (GPS) OR originStopId (stop-based origin)
-app.get('/api/directions', (req, res) => {
+app.get('/api/directions', async (req, res) => {
     try {
         const { originLat, originLon, originStopId, destLocationId, time, day, forceBus } = req.query;
 
@@ -110,7 +115,7 @@ app.get('/api/directions', (req, res) => {
         // Use current time if not provided
         const currentTime = time || new Date().toTimeString().slice(0, 5);
 
-        const result = getDirections(
+        const result = await getDirections(
             originLat ? parseFloat(originLat) : null,
             originLon ? parseFloat(originLon) : null,
             originStopId || null,
@@ -128,7 +133,20 @@ app.get('/api/directions', (req, res) => {
 });
 
 // Start the server
+// --- SERVE FRONTEND (Production) ---
+const path = require('path');
+const frontendPath = path.join(__dirname, '../Frontend/dist');
+
+// Serve static files from the React build
+app.use(express.static(frontendPath));
+
+// Handle React Routing, return all requests to React app
+app.get(/.*/, (req, res) => {
+    res.sendFile(path.join(frontendPath, 'index.html'));
+});
+
 const PORT = 3000;
-app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on port ${PORT}`);
+    console.log(`Open http://localhost:${PORT} to view the app.`);
 });
