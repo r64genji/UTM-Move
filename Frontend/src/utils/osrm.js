@@ -1,7 +1,10 @@
 import axios from 'axios';
 
 const OSRM_DRIVING_URL = 'http://router.project-osrm.org/route/v1/driving';
-const OSRM_WALKING_URL = 'http://router.project-osrm.org/route/v1/foot';
+
+// OpenRouteService for walking (proper pedestrian paths)
+const ORS_API_KEY = import.meta.env.VITE_ORS_API_KEY;
+const ORS_WALKING_URL = 'https://api.openrouteservice.org/v2/directions/foot-walking/geojson';
 
 // Function to fetch the route shape (polyline) connecting a list of stops (for bus routes)
 export const fetchRouteGeom = async (stops) => {
@@ -26,27 +29,42 @@ export const fetchRouteGeom = async (stops) => {
     }
 };
 
-// Function to fetch walking route between two points
+// Function to fetch walking route between two points using OpenRouteService
 export const fetchWalkingRoute = async (origin, destination) => {
     if (!origin || !destination) return null;
 
-    const coordinates = `${origin.lon},${origin.lat};${destination.lon},${destination.lat}`;
-
     try {
-        const url = `${OSRM_WALKING_URL}/${coordinates}?overview=full&geometries=geojson`;
-        const response = await axios.get(url);
+        // ORS GeoJSON endpoint expects coordinates as [lon, lat] arrays
+        const response = await axios.post(
+            ORS_WALKING_URL,
+            {
+                coordinates: [
+                    [origin.lon, origin.lat],
+                    [destination.lon, destination.lat]
+                ]
+            },
+            {
+                headers: {
+                    'Authorization': ORS_API_KEY,
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
 
-        if (response.data.code === 'Ok' && response.data.routes.length > 0) {
-            const route = response.data.routes[0];
+        // ORS GeoJSON response has features array with LineString geometry
+        if (response.data && response.data.features && response.data.features.length > 0) {
+            const feature = response.data.features[0];
+            const props = feature.properties.summary || {};
             return {
-                geometry: route.geometry,
-                distance: Math.round(route.distance), // meters
-                duration: Math.ceil(route.duration / 60) // minutes
+                geometry: feature.geometry,
+                distance: Math.round(props.distance || 0), // meters
+                duration: Math.ceil((props.duration || 0) / 60) // minutes
             };
         }
         return null;
     } catch (error) {
-        console.error('Error fetching walking route from OSRM:', error);
+        console.error('Error fetching walking route from ORS:', error);
         return null;
     }
 };
+

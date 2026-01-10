@@ -146,7 +146,10 @@ const DirectionsPanel = ({ directions, onClose, loading, onPlanFutureTrip }) => 
                             {step.type === 'alight' && '📍'}
                         </div>
                         <div className="step-content">
-                            <p className="step-instruction">{step.instruction}</p>
+                            <div className="step-header">
+                                <p className="step-instruction">{step.instruction}</p>
+                                {step.time && <span className="step-time">{step.time}</span>}
+                            </div>
                             {step.type === 'walk' && (
                                 <span className="step-meta">{step.distance}m • ~{step.duration} min</span>
                             )}
@@ -158,6 +161,11 @@ const DirectionsPanel = ({ directions, onClose, loading, onPlanFutureTrip }) => 
                                             Also at: {step.upcomingTimes.slice(1).join(', ')}
                                         </span>
                                     )}
+                                </div>
+                            )}
+                            {step.type === 'alight' && (
+                                <div className="step-meta">
+                                    <span className="stop-name">at {step.stopName}</span>
                                 </div>
                             )}
                         </div>

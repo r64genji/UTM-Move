@@ -31,23 +31,38 @@ const destinationIcon = L.divIcon({
     iconAnchor: [13, 13]
 });
 
-// Helper to update map view bounds
+import 'leaflet-arrowheads';
+
+// Helper to update map view bounds - prevents "fighting" the user's drag/zoom
 function MapUpdater({ bounds }) {
     const map = useMap();
+    const lastBoundsStr = React.useRef("");
+
     useEffect(() => {
-        if (bounds) {
-            map.fitBounds(bounds, { padding: [50, 50] });
+        if (!bounds) return;
+
+        const boundsStr = bounds.toBBoxString();
+        // Only fit bounds if they have actually changed (e.g. new route selected)
+        // This prevents snapping the map back while the user is actively dragging/zooming
+        if (boundsStr !== lastBoundsStr.current) {
+            lastBoundsStr.current = boundsStr;
+            map.fitBounds(bounds, {
+                padding: [50, 50],
+                maxZoom: 16,
+                animate: true,
+                duration: 0.5
+            });
         }
     }, [bounds, map]);
     return null;
 }
 
-import 'leaflet-arrowheads';
-
 const MapComponent = ({
     stops,
     selectedRouteStops,
     routeGeometry,
+    routeColor = '#3b82f6',     // Custom color for the explorer route
+    allRouteGeometries = [],    // Array of { geometry, color, name } for all routes display
     // Directions-specific props
     walkingGeometries = [],     // Array of walking route GeoJSON geometries
     busRouteGeometry = null,    // Legacy: Single bus route geometry
@@ -59,12 +74,18 @@ const MapComponent = ({
     const defaultCenter = [1.559704, 103.634727];
     const busPolylineRef = React.useRef(null);
     const segmentRefs = React.useRef({});
-    const routePolylineRef = React.useRef(null);
+    const routePolylineRefs = React.useRef({});
 
     // Convert GeoJSON LineString (lon, lat) to Leaflet (lat, lon)
-    const polylinePositions = routeGeometry
-        ? routeGeometry.coordinates.map(coord => [coord[1], coord[0]])
-        : [];
+    const polylinePositions = React.useMemo(() => {
+        if (!routeGeometry) return [];
+        if (routeGeometry.type === 'LineString') {
+            return [routeGeometry.coordinates.map(coord => [coord[1], coord[0]])];
+        } else if (routeGeometry.type === 'MultiLineString') {
+            return routeGeometry.coordinates.map(line => line.map(coord => [coord[1], coord[0]]));
+        }
+        return [];
+    }, [routeGeometry]);
 
     // Legacy support
     const busRoutePositions = busRouteGeometry
@@ -101,8 +122,12 @@ const MapComponent = ({
             }
         };
 
-        applyArrowheads(routePolylineRef);
         applyArrowheads(busPolylineRef);
+
+        // Apply to all route polyline segments
+        Object.values(routePolylineRefs.current).forEach(ref => {
+            if (ref) applyArrowheads({ current: ref });
+        });
 
         // Apply to all new segments
         Object.values(segmentRefs.current).forEach(ref => {
@@ -111,38 +136,72 @@ const MapComponent = ({
 
     }, [routeGeometry, busRouteGeometry, busRouteSegments]);
 
-    // Calculate bounds
-    let bounds = null;
-    const allPositions = [
-        ...polylinePositions,
-        ...busRoutePositions,
-        ...walkingRoutes.flat(),
-        ...busSegments.flatMap(s => s.positions)
-    ];
+    // Calculate bounds with coordinate sanitization
+    const bounds = React.useMemo(() => {
+        const allPositions = [
+            ...polylinePositions.flat(),
+            ...busRoutePositions,
+            ...walkingRoutes.flat(),
+            ...busSegments.flatMap(s => s.positions)
+        ].filter(pos => pos && pos[0] !== 0 && pos[1] !== 0 && !isNaN(pos[0]) && !isNaN(pos[1]));
 
-    if (allPositions.length > 0) {
-        bounds = L.latLngBounds(allPositions);
-    } else if (stops.length > 0) {
-        // Default to bounds of stops
-        bounds = L.latLngBounds(stops.map(s => [s.lat, s.lon]));
-    }
+        if (allPositions.length > 0) {
+            return L.latLngBounds(allPositions);
+        } else if (stops.length > 0) {
+            const validStopCoords = stops
+                .map(s => [s.lat, s.lon])
+                .filter(pos => pos[0] !== 0 && pos[1] !== 0 && !isNaN(pos[0]) && !isNaN(pos[1]));
+
+            if (validStopCoords.length > 0) {
+                return L.latLngBounds(validStopCoords);
+            }
+        }
+        return null;
+    }, [polylinePositions, busRoutePositions, walkingRoutes, busSegments, stops]);
 
     return (
         <div style={{ height: '100%', width: '100%', position: 'relative', zIndex: 0 }}>
-            <MapContainer center={defaultCenter} zoom={15} style={{ height: '100%', width: '100%', background: '#1a1a1a' }} zoomControl={false}>
+            <MapContainer
+                center={defaultCenter}
+                zoom={15}
+                maxZoom={22}
+                minZoom={3}
+                style={{ height: '100%', width: '100%', background: '#1a1a1a' }}
+                zoomControl={false}
+                renderer={L.svg({ padding: 1.5 })}
+            >
                 <TileLayer
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    maxNativeZoom={19}
+                    maxZoom={22}
+                    keepBuffer={20}
+                    updateWhenIdle={false}
+                    updateWhenZooming={true}
                 />
 
                 {/* Draw Route Polyline (route explorer mode) */}
-                {polylinePositions.length > 0 && (
+                {polylinePositions.map((positions, idx) => (
                     <Polyline
-                        ref={routePolylineRef}
-                        positions={polylinePositions}
-                        pathOptions={{ color: '#3b82f6', weight: 5, opacity: 0.7 }}
+                        key={`route-${idx}`}
+                        ref={el => routePolylineRefs.current[idx] = el}
+                        positions={positions}
+                        pathOptions={{ color: routeColor, weight: 5, opacity: 0.7 }}
                     />
-                )}
+                ))}
+
+                {/* Draw All Routes (when All Routes mode is selected) */}
+                {allRouteGeometries.map((routeData, idx) => {
+                    if (!routeData.geometry || !routeData.geometry.coordinates) return null;
+                    const positions = routeData.geometry.coordinates.map(coord => [coord[1], coord[0]]);
+                    return (
+                        <Polyline
+                            key={`all-route-${idx}`}
+                            positions={positions}
+                            pathOptions={{ color: routeData.color, weight: 4, opacity: 0.6 }}
+                        />
+                    );
+                })}
 
                 {/* Draw Walking Routes (directions mode) - Green dashed */}
                 {walkingRoutes.map((route, index) => (
@@ -163,7 +222,7 @@ const MapComponent = ({
                     <Polyline
                         ref={busPolylineRef}
                         positions={busRoutePositions}
-                        pathOptions={{ color: '#3b82f6', weight: 5, opacity: 0.8 }}
+                        pathOptions={{ color: routeColor, weight: 5, opacity: 0.8 }}
                     />
                 )}
 

@@ -15,7 +15,8 @@ const routeGeometries = JSON.parse(fs.readFileSync(path.join(__dirname, 'route_g
 
 // Constants
 const WALKING_SPEED_MPS = 1.4; // meters per second (~5 km/h)
-const WALK_ONLY_THRESHOLD_M = 200; // If destination within 200m, suggest walking
+const WALK_ONLY_THRESHOLD_M = 500; // If destination within 500m, suggest walking
+const PREFER_WALK_THRESHOLD_M = 1000; // Under 1km, compare walk vs bus time carefully
 const ALTERNATIVE_STOP_RADIUS_M = 500; // Check for alternative stops within 500m
 const CP_STOP_ID = 'CP'; // Centre Point transfer hub
 
@@ -28,7 +29,7 @@ function createWalkResponse(originCoords, destLocation, distance, primaryStop, d
     const walkDuration = Math.ceil(distance / WALKING_SPEED_MPS / 60);
     return {
         type: 'WALK_ONLY',
-        message: distance < 100 ? 'Your destination is right here!' : 'Your destination is very close. We recommend walking.',
+        message: distance < 150 ? 'Your destination is right here!' : 'Your destination is very close. We recommend walking.',
         destination: destLocation,
         totalWalkingDistance: Math.round(distance),
         totalDuration: walkDuration,
@@ -560,9 +561,15 @@ async function getDirections(originLat, originLon, originStopId, destLocationId,
     let bestDestStop = null;
     let minTotalScore = Infinity; // Score = BusDuration + WalkDuration + WaitTime
 
+    // CHANGE 1: Track best NON-LOOP route separately
+    // This ensures we can compare loop routes against simpler "direct + walk" alternatives
+    let bestNonLoopRoute = null;
+    let bestNonLoopStop = null;
+    let bestNonLoopScore = Infinity;
+
     // We iterate through candidate destination stops
-    // Limit to top 3 as requested by user
-    const candidateDestStops = destNearestStops.slice(0, 3);
+    // Expanded to top 5 to ensure we find nearby stops like CP when destination is AM
+    const candidateDestStops = destNearestStops.slice(0, 5);
     let bestAlternativeBus = null; // for fallback logic
 
     // DEBUG LOGGING
@@ -644,10 +651,31 @@ async function getDirections(originLat, originLon, originStopId, destLocationId,
         // Total Score (Minutes) = Wait + Ride + Walk
         const totalScore = waitMins + busTravelMins + walkFromMins;
 
+        // CHANGE 1: Track best non-loop route separately
+        // Only consider non-loop routes where walk from stop is reasonable (< 500m)
+        if (!route.isLoop && walkFromDist < 500) {
+            if (totalScore < bestNonLoopScore) {
+                bestNonLoopScore = totalScore;
+                bestNonLoopRoute = route;
+                bestNonLoopStop = candidateDest;
+            }
+        }
+
         if (totalScore < minTotalScore) {
             minTotalScore = totalScore;
             directRoutes = [route]; // Use this route
             bestDestStop = candidateDest;
+        }
+    }
+
+    // CHANGE 1: If best route is a loop but we have a non-loop alternative with reasonable walk,
+    // prefer the non-loop route (e.g., prefer "bus to CP + walk 230m to AM" over loop through T02)
+    if (directRoutes.length > 0 && directRoutes[0].isLoop && bestNonLoopRoute) {
+        // Only prefer non-loop if it's not significantly slower (within 10 mins or faster)
+        if (bestNonLoopScore <= minTotalScore + 10) {
+            directRoutes = [bestNonLoopRoute];
+            bestDestStop = bestNonLoopStop;
+            minTotalScore = bestNonLoopScore;
         }
     }
 
@@ -659,16 +687,40 @@ async function getDirections(originLat, originLon, originStopId, destLocationId,
     // Now handling the inefficient route logic (Step 5 continued)
     let inefficientDirectRoute = null;
 
-    if (!forceBus && directRoutes.length > 0 && directDistance < 1000) {
+    if (!forceBus && directRoutes.length > 0 && directDistance < PREFER_WALK_THRESHOLD_M) {
         const bestRoute = directRoutes[0];
         const stopCount = bestRoute.isLoop
             ? bestRoute.stopsSequence.length - 1
             : bestRoute.destStopIndex - bestRoute.originStopIndex;
 
-        // If our "Optimized" route is still a loop/inefficient, maybe walking is better.
-        if (bestRoute.isLoop || stopCount > 8) {
-            inefficientDirectRoute = bestRoute;
-            directRoutes = [];
+        // Calculate expected time for THIS specific bus route
+        const dep = getNextDeparture(bestRoute, bestRoute.originStopIndex, currentTime, dayName);
+        if (dep) {
+            const waitTime = dep.minutesUntil;
+            const walkToOriginMins = Math.ceil(haversineDistance(originCoords.lat, originCoords.lon, primaryStop.lat, primaryStop.lon) / WALKING_SPEED_MPS / 60);
+
+            // Re-calculate bus duration accurately for this comparison
+            let busMins = 0;
+            if (bestRoute.isLoop) {
+                const off1 = getDynamicOffset(bestRoute.routeName, bestRoute.originTrip.headsign, bestRoute.originStopIndex) || 0;
+                const end1 = getDynamicOffset(bestRoute.routeName, bestRoute.originTrip.headsign, bestRoute.originTrip.stopsSequence.length - 1) || 0;
+                const off2 = getDynamicOffset(bestRoute.routeName, bestRoute.destTrip.headsign, bestRoute.destStopIndex) || 0;
+                busMins = (end1 - off1) + off2 + 5;
+            } else {
+                busMins = (getDynamicOffset(bestRoute.routeName, bestRoute.headsign, bestRoute.destStopIndex) || 2) -
+                    (getDynamicOffset(bestRoute.routeName, bestRoute.headsign, bestRoute.originStopIndex) || 0);
+            }
+
+            const destStopObj = bestRoute._actualDestStop || destStop;
+            const walkFromDestMins = Math.ceil(haversineDistance(destStopObj.lat, destStopObj.lon, destLocation.lat, destLocation.lon) / WALKING_SPEED_MPS / 60);
+            const totalBusTime = walkToOriginMins + waitTime + busMins + walkFromDestMins;
+            const totalWalkTime = Math.ceil(directDistance / WALKING_SPEED_MPS / 60);
+
+            // If walking is faster or saves significant waiting, suggest walking
+            if (totalWalkTime <= totalBusTime || bestRoute.isLoop || stopCount > 10) {
+                inefficientDirectRoute = bestRoute;
+                directRoutes = [];
+            }
         }
     }
 
@@ -784,7 +836,89 @@ async function getDirections(originLat, originLon, originStopId, destLocationId,
             }
         }
 
-        // Get next departure for second leg (estimate arrival at CP + wait time)
+        // CHANGE 3: Before returning TRANSFER, check if walking from transfer point to destination is faster
+        // This handles cases like KTC_A → AM where CP (transfer point) is only 226m from AM
+        const transferStopObj = getStopById(usedTransferPoint);
+        const walkFromTransferToDestDist = haversineDistance(
+            transferStopObj.lat, transferStopObj.lon,
+            destLocation.lat, destLocation.lon
+        );
+        const walkFromTransferToDestMins = Math.ceil(walkFromTransferToDestDist / WALKING_SPEED_MPS / 60);
+
+        // If walk from transfer point to destination is short (< 500m / ~7 mins), 
+        // return a simpler BUS_ROUTE to the transfer point + walk, instead of complex transfer
+        if (walkFromTransferToDestDist < 500) {
+            // Calculate first leg arrival time
+            const firstLegOffset = getDynamicOffset(firstLegRoute.routeName, firstLegRoute.headsign, firstLegRoute.destStopIndex, firstLegRoute);
+            const firstLegArrivalTime = addMinutesToTime(firstLegDeparture.tripStartTime, firstLegOffset);
+
+            // Determine effective origin stop
+            const effectiveOriginStop = useAlternativeStop ? alternativeStop : primaryStop;
+            const walkToOriginStop = haversineDistance(
+                originCoords.lat, originCoords.lon,
+                effectiveOriginStop.lat, effectiveOriginStop.lon
+            );
+
+            // Calculate bus travel duration
+            const originOffset = getDynamicOffset(firstLegRoute.routeName, firstLegRoute.headsign, firstLegRoute.originStopIndex) || 0;
+            const destOffset = getDynamicOffset(firstLegRoute.routeName, firstLegRoute.headsign, firstLegRoute.destStopIndex) || 0;
+            const busTravelMins = destOffset - originOffset;
+
+            // Return simpler BUS_ROUTE (first leg only) + walk from transfer point to destination
+            return {
+                type: 'BUS_ROUTE',
+                destination: destLocation,
+                originStop: effectiveOriginStop,
+                summary: {
+                    route: firstLegRoute.routeName,
+                    headsign: firstLegRoute.headsign,
+                    departure: firstLegDeparture.time,
+                    departureDay: departureDay,
+                    totalDuration: (firstLegDeparture.minutesUntil || 0) + busTravelMins + walkFromTransferToDestMins,
+                    busArrivalTime: firstLegArrivalTime,
+                    alightAt: transferStopObj.name,
+                    walkToDestination: Math.round(walkFromTransferToDestDist),
+                    eta: addMinutesToTime(firstLegArrivalTime, walkFromTransferToDestMins)
+                },
+                steps: [
+                    {
+                        type: 'walk',
+                        instruction: `Walk to ${effectiveOriginStop.name}`,
+                        from: originCoords,
+                        to: { lat: effectiveOriginStop.lat, lon: effectiveOriginStop.lon },
+                        distance: Math.round(walkToOriginStop),
+                        duration: Math.ceil(walkToOriginStop / WALKING_SPEED_MPS / 60)
+                    },
+                    {
+                        type: 'board',
+                        instruction: `Board ${firstLegRoute.routeName} (${firstLegRoute.headsign})`,
+                        stopName: effectiveOriginStop.name,
+                        stopId: effectiveOriginStop.id,
+                        time: firstLegDeparture.time,
+                        routeGeometryKey: getRouteGeometryKey(firstLegRoute.routeName, firstLegRoute.headsign)
+                    },
+                    {
+                        type: 'alight',
+                        instruction: `Alight at ${transferStopObj.name}`,
+                        stopName: transferStopObj.name,
+                        stopId: usedTransferPoint,
+                        time: firstLegArrivalTime
+                    },
+                    {
+                        type: 'walk',
+                        instruction: `Walk to ${destLocation.name}`,
+                        from: { lat: transferStopObj.lat, lon: transferStopObj.lon },
+                        to: { lat: destLocation.lat, lon: destLocation.lon },
+                        distance: Math.round(walkFromTransferToDestDist),
+                        duration: walkFromTransferToDestMins
+                    }
+                ],
+                routeGeometry: routeGeometries[getRouteGeometryKey(firstLegRoute.routeName, firstLegRoute.headsign)]?.geometry,
+                destStop: transferStopObj // The bus stop where user alights
+            };
+        }
+
+        // Get next departure for second leg (estimate arrival at transfer point + wait time)
         const cpArrivalMinutes = firstLegDeparture.minutesUntil + (firstLegRoute.destStopIndex - firstLegRoute.originStopIndex) * 2;
         const cpArrivalTime = addMinutesToTime(currentTime, cpArrivalMinutes);
 
@@ -812,7 +946,13 @@ async function getDirections(originLat, originLon, originStopId, destLocationId,
             destLocation.lat, destLocation.lon
         );
 
-        const transferStopObj = getStopById(usedTransferPoint);
+        const firstLegDepartureTime = firstLegDeparture.time;
+        const firstLegOffset = getDynamicOffset(firstLegRoute.routeName, firstLegRoute.headsign, firstLegRoute.destStopIndex, firstLegRoute);
+        const firstLegArrivalTime = addMinutesToTime(firstLegDeparture.tripStartTime, firstLegOffset);
+
+        const secondLegDepartureTime = secondLegDeparture ? secondLegDeparture.time : 'Next available';
+        const secondLegOffset = getDynamicOffset(secondLegRoute.routeName, secondLegRoute.headsign, secondLegRoute.destStopIndex, secondLegRoute);
+        const secondLegArrivalTime = secondLegDeparture ? addMinutesToTime(secondLegDeparture.tripStartTime, secondLegOffset) : null;
 
         return {
             type: 'TRANSFER',
@@ -825,51 +965,16 @@ async function getDirections(originLat, originLon, originStopId, destLocationId,
                 departure: firstLegDeparture.time,
                 transferAt: transferStopObj.name,
                 departureDay: departureDay,
-                departureDay: departureDay,
                 totalDuration: (function () {
                     if (!secondLegDeparture) return null;
-
                     const currentMins = timeToMinutes(currentTime);
-                    const leg2OriginOff = getDynamicOffset(secondLegRoute.routeName, secondLegRoute.headsign, secondLegRoute.originStopIndex) || 0;
-                    const leg2DestOff = getDynamicOffset(secondLegRoute.routeName, secondLegRoute.headsign, secondLegRoute.destStopIndex) || 0;
-                    const leg2Duration = Math.max(0, leg2DestOff - leg2OriginOff);
-
-                    const arrivalMins = timeToMinutes(secondLegDeparture.time) + leg2Duration;
-
-                    // Walk times
-                    const walkDuration = Math.ceil(walkToOriginStop / WALKING_SPEED_MPS / 60) +
-                        Math.ceil(walkFromDestStop / WALKING_SPEED_MPS / 60);
-
-                    // Calculate diff
+                    const arrivalMins = timeToMinutes(secondLegArrivalTime);
                     let diff = arrivalMins - currentMins;
-
-                    // Handle day wrap (Next Day)
-                    // If departureDay is tomorrow (or just diff is negative/too small implies wrap)
-                    // But explicitly: firstLegDeparture.day vs current dayName.
-                    // If transfer wraps day... tricky.
-                    // Simple heuristic: If arrival is earlier than current time, assume next day (+1440).
-                    // Or if explicit 'departureDay' is set and != dayName.
-
-                    if (diff < 0) {
-                        diff += 24 * 60;
-                    }
-                    else if (firstLegDeparture.minutesUntil === null) {
-                        // This implies next day finding
-                        // If we found a bus tomorrow, ensure we adding 24h if times look like today?
-                        // Actually if firstLegDeparture is tomorrow, arrivalMins IS tomorrow.
-                        // But diff might be small positive if 19:09 -> 19:15 tomorrow? (No, 19:09 -> 07:00 is negative).
-                        // If 19:09 -> 07:00. 420 - 1149 = -729. +1440 = 711 mins. Correct.
-                    }
-
-                    return diff + Math.ceil(walkFromDestStop / WALKING_SPEED_MPS / 60); // Walk to Dest is after bus
+                    if (diff < 0) diff += 24 * 60;
+                    return diff + Math.ceil(walkFromDestStop / WALKING_SPEED_MPS / 60);
                 })(),
-                busArrivalTime: (function () {
-                    if (!secondLegDeparture) return null;
-                    const leg2OriginOff = getDynamicOffset(secondLegRoute.routeName, secondLegRoute.headsign, secondLegRoute.originStopIndex) || 0;
-                    const leg2DestOff = getDynamicOffset(secondLegRoute.routeName, secondLegRoute.headsign, secondLegRoute.destStopIndex) || 0;
-                    const leg2Duration = Math.max(0, leg2DestOff - leg2OriginOff);
-                    return addMinutesToTime(secondLegDeparture.time, leg2Duration);
-                })()
+                busArrivalTime: secondLegArrivalTime,
+                eta: secondLegDeparture ? addMinutesToTime(secondLegArrivalTime, Math.ceil(walkFromDestStop / WALKING_SPEED_MPS / 60)) : null
             },
             steps: [
                 {
@@ -892,7 +997,8 @@ async function getDirections(originLat, originLon, originStopId, destLocationId,
                     type: 'alight',
                     instruction: `Alight at ${transferStopObj.name}`,
                     stopName: transferStopObj.name,
-                    stopId: usedTransferPoint
+                    stopId: usedTransferPoint,
+                    time: firstLegArrivalTime
                 },
                 {
                     type: 'board',
@@ -906,7 +1012,8 @@ async function getDirections(originLat, originLon, originStopId, destLocationId,
                     type: 'alight',
                     instruction: `Alight at ${destStop.name}`,
                     stopName: destStop.name,
-                    stopId: destStopId
+                    stopId: destStopId,
+                    time: secondLegArrivalTime
                 },
                 {
                     type: 'walk',
@@ -1009,19 +1116,17 @@ async function getDirections(originLat, originLon, originStopId, destLocationId,
         busArrivalTime = `${String(arrH).padStart(2, '0')}:${String(arrM).padStart(2, '0')}`;
 
         // Calculate Total Duration
-        // Logic: WalkToStop + (BusArrival - BusDeparture) + WalkFromStop
+        const currentMins = timeToMinutes(currentTime);
+        const arrivalAtFinalMins = arrivalMinutes + walkFromDuration;
 
-        // Use departure.time (boarding time) not tripStartTime (route start time)
-        const [boardH, boardM] = departure.time.split(':').map(Number);
-        const boardMinutes = boardH * 60 + boardM;
+        let diff = arrivalAtFinalMins - currentMins;
+        if (diff < 0) diff += 24 * 60; // Handle next day
 
-        const busTravelMinutes = arrivalMinutes - boardMinutes;
-        totalDuration = walkToDuration + busTravelMinutes + walkFromDuration;
+        totalDuration = diff;
 
         // Calculate ETA
-        const etaMinutes = arrivalMinutes + walkFromDuration;
-        const etaH = Math.floor(etaMinutes / 60) % 24;
-        const etaM = etaMinutes % 60;
+        const etaH = Math.floor(arrivalAtFinalMins / 60) % 24;
+        const etaM = arrivalAtFinalMins % 60;
         eta = `${String(etaH).padStart(2, '0')}:${String(etaM).padStart(2, '0')}`;
     }
 
@@ -1065,13 +1170,14 @@ async function getDirections(originLat, originLon, originStopId, destLocationId,
         {
             type: 'ride',
             instruction: `Ride ${stopCount} stops to ${actualDestStop.name}`,
-            duration: Math.round(totalDuration - walkToDuration - walkFromDuration) // Approx ride time
+            duration: Math.round((timeToMinutes(busArrivalTime) - timeToMinutes(departure.time) + 1440) % 1440)
         },
         {
             type: 'alight',
             instruction: `Alight at ${actualDestStop.name}`,
             stopName: actualDestStop.name,
-            stopId: actualDestStop.id
+            stopId: actualDestStop.id,
+            time: busArrivalTime
         },
         {
             type: 'walk',

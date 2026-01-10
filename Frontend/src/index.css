@@ -1,8 +1,13 @@
+/* Google Fonts for Mobile */
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+
 /* Modern Dark Aesthetic (Tailwind-inspired but pure CSS) */
 :root {
     /* Colors */
     --color-primary: #3B82F6;
-    /* Blue-500 */
+    --color-primary-rgb: 59, 130, 246;
+    /* Matching Blue-500 */
     --color-primary-hover: #2563EB;
     /* Blue-600 */
 
@@ -60,9 +65,7 @@ body {
     font-family: 'Inter', sans-serif;
     background-color: var(--bg-dark);
     color: var(--text-main);
-    overflow: hidden;
-    display: flex;
-    /* Sidebar layout */
+    display: block;
 }
 
 #root {
@@ -823,6 +826,23 @@ button {
     padding-top: 0.25rem;
 }
 
+.step-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.step-time {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    background-color: rgba(59, 130, 246, 0.1);
+    padding: 0.15rem 0.4rem;
+    border-radius: 0.25rem;
+    white-space: nowrap;
+}
+
 .step-instruction {
     font-size: 0.9rem;
     color: white;
@@ -911,4 +931,110 @@ button {
     margin-top: 0.5rem;
     font-style: italic;
     color: white;
+}
+
+/* =================================================
+   MOBILE WEB APP STYLES
+   Using Tailwind CSS via CDN for mobile components
+   ================================================= */
+
+
+/* Mobile Color Variables (matching Tailwind config in HTML) */
+.text-primary {
+    color: #137fec;
+}
+
+.bg-primary {
+    background-color: #137fec;
+}
+
+.bg-primary\/10 {
+    background-color: rgba(19, 127, 236, 0.1);
+}
+
+.bg-primary\/20 {
+    background-color: rgba(19, 127, 236, 0.2);
+}
+
+.bg-background-light {
+    background-color: #f6f7f8;
+}
+
+.bg-background-dark {
+    background-color: #101922;
+}
+
+/* Mobile-specific utilities */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Safe area for iOS */
+.pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Mobile font family */
+.font-display {
+    font-family: 'Lexend', sans-serif;
+}
+
+/* Shadow glow effect for mobile */
+.shadow-glow {
+    box-shadow: 0 0 20px -5px rgba(19, 127, 236, 0.5);
+}
+
+/* Animate ping for live indicator */
+@keyframes ping {
+
+    75%,
+    100% {
+        transform: scale(2);
+        opacity: 0;
+    }
+}
+
+.animate-ping {
+    animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* Animate bounce for bus marker */
+@keyframes bounce {
+
+    0%,
+    100% {
+        transform: translateY(-25%);
+        animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+    }
+
+    50% {
+        transform: translateY(0);
+        animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+    }
+}
+
+.animate-bounce {
+    animation: bounce 1s infinite;
+}
+
+/* Animate pulse */
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: .5;
+    }
+}
+
+.animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }

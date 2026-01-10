@@ -27,7 +27,11 @@ export const fetchNextBus = async (route, time, stop) => {
 // Fetch directions from origin to destination
 export const fetchDirections = async (params) => {
     try {
-        const response = await axios.get(`${API_BASE_URL}/directions`, { params });
+        // Add cache-busting timestamp to prevent stale responses
+        const response = await axios.get(`${API_BASE_URL}/directions`, {
+            params: { ...params, _t: Date.now() },
+            headers: { 'Cache-Control': 'no-cache' }
+        });
         return response.data;
     } catch (error) {
         console.error('Error fetching directions:', error);

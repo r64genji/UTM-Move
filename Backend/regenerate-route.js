@@ -36,7 +36,7 @@ async function fetchNewGeometry() {
     // Use 'foot' profile to force usage of internal roads (shortest path) vs highway (fastest driving)
     // OSRM Public Server: router.project-osrm.org
     const coordsString = stopCoords.join(';');
-    const url = `http://router.project-osrm.org/route/v1/foot/${coordsString}?overview=full&geometries=geojson`;
+    const url = `http://router.project-osrm.org/route/v1/walking/${coordsString}?overview=full&geometries=geojson`;
 
     console.log(`Fetching new geometry from: ${url}`);
 

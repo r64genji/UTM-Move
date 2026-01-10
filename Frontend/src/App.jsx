@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import './index.css';
 import { fetchStaticData, fetchDirections } from './services/api';
 import { fetchRouteGeom, fetchWalkingRoute } from './utils/osrm';
@@ -10,6 +10,7 @@ import ScheduleView from './components/ScheduleView';
 import DirectionSelector from './components/DirectionSelector';
 import SearchBar from './components/SearchBar';
 import DirectionsPanel from './components/DirectionsPanel';
+import MobileApp from './components/mobile/MobileApp';
 
 const ROUTE_COLORS = {
     'A': '#EF4444', // Red
@@ -29,8 +30,14 @@ const getRouteColor = (routeStr) => {
     return ROUTE_COLORS[letter] || '#3b82f6';
 };
 
+// Helper to safely get route from data
+const findRoute = (data, name) => {
+    if (!data || !data.routes) return null;
+    return data.routes.find(r => r.name === name);
+};
+
 function App() {
-    const [data, setData] = useState({ stops: [], routes: [], locations: [] });
+    const [data, setData] = useState({ stops: [], routes: [], locations: [], route_geometries: {}, route_waypoints: {} });
     const [selectedRouteName, setSelectedRouteName] = useState(null);
     const [selectedHeadsign, setSelectedHeadsign] = useState(null);
     const [routeGeometry, setRouteGeometry] = useState(null);
@@ -51,13 +58,33 @@ function App() {
     const [directionsMarkers, setDirectionsMarkers] = useState(null);
     const [selectedDestination, setSelectedDestination] = useState(null);
 
+    // Mobile viewport detection
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+        handleResize();
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
     useEffect(() => {
         const loadData = async () => {
             try {
                 const result = await fetchStaticData();
-                setData(result);
-            } catch (error) {
-                console.error("Failed to load data", error);
+                setData({
+                    stops: result?.stops || [],
+                    routes: result?.routes || [],
+                    locations: result?.locations || [],
+                    route_geometries: result?.route_geometries || {},
+                    route_waypoints: result?.route_waypoints || {}
+                });
+            } catch (err) {
+                console.error("Failed to load static data", err);
+                // Ensure state is at least valid
+                setData({ stops: [], routes: [], locations: [] });
             } finally {
                 setLoading(false);
             }
@@ -83,14 +110,81 @@ function App() {
     }, []);
 
     // When route changes, pick default headsign
-    const handleRouteSelect = (routeName) => {
+    // When route changes, pick default headsign
+    const handleRouteSelect = async (routeName, serviceId = 'WEEKDAY', showLoop = false) => {
+        // Clear geometry if no route selected
+        if (!routeName) {
+            setSelectedRouteName(null);
+            setRouteGeometry(null);
+            return;
+        }
+
         setSelectedRouteName(routeName);
         const route = data.routes.find(r => r.name === routeName);
         if (!route) return;
 
-        const defaultServiceIndex = 0;
-        setSelectedServiceIndex(defaultServiceIndex);
-        updateHeadsignsForService(route, defaultServiceIndex);
+        let serviceIndex = 0;
+        if (serviceId) {
+            const idx = route.services.findIndex(s => s.service_id === serviceId);
+            if (idx !== -1) serviceIndex = idx;
+        }
+
+        setSelectedServiceIndex(serviceIndex);
+
+        if (showLoop) {
+            // Show full loop: fetch geometries for ALL unique headsigns
+            // Clear specific headsign selection
+            setSelectedHeadsign(null);
+
+            const service = route.services[serviceIndex];
+            if (!service) return;
+
+            const headsigns = [...new Set(service.trips.map(t => t.headsign))];
+            const geometryPromises = headsigns.map(async (headsign) => {
+                const specificKey = `${routeName} : ${headsign}`;
+
+                // Try to get from static data first
+                if (data.route_geometries && data.route_geometries[specificKey]) {
+                    return data.route_geometries[specificKey];
+                }
+
+                // Fallback to OSRM fetch
+                const trip = service.trips.find(t => t.headsign === headsign);
+                if (!trip) return null;
+
+                const routeStopObjects = trip.stops_sequence.map(id => data.stops.find(s => s.id === id)).filter(Boolean);
+
+                // Enrich with waypoints if available
+                let stopList = routeStopObjects;
+                if (data.route_waypoints && data.route_waypoints[specificKey]) {
+                    const waypoints = data.route_waypoints[specificKey];
+                    let enriched = [];
+                    stopList.forEach(stop => {
+                        enriched.push(stop);
+                        const wps = waypoints.filter(wp => wp.afterStopId === stop.id);
+                        wps.forEach(wp => enriched.push({ lat: wp.lat, lon: wp.lon, isWaypoint: true }));
+                    });
+                    stopList = enriched;
+                }
+
+                return await fetchRouteGeom(stopList);
+            });
+
+            const geometries = await Promise.all(geometryPromises);
+            const validGeometries = geometries.filter(Boolean);
+
+            // Combine into MultiLineString
+            const multiLineGeometry = {
+                type: 'MultiLineString',
+                coordinates: validGeometries.map(g => g.coordinates)
+            };
+
+            setRouteGeometry(multiLineGeometry);
+
+        } else {
+            // Default behavior: Select first headsign
+            updateHeadsignsForService(route, serviceIndex);
+        }
     };
 
     const updateHeadsignsForService = (route, serviceIdx) => {
@@ -123,12 +217,19 @@ function App() {
         if (!route) return;
 
         const specificKey = `${routeName} : ${headsign}`;
+        console.log('Looking for geometry key:', specificKey);
 
         if (data.route_geometries) {
+            console.log('Geometries available, keys:', Object.keys(data.route_geometries).length);
             if (data.route_geometries[specificKey]) {
+                console.log('Found geometry in JSON!');
                 setRouteGeometry(data.route_geometries[specificKey]);
                 return;
+            } else {
+                console.log('Geometry NOT found for key:', specificKey);
             }
+        } else {
+            console.log('No route_geometries in data');
         }
 
         let targetTrip = null;
@@ -172,6 +273,7 @@ function App() {
     };
 
     const handleGetDirections = async (destination, options = {}) => {
+        setMode('directions');
         setSelectedDestination(destination);
         setDirectionsLoading(true);
         setDirections(null);
@@ -181,7 +283,8 @@ function App() {
         setDirectionsMarkers(null);
 
         try {
-            const origin = customOrigin || userLocation;
+            // Use overrideOrigin if provided (fixes stale closure issue when changing origin)
+            const origin = options.overrideOrigin || customOrigin || userLocation;
             if (!origin) {
                 setDirections({ error: 'Location not available', suggestion: 'Please enable GPS or select a starting point.' });
                 return;
@@ -223,8 +326,9 @@ function App() {
 
                 setWalkingGeometries(walkGeoms);
 
-                const routeStr = result.summary.route || '';
-                const routeParts = routeStr.split(/→|->/).map(s => s.trim());
+                // Handle bus route colors (only if there's a bus route)
+                const routeStr = result.summary?.route || '';
+                const routeParts = routeStr.split(/→|->/).map(s => s.trim()).filter(Boolean);
                 const color1 = getRouteColor(routeParts[0]);
                 const color2 = routeParts.length > 1 ? getRouteColor(routeParts[1]) : color1;
 
@@ -268,7 +372,7 @@ function App() {
                             { lat: result.destStop.lat, lon: result.destStop.lon }
                         );
                         if (seg2?.coordinates) {
-                            newSegments.push({ coordinates: seg2.coordinates, color: color1, type: 'bus' });
+                            newSegments.push({ coordinates: seg2.coordinates, color: color2, type: 'bus' });
                         }
                     }
 
@@ -330,11 +434,26 @@ function App() {
     };
 
     const handleSelectOrigin = (location) => {
-        setCustomOrigin({
+        if (!location) {
+            setCustomOrigin(null);
+            // Recalculate with GPS location if destination exists
+            if (selectedDestination && userLocation) {
+                handleGetDirections(selectedDestination, { overrideOrigin: userLocation });
+            }
+            return;
+        }
+        const newOrigin = {
             lat: location.lat,
             lon: location.lon,
             name: location.name
-        });
+        };
+        setCustomOrigin(newOrigin);
+
+        // Recalculate directions with new origin if destination exists
+        // Pass newOrigin directly to avoid stale closure issue
+        if (selectedDestination) {
+            handleGetDirections(selectedDestination, { overrideOrigin: newOrigin });
+        }
     };
 
     const handleUseCurrentLocation = () => {
@@ -342,6 +461,7 @@ function App() {
     };
 
     const handleCloseDirections = () => {
+        setMode('explore');
         setDirections(null);
         setWalkingGeometries([]);
         setBusRouteGeometry(null);
@@ -355,19 +475,29 @@ function App() {
         }
     };
 
-    const selectedRouteData = data.routes.find(r => r.name === selectedRouteName);
-
+    const selectedRouteData = findRoute(data, selectedRouteName);
     let selectedStopIds = [];
-    let availableHeadsigns = [];
     let activeService = null;
+    let availableHeadsigns = [];
 
-    if (selectedRouteData) {
+    if (selectedRouteData && selectedRouteData.services) {
         activeService = selectedRouteData.services[selectedServiceIndex];
+        if (activeService && activeService.trips) {
+            availableHeadsigns = [...new Set(activeService.trips.map(t => t.headsign))];
 
-        if (activeService) {
-            const heads = new Set();
-            activeService.trips.forEach(t => heads.add(t.headsign));
-            availableHeadsigns = Array.from(heads);
+            if (!selectedHeadsign && availableHeadsigns.length > 0 && mode !== 'explore') {
+                // Only auto-select if NOT in explore mode (or if we want to enforce it, but we want to allow null for "All" view)
+                // Actually, if we are in "All headsigns" mode (routeGeometry is MultiLineString), we want selectedHeadsign to be null.
+                // The issue is this effect runs on every render.
+                // If we explicitly set it to null in handleRouteSelect(showLoop=true), this might override it back.
+                // Let's rely on explicit user action or handleRouteSelect to set it. We shouldn't auto-set it here unless it's undefined/null AND we want a default.
+                // But for "Show Loop" feature, we intentionally want it null.
+
+                // For now, let's DISABLE this auto-selection here, as handleRouteSelect handles the default case.
+
+                // const firstHeadsign = availableHeadsigns[0];
+                // setTimeout(() => setSelectedHeadsign(firstHeadsign), 0);
+            }
 
             if (selectedHeadsign) {
                 const trip = activeService.trips.find(t => t.headsign === selectedHeadsign);
@@ -381,10 +511,46 @@ function App() {
     let visibleStops = [];
     if (mode === 'explore') {
         if (showAllStops) {
-            visibleStops = data.stops;
+            visibleStops = data?.stops || [];
         } else if (selectedStopIds.length > 0) {
-            visibleStops = data.stops.filter(s => selectedStopIds.includes(s.id));
+            visibleStops = (data?.stops || []).filter(s => selectedStopIds.includes(s.id));
         }
+    }
+
+    if (loading) {
+        return (
+            <div className="loading-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--bg-dark)', color: 'white' }}>
+                <div className="loading-spinner" style={{ width: '40px', height: '40px', border: '4px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--color-primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+                <p style={{ marginTop: '16px', fontWeight: '500' }}>Loading UTM Move...</p>
+            </div>
+        );
+    }
+
+    // Render mobile app for small screens
+    if (isMobile) {
+        return (
+            <MobileApp
+                data={data}
+                userLocation={customOrigin || userLocation}
+                onGetDirections={handleGetDirections}
+                onSelectOrigin={handleSelectOrigin}
+                onSelectRoute={handleRouteSelect}
+                onDirectionSelect={handleDirectionSelect}
+                mode={mode}
+                visibleStops={visibleStops}
+                selectedStopIds={selectedStopIds}
+                routeGeometry={routeGeometry}
+                selectedServiceIndex={selectedServiceIndex}
+                walkingGeometries={walkingGeometries}
+                busRouteGeometry={busRouteGeometry}
+                busRouteSegments={busRouteSegments}
+                directionsMarkers={directionsMarkers}
+                directions={directions}
+                directionsLoading={directionsLoading}
+                onCloseDirections={handleCloseDirections}
+                onPlanFutureTrip={handlePlanFutureTrip}
+            />
+        );
     }
 
     return (
@@ -434,12 +600,12 @@ function App() {
                             <div className="section-title">
                                 <span>Select a Route</span>
                                 <span style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 8px', borderRadius: '12px', fontSize: '10px' }}>
-                                    {data.routes.length} Active
+                                    {(data?.routes || []).length} Active
                                 </span>
                             </div>
 
                             <div className="route-grid">
-                                {data.routes.map(route => (
+                                {(data?.routes || []).map(route => (
                                     <div
                                         key={route.name}
                                         className={`route-card ${selectedRouteName === route.name ? 'active' : ''}`}
@@ -469,7 +635,7 @@ function App() {
                                         selectedHeadsign={selectedHeadsign}
                                         onSelectHeadsign={(h) => handleDirectionSelect(selectedRouteName, h)}
                                     />
-                                    <ScheduleView service={activeService} stops={data.stops} currentHeadsign={selectedHeadsign} />
+                                    <ScheduleView service={activeService} stops={data?.stops || []} currentHeadsign={selectedHeadsign} />
                                 </div>
                             )}
 
@@ -525,6 +691,7 @@ function App() {
                         stops={visibleStops}
                         selectedRouteStops={selectedStopIds}
                         routeGeometry={mode === 'explore' ? routeGeometry : null}
+                        routeColor={getRouteColor(selectedRouteName)}
                         walkingGeometries={mode === 'directions' ? walkingGeometries : []}
                         busRouteGeometry={mode === 'directions' ? busRouteGeometry : null}
                         busRouteSegments={mode === 'directions' ? busRouteSegments : []}
