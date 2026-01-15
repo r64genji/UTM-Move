@@ -16,26 +16,63 @@ function haversineDistance(lat1, lon1, lat2, lon2) {
 }
 
 /**
- * Find the index of the nearest point on a LineString to a given coordinate
+ * Find the closest point on a line segment to a given point
+ * Returns the interpolated point and the parameter t (0-1) along the segment
+ */
+function closestPointOnSegment(px, py, ax, ay, bx, by) {
+    const dx = bx - ax;
+    const dy = by - ay;
+    const lenSq = dx * dx + dy * dy;
+
+    if (lenSq === 0) {
+        // Segment is a point
+        return { x: ax, y: ay, t: 0 };
+    }
+
+    // Calculate parameter t for the projection onto the line
+    let t = ((px - ax) * dx + (py - ay) * dy) / lenSq;
+
+    // Clamp t to [0, 1] to stay on the segment
+    t = Math.max(0, Math.min(1, t));
+
+    return {
+        x: ax + t * dx,
+        y: ay + t * dy,
+        t: t
+    };
+}
+
+/**
+ * Find the best position on the route for a stop
+ * Returns the segment index and the interpolated point
  * @param {Array} coordinates - Array of [lon, lat] coordinates (GeoJSON format)
  * @param {number} lat - Target latitude
  * @param {number} lon - Target longitude
- * @returns {number} Index of nearest point
+ * @returns {Object} { segmentIndex, point: {lon, lat}, t }
  */
-function findNearestPointIndex(coordinates, lat, lon) {
+function findBestPositionOnRoute(coordinates, lat, lon) {
     let minDist = Infinity;
-    let nearestIdx = 0;
+    let bestResult = null;
 
-    for (let i = 0; i < coordinates.length; i++) {
-        const [coordLon, coordLat] = coordinates[i];
-        const dist = haversineDistance(lat, lon, coordLat, coordLon);
+    for (let i = 0; i < coordinates.length - 1; i++) {
+        const [ax, ay] = coordinates[i];     // lon, lat
+        const [bx, by] = coordinates[i + 1]; // lon, lat
+
+        const closest = closestPointOnSegment(lon, lat, ax, ay, bx, by);
+        const dist = haversineDistance(lat, lon, closest.y, closest.x);
+
         if (dist < minDist) {
             minDist = dist;
-            nearestIdx = i;
+            bestResult = {
+                segmentIndex: i,
+                point: { lon: closest.x, lat: closest.y },
+                t: closest.t,
+                distance: dist
+            };
         }
     }
 
-    return nearestIdx;
+    return bestResult;
 }
 
 /**
@@ -56,64 +93,80 @@ export function extractRouteSegment(routeGeometry, startStop, endStop) {
 
     const coords = routeGeometry.coordinates;
 
-    // Find nearest points on the route to each stop
-    const startIdx = findNearestPointIndex(coords, startStop.lat, startStop.lon);
-    const endIdx = findNearestPointIndex(coords, endStop.lat, endStop.lon);
+    // Find the best positions on the route for each stop
+    const startPos = findBestPositionOnRoute(coords, startStop.lat, startStop.lon);
+    const endPos = findBestPositionOnRoute(coords, endStop.lat, endStop.lon);
 
-    // Ensure we have a valid segment (start must be before end in route direction)
-    if (startIdx >= endIdx) {
-        // If indices are reversed, the route might be going the other direction
-        // In this case, return the segment in reverse
-        console.warn('Route segment indices reversed, route may be in opposite direction');
-        // Still extract the segment but in the order found
-        const segmentCoords = coords.slice(Math.min(startIdx, endIdx), Math.max(startIdx, endIdx) + 1);
+    if (!startPos || !endPos) {
+        return null;
+    }
 
-        // If start is after end, reverse the segment
-        if (startIdx > endIdx) {
-            segmentCoords.reverse();
+    // Determine direction: start should come before end on the route
+    let startSegIdx = startPos.segmentIndex;
+    let endSegIdx = endPos.segmentIndex;
+    let startT = startPos.t;
+    let endT = endPos.t;
+    let reversed = false;
+
+    // If start is after end, we need to handle the reversal
+    if (startSegIdx > endSegIdx || (startSegIdx === endSegIdx && startT > endT)) {
+        // Route might be going the opposite direction, swap and reverse later
+        [startSegIdx, endSegIdx] = [endSegIdx, startSegIdx];
+        [startT, endT] = [endT, startT];
+        reversed = true;
+    }
+
+    // Build the segment coordinates
+    const segmentCoords = [];
+
+    // Add the start point (interpolated on the segment)
+    if (reversed) {
+        segmentCoords.push([endPos.point.lon, endPos.point.lat]);
+    } else {
+        segmentCoords.push([startPos.point.lon, startPos.point.lat]);
+    }
+
+    // Add intermediate points (vertices between start and end segments)
+    if (startSegIdx === endSegIdx) {
+        // Both stops are on the same segment, just connect them directly
+        // (start point already added, end point added below)
+    } else {
+        // Add vertices from startSegIdx+1 to endSegIdx (inclusive)
+        for (let i = startSegIdx + 1; i <= endSegIdx; i++) {
+            segmentCoords.push([...coords[i]]);
         }
+    }
 
+    // Add the end point (interpolated on the segment)
+    if (reversed) {
+        segmentCoords.push([startPos.point.lon, startPos.point.lat]);
+    } else {
+        segmentCoords.push([endPos.point.lon, endPos.point.lat]);
+    }
+
+    // If reversed, reverse the segment so it goes from actual start to actual end
+    if (reversed) {
+        segmentCoords.reverse();
+    }
+
+    // Remove duplicate consecutive points
+    const uniqueCoords = segmentCoords.filter((coord, index) => {
+        if (index === 0) return true;
+        const prev = segmentCoords[index - 1];
+        const dist = haversineDistance(coord[1], coord[0], prev[1], prev[0]);
+        return dist > 1; // Filter out points within 1 meter of each other
+    });
+
+    if (uniqueCoords.length < 2) {
+        // Not enough points, return a simple line between stops
         return {
             type: 'LineString',
-            coordinates: segmentCoords
+            coordinates: [
+                [startStop.lon, startStop.lat],
+                [endStop.lon, endStop.lat]
+            ]
         };
     }
-
-    // Extract the segment (inclusive of both endpoints)
-    let segmentCoords = coords.slice(startIdx, endIdx + 1);
-
-    // TRIM NEARBY POINTS: If the nearest road point is "behind" or just redundant, remove it.
-    // This prevents "backtracking" visual artifacts (Stop -> RoadPoint -> NextPoint).
-    // Threshold: 30 meters.
-    if (segmentCoords.length > 0) {
-        const first = segmentCoords[0];
-        const distFirst = haversineDistance(startStop.lat, startStop.lon, first[1], first[0]);
-        if (distFirst < 30) {
-            segmentCoords.shift(); // Remove first point
-        }
-    }
-
-    if (segmentCoords.length > 0) {
-        const last = segmentCoords[segmentCoords.length - 1];
-        const distLast = haversineDistance(endStop.lat, endStop.lon, last[1], last[0]);
-        if (distLast < 30) {
-            segmentCoords.pop(); // Remove last point
-        }
-    }
-
-    // SNAP TO STOPS: Explicitly add the stop coordinates to start/end
-    const finalCoords = [
-        [startStop.lon, startStop.lat],
-        ...segmentCoords,
-        [endStop.lon, endStop.lat]
-    ];
-
-    // Filter out potential duplicates if stop is practically on the node
-    const uniqueCoords = finalCoords.filter((coord, index) => {
-        if (index === 0) return true;
-        const prev = finalCoords[index - 1];
-        return !(coord[0] === prev[0] && coord[1] === prev[1]);
-    });
 
     return {
         type: 'LineString',
@@ -148,3 +201,4 @@ export function extractDirectedRouteSegment(routeGeometry, startStop, endStop) {
 
     return segment;
 }
+

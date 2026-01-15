@@ -24,7 +24,25 @@ export const fetchNextBus = async (route, time, stop) => {
     }
 };
 
-// Fetch directions from origin to destination
+// Proxy ORS route requests via backend to avoid CORS and ORS config issues in frontend
+export const fetchRouteFromBackend = async (coordinates, profile = 'foot-walking') => {
+    try {
+        // Convert coords to string format: lon,lat;lon,lat
+        const coordStr = coordinates.map(c => `${c[0]},${c[1]}`).join(';');
+
+        const response = await axios.get(`${API_BASE_URL}/ors-route`, {
+            params: {
+                profile,
+                coordinates: coordStr
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching ORS route via backend:', error);
+        return null;
+    }
+};
+
 export const fetchDirections = async (params) => {
     try {
         // Add cache-busting timestamp to prevent stale responses

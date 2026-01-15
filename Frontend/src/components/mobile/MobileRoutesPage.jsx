@@ -1,24 +1,7 @@
 import { useState, useEffect } from 'react';
 import BottomNavigation from './BottomNavigation';
 import { fetchNextBus } from '../../services/api';
-
-const ROUTE_COLORS = {
-    'A': '#EF4444', // Red
-    'B': '#F59E0B', // Amber
-    'C': '#10B981', // Emerald
-    'D': '#3B82F6', // Blue
-    'E': '#8B5CF6', // Violet
-    'F': '#EC4899', // Pink
-    'G': '#14b8a6', // Teal
-    'L': '#6366F1'  // Indigo
-};
-
-const getRouteColor = (routeName) => {
-    if (!routeName) return '#3b82f6';
-    const match = routeName.match(/Route\s+([A-Z])/i);
-    const letter = match ? match[1].toUpperCase() : 'A';
-    return ROUTE_COLORS[letter] || '#3b82f6';
-};
+import { getRouteColor } from '../../constants';
 
 const MobileRoutesPage = ({ activeTab, onTabChange, routes, onSelectRoute }) => {
     const [selectedService, setSelectedService] = useState('WEEKDAY');
@@ -54,19 +37,16 @@ const MobileRoutesPage = ({ activeTab, onTabChange, routes, onSelectRoute }) => 
         <div className="relative flex h-full min-h-screen w-full flex-col overflow-x-hidden max-w-md mx-auto bg-[#101922] shadow-xl">
             {/* Header */}
             <div className="flex items-center px-4 py-3 justify-between sticky top-0 bg-[#101922] z-20 border-b border-gray-800">
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-gray-800 cursor-pointer text-white">
-                    <span className="material-symbols-outlined">menu</span>
-                </div>
+                <div className="size-10"></div> {/* Left spacer since menu is removed */}
                 <div className="flex flex-col items-center">
-                    <h2 className="text-lg font-bold leading-tight tracking-tight">All Routes</h2>
-                    <span className="text-xs font-medium text-emerald-600 flex items-center gap-1">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        Live Status
-                    </span>
+                    <h2 className="text-lg font-bold text-white leading-tight tracking-tight">All Routes</h2>
                 </div>
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-gray-800 cursor-pointer text-white">
+                <button
+                    onClick={() => onTabChange('info')}
+                    className="flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-gray-800 cursor-pointer text-white transition-colors"
+                >
                     <span className="material-symbols-outlined">info</span>
-                </div>
+                </button>
             </div>
 
             {/* Service Type Tabs */}
@@ -119,10 +99,25 @@ const MobileRoutesPage = ({ activeTab, onTabChange, routes, onSelectRoute }) => 
                                     const currentHours = now.getHours();
                                     const currentMinutes = now.getMinutes();
                                     const currentTotalMins = currentHours * 60 + currentMinutes;
+                                    const currentTimeStr = `${String(currentHours).padStart(2, '0')}:${String(currentMinutes).padStart(2, '0')}`;
                                     const isFridayPrayer = currentDay === 'friday' && currentTotalMins >= 760 && currentTotalMins < 840;
 
+                                    // Find the earliest and latest bus times for this service
+                                    let earliestTime = '23:59';
+                                    let latestTime = '00:00';
+
+                                    activeService?.trips?.forEach(trip => {
+                                        trip.times?.forEach(time => {
+                                            if (time && time < earliestTime) earliestTime = time;
+                                            if (time && time > latestTime) latestTime = time;
+                                        });
+                                    });
+
+                                    // Check if current time is within service hours
+                                    const isBeforeServiceStart = currentTimeStr < earliestTime;
+                                    const isAfterServiceEnd = currentTimeStr > latestTime;
+
                                     // Check how many headsigns have remaining trips
-                                    const currentTimeStr = `${String(currentHours).padStart(2, '0')}:${String(currentMinutes).padStart(2, '0')}`;
                                     let activeHeadsigns = 0;
                                     let totalHeadsigns = activeService?.trips?.length || 0;
 
@@ -134,6 +129,22 @@ const MobileRoutesPage = ({ activeTab, onTabChange, routes, onSelectRoute }) => 
                                     if (isFridayPrayer) {
                                         statusText = 'Prayer Break';
                                         statusColor = 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200';
+                                    } else if (isBeforeServiceStart) {
+                                        // Before first bus - check if starting within an hour
+                                        const earlyParts = earliestTime.split(':').map(Number);
+                                        const earlyTotalMins = earlyParts[0] * 60 + earlyParts[1];
+                                        const minsUntilStart = earlyTotalMins - currentTotalMins;
+
+                                        if (minsUntilStart <= 60 && minsUntilStart > 0) {
+                                            statusText = 'Starting Soon';
+                                            statusColor = 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200';
+                                        } else {
+                                            statusText = 'Inactive';
+                                            statusColor = 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400';
+                                        }
+                                    } else if (isAfterServiceEnd) {
+                                        statusText = 'Service Ended';
+                                        statusColor = 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400';
                                     } else if (activeHeadsigns === totalHeadsigns && totalHeadsigns > 0) {
                                         // All headsigns have remaining trips
                                         statusText = 'Active';
@@ -142,10 +153,6 @@ const MobileRoutesPage = ({ activeTab, onTabChange, routes, onSelectRoute }) => 
                                         // Some headsigns have remaining trips
                                         statusText = 'Limited';
                                         statusColor = 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-200';
-                                    } else if (currentTotalMins < 420) {
-                                        // Before 7 AM - service starting soon
-                                        statusText = 'Starting Soon';
-                                        statusColor = 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200';
                                     } else {
                                         // No remaining trips
                                         statusText = 'Service Ended';

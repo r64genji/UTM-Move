@@ -1,6 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 const DirectionsPanel = ({ directions, onClose, loading, onPlanFutureTrip }) => {
+    const [expandedSteps, setExpandedSteps] = useState({});
+
+    const toggleStep = (index) => {
+        setExpandedSteps(prev => ({
+            ...prev,
+            [index]: !prev[index]
+        }));
+    };
+
     if (loading) {
         return (
             <div className="directions-panel">
@@ -138,21 +147,51 @@ const DirectionsPanel = ({ directions, onClose, loading, onPlanFutureTrip }) => 
             {/* Steps */}
             <div className="directions-steps">
                 {directions.steps.map((step, index) => (
-                    <div key={index} className={`step step-${step.type}`}>
-                        <div className="step-icon">
-                            {step.type === 'walk' && '🚶'}
+                    <div key={index} className={`step step-${step.type} ${expandedSteps[index] ? 'expanded' : ''}`}>
+                        <div
+                            className="step-icon"
+                            onClick={() => step.details && toggleStep(index)}
+                            style={{
+                                cursor: step.details ? 'pointer' : 'default',
+                                borderColor: step.type === 'walk' ? '#22c55e' : 'var(--border-color)'
+                            }}
+                        >
+                            {step.type === 'walk' && <span style={{ color: '#22c55e' }}>🚶</span>}
                             {step.type === 'board' && '🚌'}
                             {step.type === 'ride' && '➡️'}
                             {step.type === 'alight' && '📍'}
+
+                            {/* Expand arrow indicator */}
+                            {step.type === 'walk' && step.details && step.details.length > 0 && (
+                                <div className={`expand-indicator ${expandedSteps[index] ? 'expanded' : ''}`}>
+                                    ▼
+                                </div>
+                            )}
                         </div>
                         <div className="step-content">
                             <div className="step-header">
                                 <p className="step-instruction">{step.instruction}</p>
                                 {step.time && <span className="step-time">{step.time}</span>}
                             </div>
+
                             {step.type === 'walk' && (
-                                <span className="step-meta">{step.distance}m • ~{step.duration} min</span>
+                                <>
+                                    <span className="step-meta">{step.distance}m • ~{step.duration} min</span>
+                                    {/* Detailed walking instructions */}
+                                    {expandedSteps[index] && step.details && (
+                                        <div className="step-details">
+                                            {step.details.map((detail, i) => (
+                                                <div key={i} className="walk-detail-item">
+                                                    <span className="detail-icon">{detail.icon}</span>
+                                                    <span className="detail-text">{detail.instruction}</span>
+                                                    <span className="detail-dist">{detail.distance}m</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </>
                             )}
+
                             {step.type === 'board' && (
                                 <div className="step-meta">
                                     <span className="stop-name">at {step.stopName}</span>

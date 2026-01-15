@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import './index.css';
-import { fetchStaticData, fetchDirections } from './services/api';
-import { fetchRouteGeom, fetchWalkingRoute } from './utils/osrm';
+import { fetchStaticData, fetchDirections, fetchRouteFromBackend } from './services/api';
 import { extractDirectedRouteSegment } from './utils/routeGeometryUtils';
+import { getRouteColor } from './constants';
 import MapComponent from './components/Map';
 import RouteSelector from './components/RouteSelector';
 import ServiceSelector from './components/ServiceSelector';
@@ -11,24 +11,7 @@ import DirectionSelector from './components/DirectionSelector';
 import SearchBar from './components/SearchBar';
 import DirectionsPanel from './components/DirectionsPanel';
 import MobileApp from './components/mobile/MobileApp';
-
-const ROUTE_COLORS = {
-    'A': '#EF4444', // Red
-    'B': '#F59E0B', // Amber
-    'C': '#10B981', // Emerald
-    'D': '#3B82F6', // Blue
-    'E': '#8B5CF6', // Violet
-    'F': '#EC4899', // Pink
-    'G': '#14b8a6', // Teal
-    'L': '#6366F1'  // Indigo
-};
-
-const getRouteColor = (routeStr) => {
-    if (!routeStr) return '#3b82f6';
-    const match = routeStr.match(/Route\s+([A-Z])/i);
-    const letter = match ? match[1].toUpperCase() : 'A';
-    return ROUTE_COLORS[letter] || '#3b82f6';
-};
+import DevPanel from './components/DevPanel';
 
 // Helper to safely get route from data
 const findRoute = (data, name) => {
@@ -37,7 +20,7 @@ const findRoute = (data, name) => {
 };
 
 function App() {
-    const [data, setData] = useState({ stops: [], routes: [], locations: [], route_geometries: {}, route_waypoints: {} });
+    const [data, setData] = useState({ stops: [], routes: [], locations: [], route_geometries: {} });
     const [selectedRouteName, setSelectedRouteName] = useState(null);
     const [selectedHeadsign, setSelectedHeadsign] = useState(null);
     const [routeGeometry, setRouteGeometry] = useState(null);
@@ -61,6 +44,13 @@ function App() {
     // Mobile viewport detection
     const [isMobile, setIsMobile] = useState(false);
 
+    // Developer settings for time/day override
+    const [devSettings, setDevSettings] = useState({
+        enabled: false,
+        time: new Date().toTimeString().slice(0, 5),
+        day: ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][new Date().getDay()]
+    });
+
     useEffect(() => {
         const handleResize = () => {
             setIsMobile(window.innerWidth < 768);
@@ -78,8 +68,7 @@ function App() {
                     stops: result?.stops || [],
                     routes: result?.routes || [],
                     locations: result?.locations || [],
-                    route_geometries: result?.route_geometries || {},
-                    route_waypoints: result?.route_waypoints || {}
+                    route_geometries: result?.route_geometries || {}
                 });
             } catch (err) {
                 console.error("Failed to load static data", err);
@@ -143,31 +132,14 @@ function App() {
             const geometryPromises = headsigns.map(async (headsign) => {
                 const specificKey = `${routeName} : ${headsign}`;
 
-                // Try to get from static data first
+                // Bus routes should ONLY use pre-cached geometries from route_geometries.json
                 if (data.route_geometries && data.route_geometries[specificKey]) {
                     return data.route_geometries[specificKey];
                 }
 
-                // Fallback to OSRM fetch
-                const trip = service.trips.find(t => t.headsign === headsign);
-                if (!trip) return null;
-
-                const routeStopObjects = trip.stops_sequence.map(id => data.stops.find(s => s.id === id)).filter(Boolean);
-
-                // Enrich with waypoints if available
-                let stopList = routeStopObjects;
-                if (data.route_waypoints && data.route_waypoints[specificKey]) {
-                    const waypoints = data.route_waypoints[specificKey];
-                    let enriched = [];
-                    stopList.forEach(stop => {
-                        enriched.push(stop);
-                        const wps = waypoints.filter(wp => wp.afterStopId === stop.id);
-                        wps.forEach(wp => enriched.push({ lat: wp.lat, lon: wp.lon, isWaypoint: true }));
-                    });
-                    stopList = enriched;
-                }
-
-                return await fetchRouteGeom(stopList);
+                // No API fallback for bus routes - log warning if not found
+                console.warn(`Route geometry not found in cache for: "${specificKey}". Please pre-cache this route.`);
+                return null;
             });
 
             const geometries = await Promise.all(geometryPromises);
@@ -217,59 +189,16 @@ function App() {
         if (!route) return;
 
         const specificKey = `${routeName} : ${headsign}`;
-        console.log('Looking for geometry key:', specificKey);
 
-        if (data.route_geometries) {
-            console.log('Geometries available, keys:', Object.keys(data.route_geometries).length);
-            if (data.route_geometries[specificKey]) {
-                console.log('Found geometry in JSON!');
-                setRouteGeometry(data.route_geometries[specificKey]);
-                return;
-            } else {
-                console.log('Geometry NOT found for key:', specificKey);
-            }
-        } else {
-            console.log('No route_geometries in data');
+        // Bus routes should ONLY use pre-cached geometries from route_geometries.json
+        // No API fallback - all bus routes should be pre-computed
+        if (data.route_geometries && data.route_geometries[specificKey]) {
+            setRouteGeometry(data.route_geometries[specificKey]);
+            return;
         }
 
-        let targetTrip = null;
-        const activeService = route.services[selectedServiceIndex];
-
-        if (activeService) {
-            targetTrip = activeService.trips.find(t => t.headsign === headsign);
-        }
-
-        if (!targetTrip) {
-            for (const service of route.services) {
-                const found = service.trips.find(t => t.headsign === headsign);
-                if (found) {
-                    targetTrip = found;
-                    break;
-                }
-            }
-        }
-
-        if (!targetTrip) return;
-
-        let routeStopObjects = targetTrip.stops_sequence.map(id => data.stops.find(s => s.id === id)).filter(Boolean);
-
-        if (data.route_waypoints && data.route_waypoints[specificKey]) {
-            const waypoints = data.route_waypoints[specificKey];
-            let enrichedStops = [];
-
-            routeStopObjects.forEach(stop => {
-                enrichedStops.push(stop);
-                const relevantWaypoints = waypoints.filter(wp => wp.afterStopId === stop.id);
-                relevantWaypoints.forEach(wp => {
-                    enrichedStops.push({ lat: wp.lat, lon: wp.lon, isWaypoint: true });
-                });
-            });
-
-            routeStopObjects = enrichedStops;
-        }
-
-        const geometry = await fetchRouteGeom(routeStopObjects);
-        setRouteGeometry(geometry);
+        // If not found in cache, log a warning (should not happen if all routes are cached)
+        console.warn(`Route geometry not found in cache for: "${specificKey}". Please pre-cache this route.`);
     };
 
     const handleGetDirections = async (destination, options = {}) => {
@@ -291,14 +220,24 @@ function App() {
             }
 
             const currentTime = options.time || new Date().toTimeString().slice(0, 5);
+            const currentDay = options.day || null;
+
+            // Apply dev settings override if enabled
             const params = {
                 originLat: origin.lat,
                 originLon: origin.lon,
                 destLocationId: destination.id,
-                time: currentTime,
-                day: options.day,
+                time: devSettings.enabled ? devSettings.time : currentTime,
+                day: devSettings.enabled ? devSettings.day : currentDay,
                 forceBus: options.forceBus
             };
+
+            // For pinned locations, pass coordinates directly
+            if (destination.category === 'pinned' || destination.id?.startsWith('PINNED_')) {
+                params.destLat = destination.lat;
+                params.destLon = destination.lon;
+                params.destName = destination.name;
+            }
 
             const result = await fetchDirections(params);
             setDirections(result);
@@ -309,18 +248,26 @@ function App() {
                 if (result.steps) {
                     for (const step of result.steps) {
                         if (step.type === 'walk' && step.from && step.to) {
-                            const walkRoute = await fetchWalkingRoute(step.from, step.to);
-                            if (walkRoute) {
-                                walkGeoms.push(walkRoute.geometry);
+                            const walkRouteData = await fetchRouteFromBackend([
+                                [step.from.lon, step.from.lat],
+                                [step.to.lon, step.to.lat]
+                            ], 'foot-walking');
+
+                            if (walkRouteData && walkRouteData.geometry) {
+                                walkGeoms.push(walkRouteData.geometry);
                             }
                         }
                     }
                 }
 
                 if (result.type === 'WALK_ONLY' && result.walkingRoute) {
-                    const walkRoute = await fetchWalkingRoute(result.walkingRoute.from, result.walkingRoute.to);
-                    if (walkRoute) {
-                        walkGeoms.push(walkRoute.geometry);
+                    const walkRouteData = await fetchRouteFromBackend([
+                        [result.walkingRoute.from.lon, result.walkingRoute.from.lat],
+                        [result.walkingRoute.to.lon, result.walkingRoute.to.lat]
+                    ], 'foot-walking');
+
+                    if (walkRouteData && walkRouteData.geometry) {
+                        walkGeoms.push(walkRouteData.geometry);
                     }
                 }
 
@@ -376,7 +323,117 @@ function App() {
                         }
                     }
 
+                } else if (result.type === 'TRANSFER' && result.routeGeometries) {
+                    // TRANSFER route: two separate bus legs with a transfer point
+                    const legs = routeStr.split(/→|->/).map(s => s.trim());
+                    const firstLegColor = getRouteColor(legs[0]);
+                    const secondLegColor = legs.length > 1 ? getRouteColor(legs[1]) : firstLegColor;
+                    const transferId = result.transferPointId || 'CP';
+                    const transferStop = data.stops.find(s => s.id === transferId);
+
+                    console.log('TRANSFER route detected:', {
+                        transferId,
+                        transferStop: transferStop?.name,
+                        hasFirstLeg: !!result.routeGeometries?.firstLeg,
+                        hasSecondLeg: !!result.routeGeometries?.secondLeg,
+                        hasSecondLegParts: !!result.routeGeometries?.secondLegParts,
+                        originStop: result.originStop?.name,
+                        destStop: result.destStop?.name
+                    });
+
+                    // First leg: origin stop to transfer stop
+                    if (result.routeGeometries.firstLeg && result.originStop && transferStop) {
+                        const seg = extractDirectedRouteSegment(
+                            result.routeGeometries.firstLeg,
+                            { lat: result.originStop.lat, lon: result.originStop.lon },
+                            { lat: transferStop.lat, lon: transferStop.lon }
+                        );
+                        if (seg?.coordinates) {
+                            newSegments.push({ coordinates: seg.coordinates, color: firstLegColor, type: 'bus' });
+                        } else if (result.routeGeometries.firstLeg.coordinates) {
+                            newSegments.push({ coordinates: result.routeGeometries.firstLeg.coordinates, color: firstLegColor, type: 'bus' });
+                        }
+                    }
+
+                    // Second leg: transfer stop to destination stop
+                    // Check if it's a loop route with two parts
+                    if (result.routeGeometries.secondLegParts && transferStop && result.destStop) {
+                        // Loop route - need to render both parts
+                        const { first: firstPart, second: secondPart } = result.routeGeometries.secondLegParts;
+
+                        // Find the terminus (end of first part / start of second part)
+                        // For loop routes, the terminus is typically the last stop of the first trip
+                        if (firstPart?.coordinates && firstPart.coordinates.length > 0) {
+                            // Render first part: from transfer to terminus
+                            const lastCoord = firstPart.coordinates[firstPart.coordinates.length - 1];
+                            const terminusPoint = { lat: lastCoord[1], lon: lastCoord[0] };
+
+                            const seg1 = extractDirectedRouteSegment(
+                                firstPart,
+                                { lat: transferStop.lat, lon: transferStop.lon },
+                                terminusPoint
+                            );
+                            if (seg1?.coordinates) {
+                                newSegments.push({ coordinates: seg1.coordinates, color: secondLegColor, type: 'bus' });
+                            }
+                        }
+
+                        if (secondPart?.coordinates && secondPart.coordinates.length > 0) {
+                            // Render second part: from terminus to destination
+                            const firstCoord = secondPart.coordinates[0];
+                            const terminusPoint = { lat: firstCoord[1], lon: firstCoord[0] };
+
+                            const seg2 = extractDirectedRouteSegment(
+                                secondPart,
+                                terminusPoint,
+                                { lat: result.destStop.lat, lon: result.destStop.lon }
+                            );
+                            if (seg2?.coordinates) {
+                                newSegments.push({ coordinates: seg2.coordinates, color: secondLegColor, type: 'bus' });
+                            }
+                        }
+                    } else if (result.routeGeometries.secondLeg && transferStop && result.destStop) {
+                        // Regular route - single geometry
+                        const seg = extractDirectedRouteSegment(
+                            result.routeGeometries.secondLeg,
+                            { lat: transferStop.lat, lon: transferStop.lon },
+                            { lat: result.destStop.lat, lon: result.destStop.lon }
+                        );
+                        if (seg?.coordinates) {
+                            newSegments.push({ coordinates: seg.coordinates, color: secondLegColor, type: 'bus' });
+                        } else if (result.routeGeometries.secondLeg.coordinates) {
+                            newSegments.push({ coordinates: result.routeGeometries.secondLeg.coordinates, color: secondLegColor, type: 'bus' });
+                        }
+                    }
+
+
+                } else if (result.isLoopRoute && result.routeGeometries && result.loopInfo) {
+                    const transferStop = data.stops.find(s => s.id === result.loopInfo.transferPoint);
+
+                    if (result.routeGeometries.firstLeg && result.originStop && transferStop) {
+                        const seg1 = extractDirectedRouteSegment(
+                            result.routeGeometries.firstLeg,
+                            { lat: result.originStop.lat, lon: result.originStop.lon },
+                            { lat: transferStop.lat, lon: transferStop.lon }
+                        );
+                        if (seg1?.coordinates) {
+                            newSegments.push({ coordinates: seg1.coordinates, color: color1, type: 'bus' });
+                        }
+                    }
+
+                    if (result.routeGeometries.secondLeg && transferStop && result.destStop) {
+                        const seg2 = extractDirectedRouteSegment(
+                            result.routeGeometries.secondLeg,
+                            { lat: transferStop.lat, lon: transferStop.lon },
+                            { lat: result.destStop.lat, lon: result.destStop.lon }
+                        );
+                        if (seg2?.coordinates) {
+                            newSegments.push({ coordinates: seg2.coordinates, color: color2, type: 'bus' });
+                        }
+                    }
+
                 } else if (result.routeGeometries) {
+                    // Generic fallback for routeGeometries (e.g., BUS_ROUTE type)
                     const legs = routeStr.split(/→|->/).map(s => s.trim());
                     const firstLegColor = getRouteColor(legs[0]);
                     const secondLegColor = legs.length > 1 ? getRouteColor(legs[1]) : firstLegColor;
@@ -475,6 +532,35 @@ function App() {
         }
     };
 
+    // Restore saved journey when returning to navigate tab
+    const handleRestoreJourney = (savedJourney) => {
+        if (!savedJourney) return;
+
+        setMode('directions');
+
+        if (savedJourney.origin) {
+            setCustomOrigin(savedJourney.origin);
+        }
+        if (savedJourney.destination) {
+            setSelectedDestination(savedJourney.destination);
+        }
+        if (savedJourney.directions) {
+            setDirections(savedJourney.directions);
+        }
+        if (savedJourney.walkingGeometries) {
+            setWalkingGeometries(savedJourney.walkingGeometries);
+        }
+        if (savedJourney.busRouteGeometry) {
+            setBusRouteGeometry(savedJourney.busRouteGeometry);
+        }
+        if (savedJourney.busRouteSegments) {
+            setBusRouteSegments(savedJourney.busRouteSegments);
+        }
+        if (savedJourney.directionsMarkers) {
+            setDirectionsMarkers(savedJourney.directionsMarkers);
+        }
+    };
+
     const selectedRouteData = findRoute(data, selectedRouteName);
     let selectedStopIds = [];
     let activeService = null;
@@ -495,8 +581,7 @@ function App() {
 
                 // For now, let's DISABLE this auto-selection here, as handleRouteSelect handles the default case.
 
-                // const firstHeadsign = availableHeadsigns[0];
-                // setTimeout(() => setSelectedHeadsign(firstHeadsign), 0);
+
             }
 
             if (selectedHeadsign) {
@@ -529,27 +614,33 @@ function App() {
     // Render mobile app for small screens
     if (isMobile) {
         return (
-            <MobileApp
-                data={data}
-                userLocation={customOrigin || userLocation}
-                onGetDirections={handleGetDirections}
-                onSelectOrigin={handleSelectOrigin}
-                onSelectRoute={handleRouteSelect}
-                onDirectionSelect={handleDirectionSelect}
-                mode={mode}
-                visibleStops={visibleStops}
-                selectedStopIds={selectedStopIds}
-                routeGeometry={routeGeometry}
-                selectedServiceIndex={selectedServiceIndex}
-                walkingGeometries={walkingGeometries}
-                busRouteGeometry={busRouteGeometry}
-                busRouteSegments={busRouteSegments}
-                directionsMarkers={directionsMarkers}
-                directions={directions}
-                directionsLoading={directionsLoading}
-                onCloseDirections={handleCloseDirections}
-                onPlanFutureTrip={handlePlanFutureTrip}
-            />
+            <>
+                <MobileApp
+                    data={data}
+                    userLocation={customOrigin || userLocation}
+                    selectedOrigin={customOrigin}
+                    selectedDestination={selectedDestination}
+                    onGetDirections={handleGetDirections}
+                    onSelectOrigin={handleSelectOrigin}
+                    onSelectRoute={handleRouteSelect}
+                    onDirectionSelect={handleDirectionSelect}
+                    mode={mode}
+                    visibleStops={visibleStops}
+                    selectedStopIds={selectedStopIds}
+                    routeGeometry={routeGeometry}
+                    selectedServiceIndex={selectedServiceIndex}
+                    walkingGeometries={walkingGeometries}
+                    busRouteGeometry={busRouteGeometry}
+                    busRouteSegments={busRouteSegments}
+                    directionsMarkers={directionsMarkers}
+                    directions={directions}
+                    directionsLoading={directionsLoading}
+                    onCloseDirections={handleCloseDirections}
+                    onPlanFutureTrip={handlePlanFutureTrip}
+                    onRestoreJourney={handleRestoreJourney}
+                />
+                <DevPanel devSettings={devSettings} onSettingsChange={setDevSettings} />
+            </>
         );
     }
 

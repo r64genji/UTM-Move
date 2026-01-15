@@ -1,21 +1,4 @@
-const haversine = (lat1, lon1, lat2, lon2) => {
-    const R = 6371000;
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-        Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-};
-
-const getPathDistance = (coords) => {
-    let dist = 0;
-    for (let i = 0; i < coords.length - 1; i++) {
-        // GeoJSON is [lon, lat]
-        dist += haversine(coords[i][1], coords[i][0], coords[i + 1][1], coords[i + 1][0]);
-    }
-    return dist;
-};
+const { haversineDistance, getPathDistance } = require('./utils/geo');
 
 // Default speed if no constraint found (30 km/h)
 const AVG_SPEED_MPS = 8.33;
@@ -110,7 +93,7 @@ function enrichSchedule(scheduleData, geometries) {
 
                 for (let i = 0; i < stopObjs.length - 1; i++) {
                     if (stopObjs[i] && stopObjs[i + 1]) {
-                        const d = haversine(stopObjs[i].lat, stopObjs[i].lon, stopObjs[i + 1].lat, stopObjs[i + 1].lon);
+                        const d = haversineDistance(stopObjs[i].lat, stopObjs[i].lon, stopObjs[i + 1].lat, stopObjs[i + 1].lon);
                         segmentDists.push(d);
                         totalStraightDist += d;
                     } else {

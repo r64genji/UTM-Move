@@ -1,24 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import BottomNavigation from './BottomNavigation';
 import MapComponent from '../Map';
-
-const ROUTE_COLORS = {
-    'A': '#EF4444', // Red
-    'B': '#F59E0B', // Amber
-    'C': '#10B981', // Emerald
-    'D': '#3B82F6', // Blue
-    'E': '#8B5CF6', // Violet
-    'F': '#EC4899', // Pink
-    'G': '#14b8a6', // Teal
-    'L': '#6366F1'  // Indigo
-};
-
-const getRouteColor = (routeStr) => {
-    if (!routeStr) return '#3b82f6';
-    const match = routeStr.match(/Route\s+([A-Z])/i);
-    const letter = match ? match[1].toUpperCase() : 'A';
-    return ROUTE_COLORS[letter] || '#3b82f6';
-};
+import { getRouteColor } from '../../constants';
 
 const MobileHomePage = ({
     activeTab,
@@ -36,7 +19,8 @@ const MobileHomePage = ({
     busRouteSegments,
     directionsMarkers,
     onSelectRoute,
-    selectedRoute
+    selectedRoute,
+    onGetDirections
 }) => {
     // Compute all route geometries when no specific route is selected
     const allRouteGeometries = useMemo(() => {
@@ -187,8 +171,20 @@ const MobileHomePage = ({
                                     </div>
                                 </div>
                                 <button
-                                    className="flex items-center justify-center h-9 w-9 bg-primary rounded-full hover:bg-blue-600 active:scale-90 transition-all shadow-md"
-                                    onClick={() => onTabChange('navigate')}
+                                    className="flex items-center justify-center h-9 w-9 bg-primary rounded-full hover:bg-blue-600 active:scale-90 transition-all shadow-md active:bg-blue-700"
+                                    onClick={() => {
+                                        if (onGetDirections && nearestStop) {
+                                            const stopToNavigate = {
+                                                ...nearestStop,
+                                                id: nearestStop.id,
+                                                name: nearestStop.name,
+                                                lat: nearestStop.lat,
+                                                lon: nearestStop.lon || nearestStop.lng
+                                            };
+                                            onGetDirections(stopToNavigate);
+                                            onTabChange('navigate');
+                                        }
+                                    }}
                                 >
                                     <span className="material-symbols-outlined text-[18px] text-white">near_me</span>
                                 </button>

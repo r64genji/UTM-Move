@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const db = new sqlite3.Database('./bus.db');
-const schedulePath = path.join(__dirname, 'schedule.json');
+const schedulePath = path.join(__dirname, 'data', 'schedule.json');
 const scheduleData = JSON.parse(fs.readFileSync(schedulePath, 'utf8'));
 let pendingOperations = 0;
 let stmtRoute, stmtCalendar, stmtTrip, stmtStopTime;
@@ -68,7 +68,7 @@ db.serialize(() => {
 
     let routeDurations = {};
     try {
-        const routeDurationsPath = path.join(__dirname, 'route_durations.json');
+        const routeDurationsPath = path.join(__dirname, 'data', 'route_durations.json');
         if (fs.existsSync(routeDurationsPath)) {
             routeDurations = JSON.parse(fs.readFileSync(routeDurationsPath, 'utf8'));
             console.log("Loaded route_durations.json");

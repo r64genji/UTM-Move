@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline, CircleMarker, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, CircleMarker, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -31,7 +31,35 @@ const destinationIcon = L.divIcon({
     iconAnchor: [13, 13]
 });
 
+// Custom icon for pinned origin location
+const pinnedOriginIcon = L.divIcon({
+    className: 'pinned-origin-marker',
+    html: '<div style="background: #3b82f6; width: 24px; height: 24px; border-radius: 50%; border: 4px solid white; box-shadow: 0 3px 8px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center;"><div style="width: 8px; height: 8px; background: white; border-radius: 50%;"></div></div>',
+    iconSize: [32, 32],
+    iconAnchor: [16, 16]
+});
+
+// Custom icon for pinned destination location
+const pinnedDestinationIcon = L.divIcon({
+    className: 'pinned-destination-marker',
+    html: '<div style="background: #ef4444; width: 24px; height: 24px; border-radius: 50%; border: 4px solid white; box-shadow: 0 3px 8px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center;"><div style="width: 8px; height: 8px; background: white; border-radius: 50%;"></div></div>',
+    iconSize: [32, 32],
+    iconAnchor: [16, 16]
+});
+
 import 'leaflet-arrowheads';
+
+// Helper component to handle map click events for pinning locations
+function MapClickHandler({ pinMode, onMapClick }) {
+    useMapEvents({
+        click: (e) => {
+            if (pinMode && onMapClick) {
+                onMapClick(e.latlng.lat, e.latlng.lng, pinMode);
+            }
+        }
+    });
+    return null;
+}
 
 // Helper to update map view bounds - prevents "fighting" the user's drag/zoom
 function MapUpdater({ bounds }) {
@@ -68,7 +96,11 @@ const MapComponent = ({
     busRouteGeometry = null,    // Legacy: Single bus route geometry
     busRouteSegments = [],      // New: Array of { coordinates, color, type }
     userLocation = null,        // { lat, lon } for user GPS marker
-    directionsMarkers = null    // { origin, destination, originStop, destStop }
+    directionsMarkers = null,   // { origin, destination, originStop, destStop }
+    // Pin location props
+    onMapClick = null,          // Callback: (lat, lon, type) => void
+    pinnedLocation = null,      // { lat, lon, type: 'origin' | 'destination' }
+    pinMode = null              // 'origin' | 'destination' | null
 }) => {
     // UTM Coordinates as default center
     const defaultCenter = [1.559704, 103.634727];
@@ -295,6 +327,25 @@ const MapComponent = ({
                 })}
 
                 {bounds && <MapUpdater bounds={bounds} />}
+
+                {/* Map Click Handler for Pin Mode */}
+                <MapClickHandler pinMode={pinMode} onMapClick={onMapClick} />
+
+                {/* Pinned Location Marker */}
+                {pinnedLocation && (
+                    <Marker
+                        position={[pinnedLocation.lat, pinnedLocation.lon]}
+                        icon={pinnedLocation.type === 'origin' ? pinnedOriginIcon : pinnedDestinationIcon}
+                    >
+                        <Popup>
+                            📍 {pinnedLocation.type === 'origin' ? 'Start' : 'Destination'}: Pinned Location
+                            <br />
+                            <span style={{ fontSize: '11px', color: '#666' }}>
+                                {pinnedLocation.lat.toFixed(6)}, {pinnedLocation.lon.toFixed(6)}
+                            </span>
+                        </Popup>
+                    </Marker>
+                )}
             </MapContainer>
         </div>
     );

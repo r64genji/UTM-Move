@@ -5,7 +5,7 @@ import BottomNavigation from './BottomNavigation';
 const FAVOURITES_KEY = 'utmove_favourites';
 const RECENT_KEY = 'utmove_recent';
 
-const MobileSearchPage = ({ activeTab, onTabChange, onBack, locations, stops, onSelectLocation, searchType }) => {
+const MobileSearchPage = ({ activeTab, onTabChange, onBack, locations, stops, onSelectLocation, searchType, onPinOnMap }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [activeCategory, setActiveCategory] = useState(null); // null = show default, or 'food', 'faculty', 'residential', 'favourites'
     const [favourites, setFavourites] = useState([]);
@@ -157,7 +157,7 @@ const MobileSearchPage = ({ activeTab, onTabChange, onBack, locations, stops, on
                 {searchType === 'origin' && !searchQuery && !activeCategory && (
                     <button
                         onClick={() => handleSelectLocation(null)}
-                        className="w-full flex items-center gap-4 px-4 py-4 mb-5 bg-[#1a2633] rounded-xl shadow-sm border border-gray-800 hover:bg-gray-800/50 transition-colors group"
+                        className="w-full flex items-center gap-4 px-4 py-4 mb-3 bg-[#1a2633] rounded-xl shadow-sm border border-gray-800 hover:bg-gray-800/50 transition-colors group"
                     >
                         <div className="flex items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0 size-10 group-hover:bg-primary group-hover:text-white transition-colors">
                             <span className="material-symbols-outlined">my_location</span>
@@ -165,6 +165,28 @@ const MobileSearchPage = ({ activeTab, onTabChange, onBack, locations, stops, on
                         <div className="flex flex-col items-start flex-1 text-left">
                             <p className="text-white text-base font-semibold leading-tight">Use Current Location</p>
                             <p className="text-[#617589] dark:text-gray-400 text-sm mt-0.5">Your GPS location</p>
+                        </div>
+                        <span className="material-symbols-outlined text-gray-400">chevron_right</span>
+                    </button>
+                )}
+
+                {/* Pin on Map option */}
+                {!searchQuery && !activeCategory && (
+                    <button
+                        onClick={() => onPinOnMap && onPinOnMap(searchType)}
+                        className="w-full flex items-center gap-4 px-4 py-4 mb-5 bg-[#1a2633] rounded-xl shadow-sm border border-gray-800 hover:bg-gray-800/50 transition-colors group"
+                    >
+                        <div className={`flex items-center justify-center rounded-lg shrink-0 size-10 transition-colors ${searchType === 'origin'
+                                ? 'bg-blue-500/10 text-blue-500 group-hover:bg-blue-500 group-hover:text-white'
+                                : 'bg-red-500/10 text-red-500 group-hover:bg-red-500 group-hover:text-white'
+                            }`}>
+                            <span className="material-symbols-outlined">push_pin</span>
+                        </div>
+                        <div className="flex flex-col items-start flex-1 text-left">
+                            <p className="text-white text-base font-semibold leading-tight">Pin on Map</p>
+                            <p className="text-[#617589] dark:text-gray-400 text-sm mt-0.5">
+                                {searchType === 'origin' ? 'Tap map to set start' : 'Tap map to set destination'}
+                            </p>
                         </div>
                         <span className="material-symbols-outlined text-gray-400">chevron_right</span>
                     </button>
