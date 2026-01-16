@@ -914,6 +914,7 @@
                         {
                             "headsign": "To KDOJ",
                             "stops_sequence": [
+                                "CP",
                                 "JA1",
                                 "JA2",
                                 "JA3",

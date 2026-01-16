@@ -12,6 +12,8 @@ export const ROUTE_COLORS = {
     'E': '#8B5CF6', // Violet
     'F': '#EC4899', // Pink
     'G': '#14b8a6', // Teal
+    'H': '#06B6D4', // Cyan
+    'J': '#F97316', // Orange
     'L': '#6366F1'  // Indigo
 };
 
