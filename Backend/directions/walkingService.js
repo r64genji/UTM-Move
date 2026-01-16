@@ -8,6 +8,11 @@ const axios = require('axios');
 // GraphHopper Local API (self-hosted)
 const GRAPHHOPPER_BASE_URL = 'http://192.168.1.119:8989';
 
+// Walking time cache to speed up A* pathfinding
+const walkingTimeCache = new Map();
+const CACHE_PRECISION = 4; // Decimal places for coordinate rounding
+const FALLBACK_WALK_SPEED_M_PER_MIN = 83.33; // 5 km/h fallback
+
 /**
  * Fetch detailed walking directions with turn-by-turn instructions
  * @param {Object} origin - Origin {lat, lon}
@@ -18,22 +23,21 @@ async function getWalkingDirections(origin, destination) {
     if (!origin || !destination) return null;
 
     try {
-        // POST request with points in [longitude, latitude] order per GraphHopper docs
-        const response = await axios.post(
+        // Use GET request for broader compatibility with GraphHopper instances
+        // API format: /route?point=lat,lon&point=lat,lon&profile=foot&...
+        const params = new URLSearchParams();
+        params.append('point', `${origin.lat},${origin.lon}`);
+        params.append('point', `${destination.lat},${destination.lon}`);
+        params.append('profile', 'foot');
+        params.append('instructions', 'true');
+        params.append('locale', 'en');
+        params.append('points_encoded', 'true');
+
+        const response = await axios.get(
             `${GRAPHHOPPER_BASE_URL}/route`,
             {
-                points: [
-                    [origin.lon, origin.lat],
-                    [destination.lon, destination.lat]
-                ],
-                profile: 'foot',
-                instructions: true,
-                locale: 'en',
-                points_encoded: true
-            },
-            {
-                headers: { 'Content-Type': 'application/json' },
-                timeout: 10000
+                params: params,
+                timeout: 5000 // Short timeout to fallback quickly
             }
         );
 
@@ -139,7 +143,77 @@ function formatWalkingSteps(steps) {
     });
 }
 
+/**
+ * Generate a cache key from coordinates
+ * @param {Object} origin - {lat, lon}
+ * @param {Object} destination - {lat, lon}
+ * @returns {string} Cache key
+ */
+function getCacheKey(origin, destination) {
+    const round = (n) => n.toFixed(CACHE_PRECISION);
+    return `${round(origin.lat)},${round(origin.lon)}->${round(destination.lat)},${round(destination.lon)}`;
+}
+
+/**
+ * Get walking time in minutes between two points
+ * Uses GraphHopper with caching, falls back to haversine estimate
+ * @param {Object} origin - {lat, lon}
+ * @param {Object} destination - {lat, lon}
+ * @returns {Promise<number>} Walking time in minutes
+ */
+async function getWalkingTime(origin, destination) {
+    if (!origin || !destination) return 0;
+
+    const cacheKey = getCacheKey(origin, destination);
+
+    // Check cache first
+    if (walkingTimeCache.has(cacheKey)) {
+        return walkingTimeCache.get(cacheKey);
+    }
+
+    try {
+        const params = new URLSearchParams();
+        params.append('point', `${origin.lat},${origin.lon}`);
+        params.append('point', `${destination.lat},${destination.lon}`);
+        params.append('profile', 'foot');
+        params.append('instructions', 'false'); // Skip instructions for speed
+        params.append('points_encoded', 'false');
+
+        const response = await axios.get(
+            `${GRAPHHOPPER_BASE_URL}/route`,
+            {
+                params: params,
+                timeout: 2000 // Shorter timeout for quick estimates
+            }
+        );
+
+        if (response.data?.paths?.length > 0) {
+            const durationMins = Math.ceil(response.data.paths[0].time / 60000);
+            walkingTimeCache.set(cacheKey, durationMins);
+            return durationMins;
+        }
+    } catch (error) {
+        // Fallback silently - don't log every cache miss
+    }
+
+    // Fallback: estimate based on haversine distance
+    const { haversineDistance } = require('../utils/geo');
+    const dist = haversineDistance(origin.lat, origin.lon, destination.lat, destination.lon);
+    const fallbackMins = Math.ceil(dist / FALLBACK_WALK_SPEED_M_PER_MIN);
+    walkingTimeCache.set(cacheKey, fallbackMins);
+    return fallbackMins;
+}
+
+/**
+ * Clear the walking time cache (useful for testing)
+ */
+function clearWalkingTimeCache() {
+    walkingTimeCache.clear();
+}
+
 module.exports = {
     getWalkingDirections,
-    formatWalkingSteps
+    formatWalkingSteps,
+    getWalkingTime,
+    clearWalkingTimeCache
 };

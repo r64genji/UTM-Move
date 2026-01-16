@@ -17,12 +17,12 @@ const {
     timeToMinutes
 } = require('./scheduler');
 const {
+    findOptimalPath,
     evaluateCandidates,
     isWalkingBetter,
     WALK_ONLY_THRESHOLD_M,
-    WALKING_SPEED_MPS,
     getWalkingMinutes
-} = require('./routeScorer');
+} = require('./routingEngine');
 const { buildWalkResponse, buildDirectResponse, buildTransferResponse, getRouteGeometryKey } = require('./responseBuilder');
 const { getWalkingDirections } = require('./walkingService');
 
@@ -51,16 +51,19 @@ async function getDirections(originLat, originLon, originStopId, destLocationId,
         return { error: 'Destination not found' };
     }
 
-    // 2. Find stops near destination
+    // 2. Find stops near destination (needed for A* destination node)
     const destNearestStops = findNearestStopsSync(destLocation, 5);
     if (destNearestStops.length === 0) {
-        return { error: 'No bus stops found near destination' };
+        // This might be too strict for A* if destination is far from any stop but reachable by walking.
+        // A* should handle this by having a walk-to-destination node.
+        // For now, keep it as a sanity check.
+        console.warn('No bus stops found near destination for A* pathfinding. A* will rely on walk-to-destination.');
     }
     const destStop = destNearestStops[0];
 
     // 3. Resolve origin
     let originCoords;
-    let userNearestStops;
+    let originLocation; // To hold name for response builder
 
     if (originStopId) {
         const originStop = getStopById(originStopId);
@@ -68,7 +71,7 @@ async function getDirections(originLat, originLon, originStopId, destLocationId,
             return { error: 'Origin stop not found' };
         }
         originCoords = { lat: originStop.lat, lon: originStop.lon };
-        userNearestStops = [originStop];
+        originLocation = originStop; // Use stop as origin location
     } else if (originLat !== null && originLon !== null) {
         originCoords = { lat: originLat, lon: originLon };
         userNearestStops = await findNearestStops(originLat, originLon, 5);
@@ -112,236 +115,244 @@ async function getDirections(originLat, originLon, originStopId, destLocationId,
         return buildWalkResponse(originCoords, destLocation, directDistance, alternativeBus, walkingDetails, originName);
     }
 
-    // 6. Find best route from all candidate stops within walking distance
-    const primaryStop = userNearestStops[0];
+    // 4. Run A* Pathfinding (Unifies Direct, Loop, Transfer, and Walk optimizations)
+    console.log(`DEBUG: Running A* search from ${originCoords.lat},${originCoords.lon} to ${destLocation.name}`);
+
+
+    // Check for walk-only preference or very short distance
+    const walkOnlyDist = haversineDistance(originCoords.lat, originCoords.lon, destLocation.lat, destLocation.lon);
+
+    // Optimization: If extremely close < 300m, just walk (unless forceBus)
+    if (!forceBus && walkOnlyDist < 300) {
+        console.log('DEBUG: Destination is very close, suggesting walking.');
+        const walkingDetails = await getWalkingDirections(originCoords, destLocation);
+        return buildWalkResponse(originCoords, destLocation, walkOnlyDist, null, walkingDetails, originLocation?.name);
+    }
+
+    // 4. Calculate optimal path using A*
+    const bestPath = findOptimalPath(originCoords.lat, originCoords.lon, destLocation, currentTime, dayName);
+
+    if (!bestPath) {
+        console.log('DEBUG: No transit path found via A*. Checking for future buses...');
+
+        let alternativeBus = null;
+        const primaryOriginStop = originStopId ? getStopById(originStopId) : userNearestStops[0];
+        const primaryDestStop = destNearestStops[0];
+
+        if (primaryDestStop) {
+            const originStops = originStopId ? [getStopById(originStopId)] : userNearestStops;
+
+            // 1. Check Direct Routes from ANY nearby origin stop
+            for (const startStop of originStops) {
+                const directRoutes = findDirectRoutes(startStop.id, primaryDestStop.id);
+                if (directRoutes.length > 0) {
+                    const route = directRoutes[0];
+                    const nextBus = findNextAvailableBusForRoute(route, currentTime, dayName);
+
+                    if (nextBus) {
+                        const nowMins = timeToMinutes(currentTime);
+                        const busMins = timeToMinutes(nextBus.time);
+                        let wait = busMins - nowMins;
+                        if (wait < 0) wait += 24 * 60;
+
+                        alternativeBus = {
+                            routeName: route.routeName,
+                            headsign: route.headsign,
+                            originName: startStop.name, // Tell user where to walk
+                            nextDeparture: nextBus.time,
+                            minutesUntil: wait,
+                            warning: 'No buses available right now.'
+                        };
+                        break; // Found a valid option
+                    }
+                }
+            }
+
+            // 2. If no direct route from nearby stops, try Transfer Routes (from primary stop)
+            if (!alternativeBus && originStops.length > 0) {
+                const startStop = originStops[0];
+                const { stopsById } = getIndexes();
+                const transferCandidates = findTransferCandidates(startStop.id, destLocation, MAX_WALKING_FROM_STOP_M, stopsById);
+
+                if (transferCandidates.length > 0) {
+                    let bestFutureBus = null;
+                    let minWaitMins = Infinity;
+
+                    for (const cand of transferCandidates) {
+                        for (const leg1 of cand.firstLegs) {
+                            const nextBus = findNextAvailableBusForRoute(leg1, currentTime, dayName);
+                            if (nextBus) {
+                                const nowMins = timeToMinutes(currentTime);
+                                const busMins = timeToMinutes(nextBus.time);
+                                let wait = busMins - nowMins;
+                                if (wait < 0) wait += 24 * 60; // Next day
+
+                                if (wait < minWaitMins) {
+                                    minWaitMins = wait;
+                                    bestFutureBus = {
+                                        route: leg1,
+                                        nextBus,
+                                        wait
+                                    };
+                                }
+                            }
+                        }
+                    }
+
+                    if (bestFutureBus) {
+                        alternativeBus = {
+                            routeName: bestFutureBus.route.routeName,
+                            headsign: `${bestFutureBus.route.headsign} (Transfer)`,
+                            nextDeparture: bestFutureBus.nextBus.time,
+                            minutesUntil: bestFutureBus.wait,
+                            warning: 'No buses available right now (Transfer Required).'
+                        };
+                    }
+                }
+            }
+        }
+
+        // If still no alternative bus found, set a generic warning so UI shows Amber
+        if (!alternativeBus) {
+            alternativeBus = {
+                warning: 'No bus routes found availability.'
+            };
+        }
+
+        // Fallback to pure walking if no bus route found
+        const walkingDetails = await getWalkingDirections(originCoords, destLocation);
+        return buildWalkResponse(originCoords, destLocation, walkOnlyDist, alternativeBus, walkingDetails, originLocation?.name);
+    }
+
+    // 5. Convert A* Path to API Response
+    const busLegs = bestPath.path.filter(step => step.type === 'BUS');
+
+    // Case A: Walk Only (A* decided walking is best)
+    if (busLegs.length === 0) {
+        if (forceBus) console.log('DEBUG: A* selected walk-only despite forceBus.');
+        const walkingDetails = await getWalkingDirections(originCoords, destLocation);
+        return buildWalkResponse(originCoords, destLocation, walkOnlyDist, null, walkingDetails, originLocation?.name);
+    }
+
     const indexes = getIndexes();
 
-    // Use new function to find ALL reachable stops within walking distance
-    // This considers alighting at intermediate stops (e.g., alight at CP instead of full loop)
-    let candidates = findRoutesToNearbyStops(
-        primaryStop.id,
-        destLocation,
-        MAX_WALKING_FROM_STOP_M,
-        indexes.stopsById
-    );
+    // Case B: Direct Bus (1 Leg)
+    if (busLegs.length === 1) {
+        const leg = busLegs[0];
+        const fullRoute = indexes.routesArray.find(r => r.name === leg.routeName);
 
-    console.log('DEBUG: findRoutesToNearbyStops returned', candidates.length, 'candidates');
-    candidates.forEach((c, i) => {
-        console.log(`  Candidate ${i}: ${c.route.routeName} (${c.route.headsign}) -> ${c.destStop.name || c.destStop.id}, isLoop: ${c.route.isLoop}, walk: ${Math.round(c.destStop.dist)}m`);
-    });
+        // Helper to find the specific route entry in routesByStop that matches
+        const originStopRoutes = indexes.routesByStop.get(leg.from.id);
+        const routeDef = originStopRoutes.find(r => r.routeName === leg.routeName && r.headsign === leg.headsign);
 
-    // Also add exact destination stop matches from destNearestStops (for backward compatibility)
-    console.log('DEBUG: Checking destNearestStops for direct routes...');
-    for (const candidateDest of destNearestStops.slice(0, 5)) {
-        console.log(`  Checking dest stop: ${candidateDest.id} (${candidateDest.name})`);
-        const routes = findDirectRoutes(primaryStop.id, candidateDest.id);
-        console.log(`  findDirectRoutes returned ${routes.length} routes`);
-        routes.forEach(r => console.log(`    Route: ${r.routeName} (${r.headsign}), isLoop: ${r.isLoop}`));
+        // We also need dest index
+        const destStopIndex = routeDef.stopsSequence.indexOf(leg.to.id);
 
-        for (const route of routes) {
-            // Check if this candidate is already in the list
-            const exists = candidates.some(c =>
-                c.route.routeName === route.routeName &&
-                c.route.headsign === route.headsign &&
-                c.destStop.id === candidateDest.id
-            );
-            if (!exists) {
-                candidates.push({ route, destStop: candidateDest });
-                console.log(`  Added from destNearestStops: ${route.routeName} (${route.headsign}) -> ${candidateDest.name}, isLoop: ${route.isLoop}`);
-            }
-        }
-    }
-
-    console.log('DEBUG: Total candidates:', candidates.length);
-
-    let { route: bestRoute, destStop: bestDestStop, departure } = evaluateCandidates(
-        candidates, destLocation, currentTime, dayName
-    );
-
-    console.log('DEBUG: Best route selected:', bestRoute?.routeName, bestRoute?.headsign, 'isLoop:', bestRoute?.isLoop, 'alight at:', bestDestStop?.name);
-
-    // 7. Check if walking is more efficient
-    let inefficientRoute = null;
-    if (!forceBus && bestRoute && departure) {
-        if (isWalkingBetter(bestRoute, originCoords, primaryStop, bestDestStop, destLocation, directDistance, departure)) {
-            inefficientRoute = bestRoute;
-            bestRoute = null;
-        }
-    }
-
-    // 8. Try alternative origin stops if no direct route
-    let useAlternativeStop = false;
-    let alternativeStop = null;
-
-    if (!bestRoute) {
-        console.log('DEBUG: Checking alternative origin stops...');
-        for (let i = 1; i < userNearestStops.length; i++) {
-            const altStop = userNearestStops[i];
-            if (altStop.distance > ALTERNATIVE_STOP_RADIUS_M) break;
-
-            console.log(`  Checking alt stop ${altStop.id} (${altStop.name}), dist: ${Math.round(altStop.distance)}m`);
-
-            // First try findRoutesToNearbyStops for intermediate alighting
-            const nearbyStopCandidates = findRoutesToNearbyStops(
-                altStop.id,
-                destLocation,
-                MAX_WALKING_FROM_STOP_M,
-                indexes.stopsById
-            );
-
-            console.log(`  findRoutesToNearbyStops returned ${nearbyStopCandidates.length} candidates`);
-
-            if (nearbyStopCandidates.length > 0) {
-                const result = evaluateCandidates(nearbyStopCandidates, destLocation, currentTime, dayName);
-                if (result.route) {
-                    console.log(`  SELECTED from nearby stops: ${result.route.routeName} -> ${result.destStop.name}`);
-                    bestRoute = result.route;
-                    bestDestStop = result.destStop;
-                    departure = result.departure;
-                    alternativeStop = altStop;
-                    useAlternativeStop = true;
-                    break;
-                }
-            }
-
-            // Fallback to findDirectRoutes (inc. loop routes)
-            const altRoutes = findDirectRoutes(altStop.id, destStop.id);
-            if (altRoutes.length > 0) {
-                console.log(`  findDirectRoutes returned ${altRoutes.length} routes`);
-                altRoutes.forEach(r => console.log(`    ${r.routeName} (${r.headsign}), isLoop: ${r.isLoop}`));
-
-                const altCandidates = altRoutes.map(r => ({ route: r, destStop }));
-                const result = evaluateCandidates(altCandidates, destLocation, currentTime, dayName);
-                if (result.route) {
-                    console.log(`  SELECTED from direct routes: ${result.route.routeName}`);
-                    bestRoute = result.route;
-                    bestDestStop = result.destStop;
-                    departure = result.departure;
-                    alternativeStop = altStop;
-                    useAlternativeStop = true;
-                    break;
-                }
-            }
-        }
-    }
-
-    // 9. If walking was better than inefficient route
-    if (!bestRoute && inefficientRoute) {
-        const nextDep = getNextDeparture(inefficientRoute, inefficientRoute.originStopIndex, currentTime, dayName);
-        const altBusInfo = nextDep ? {
-            routeName: inefficientRoute.routeName,
-            headsign: inefficientRoute.headsign,
-            nextDeparture: nextDep.time,
-            minutesUntil: nextDep.minutesUntil
-        } : null;
-
-        // Get step-by-step walking directions from GraphHopper
-        const walkingDetails = await getWalkingDirections(originCoords, destLocation);
-        // Determine origin name: use the nearest stop name if user didn't select a specific stop
-        const originName = originStopId ? primaryStop.name : (userNearestStops[0]?.name || null);
-        return buildWalkResponse(originCoords, destLocation, directDistance, altBusInfo, walkingDetails, originName);
-    }
-
-    // 10. Try transfer routes if no direct route
-    if (!bestRoute) {
-        console.log('DEBUG: Searching for transfer routes...');
-        const allTransferCandidates = [];
-
-        // 10a. From primary stop
-        const primaryCandidates = findTransferCandidates(primaryStop.id, destLocation, MAX_WALKING_FROM_STOP_M, indexes.stopsById);
-        primaryCandidates.forEach(c => allTransferCandidates.push({ ...c, originStop: primaryStop }));
-        console.log(`DEBUG: Found ${primaryCandidates.length} transfer candidates from primary stop`);
-
-        // 10b. From alternative stops
-        for (let i = 1; i < userNearestStops.length; i++) {
-            const altStop = userNearestStops[i];
-            if (altStop.distance > 300) break;
-
-            const altCandidates = findTransferCandidates(altStop.id, destLocation, MAX_WALKING_FROM_STOP_M, indexes.stopsById);
-            altCandidates.forEach(c => allTransferCandidates.push({ ...c, originStop: altStop }));
-        }
-
-        if (allTransferCandidates.length > 0) {
-            console.log(`DEBUG: Evaluating ${allTransferCandidates.length} total transfer candidates`);
-            const result = await selectAndBuildBestTransfer(
-                allTransferCandidates,
-                originCoords,
-                destLocation,
-                directDistance,
-                currentTime,
-                dayName
-            );
-
-            if (result) return result;
-        }
-
-        // No route found logic
-        const originRoutes = getRoutesForStop(primaryStop.id);
-        const destRoutes = getRoutesForStop(destStop.id);
-        return {
-            error: 'No route found',
-            suggestion: `No bus connection found from ${primaryStop.name} to ${destStop.name}.`,
-            debug: {
-                originStop: primaryStop.name,
-                destStop: destStop.name,
-                originServedBy: [...new Set(originRoutes.map(r => r.routeName))],
-                destServedBy: [...new Set(destRoutes.map(r => r.routeName))]
-            }
+        const routeObj = {
+            ...routeDef,
+            destStopIndex: destStopIndex, // Add dynamic dest index
+            isLoop: fullRoute.isLoop || routeDef.headsign.includes('Loop')
         };
-    }
 
-    // 11. Get departure info
-    let departureDay = null;
-    if (!departure) {
-        const nextBus = findNextAvailableBusForRoute(bestRoute, currentTime, dayName);
-        if (nextBus) {
-            departure = { time: nextBus.time, minutesUntil: null, tripStartTime: nextBus.tripStartTime };
-            departureDay = nextBus.day;
-        } else {
-            return { error: 'No bus service available' };
+        // Fetch walking details
+        const walkToOriginStep = bestPath.path[0];
+        const lastStep = bestPath.path[bestPath.path.length - 1];
+
+        let walkingToOriginDetails = null;
+        let walkingFromDestDetails = null;
+
+        try {
+            [walkingToOriginDetails, walkingFromDestDetails] = await Promise.all([
+                (walkToOriginStep.type === 'WALK')
+                    ? getWalkingDirections(originCoords, { lat: leg.from.lat, lon: leg.from.lon })
+                    : Promise.resolve(null),
+                (lastStep.type === 'WALK')
+                    ? getWalkingDirections({ lat: leg.to.lat, lon: leg.to.lon }, destLocation)
+                    : Promise.resolve(null)
+            ]);
+        } catch (e) {
+            console.warn('Walking details fetch failed:', e.message);
         }
+
+        return buildDirectResponse({
+            route: routeObj,
+            departure: {
+                time: leg.departureTime,
+                minutesUntil: leg.waitTime,
+                tripStartTime: leg.departureTime
+            },
+            originCoords,
+            originStop: leg.from,
+            destStop: leg.to,
+            destLocation,
+            directDistance: walkOnlyDist,
+            currentTime,
+            dayName,
+            departureDay: dayName,
+            walkingToOriginDetails: walkingToOriginDetails?.steps,
+            walkingFromDestDetails: walkingFromDestDetails?.steps,
+            originName: originLocation?.name
+        });
     }
 
-    // 12. Build direct response
-    const originStop = useAlternativeStop ? alternativeStop : primaryStop;
-    bestRoute._actualDestStop = bestDestStop;
+    // Case C: Transfer (2+ Legs)
+    if (busLegs.length >= 2) {
+        // Resolve all bus legs from A* results
+        const resolvedBusLegs = await Promise.all(busLegs.map(async (leg) => {
+            const routes = indexes.routesByStop.get(leg.from.id);
+            const routeDef = routes.find(r => r.routeName === leg.routeName && r.headsign === leg.headsign);
+            const destIndex = routeDef.stopsSequence.indexOf(leg.to.id);
 
-    console.log(`DEBUG: bestRoute found: ${bestRoute.routeName} to ${bestDestStop.name}`);
+            return {
+                route: {
+                    ...routeDef,
+                    destStopIndex: destIndex,
+                    fromStopName: leg.from.name,
+                    toStopName: leg.to.name,
+                    fromStopId: leg.from.id,
+                    toStopId: leg.to.id,
+                    fromStopLat: leg.from.lat,
+                    fromStopLon: leg.from.lon,
+                    toStopLat: leg.to.lat,
+                    toStopLon: leg.to.lon
+                },
+                departure: { time: leg.departureTime, tripStartTime: leg.departureTime },
+                arrivalTime: leg.arrivalTimeStr
+            };
+        }));
 
-    // Fetch detailed walking directions in parallel
-    let walkingToOriginDetails = null;
-    let walkingFromDestDetails = null;
+        const leg1 = resolvedBusLegs[0];
+        const lastLeg = resolvedBusLegs[resolvedBusLegs.length - 1];
 
-    try {
-        console.log(`DEBUG: Fetching walking details for ${bestRoute.routeName}...`);
-        console.log(`DEBUG: Origin: ${originCoords.lat},${originCoords.lon} -> Stop: ${originStop.lat},${originStop.lon}`);
-        console.log(`DEBUG: Stop: ${bestDestStop.lat},${bestDestStop.lon} -> Dest: ${destLocation.lat},${destLocation.lon}`);
+        let walkingToOriginDetails = null;
+        let walkingFromDestDetails = null;
 
-        [walkingToOriginDetails, walkingFromDestDetails] = await Promise.all([
-            getWalkingDirections(originCoords, { lat: originStop.lat, lon: originStop.lon }),
-            getWalkingDirections({ lat: bestDestStop.lat, lon: bestDestStop.lon }, destLocation)
-        ]);
+        try {
+            [walkingToOriginDetails, walkingFromDestDetails] = await Promise.all([
+                (bestPath.path[0].type === 'WALK')
+                    ? getWalkingDirections(originCoords, { lat: busLegs[0].from.lat, lon: busLegs[0].from.lon })
+                    : Promise.resolve(null),
+                (bestPath.path[bestPath.path.length - 1].type === 'WALK')
+                    ? getWalkingDirections({ lat: busLegs[busLegs.length - 1].to.lat, lon: busLegs[busLegs.length - 1].to.lon }, destLocation)
+                    : Promise.resolve(null)
+            ]);
+        } catch (e) {
+            console.warn('Walking details fetch failed:', e.message);
+        }
 
-        console.log(`DEBUG: Walking details fetched. Origin steps: ${walkingToOriginDetails?.steps?.length}, Dest steps: ${walkingFromDestDetails?.steps?.length}`);
-    } catch (err) {
-        console.error('Error fetching walking details:', err.message);
-        // Continue without detailed walking steps (fallback to Haversine summary)
+        return buildTransferResponse({
+            busLegs: resolvedBusLegs,
+            originCoords,
+            originStop: busLegs[0].from,
+            destStop: busLegs[busLegs.length - 1].to,
+            destLocation,
+            directDistance: walkOnlyDist,
+            currentTime,
+            departureDay: dayName,
+            walkingToOriginDetails: walkingToOriginDetails?.steps,
+            walkingFromDestDetails: walkingFromDestDetails?.steps
+        });
     }
-
-    return buildDirectResponse({
-        route: bestRoute,
-        departure,
-        originCoords,
-        originStop,
-        destStop: bestDestStop,
-        destLocation,
-        directDistance,
-        currentTime,
-        dayName,
-        departureDay,
-        walkingToOriginDetails: walkingToOriginDetails?.steps,
-        walkingFromDestDetails: walkingFromDestDetails?.steps
-    });
 }
 
 /**
@@ -489,7 +500,8 @@ async function selectAndBuildBestTransfer(candidates, originCoords, destLocation
         currentTime,
         departureDay: leg1Departure.day || null,
         walkingToOriginDetails: walkingToOriginDetails?.steps,
-        walkingFromDestDetails: walkingFromDestDetails?.steps
+        walkingFromDestDetails: walkingFromDestDetails?.steps,
+        originName: originLocation?.name
     });
 }
 

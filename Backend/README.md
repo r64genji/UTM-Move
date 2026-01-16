@@ -6,7 +6,7 @@ The UTM Move backend is a Node.js/Express server that provides:
 - Static data API for routes and schedules
 - Real-time bus arrival calculations
 - Intelligent direction finding with walking + bus combinations
-- ORS integration for walking directions
+- Graphhopper integration for walking directions
 
 ## Architecture
 

@@ -6,7 +6,7 @@
 const { haversineDistance } = require('../utils/geo');
 const { getRouteGeometries } = require('./dataLoader');
 const { getDynamicOffset, addMinutesToTime, getUpcomingDepartures, timeToMinutes } = require('./scheduler');
-const { WALKING_SPEED_MPS, getWalkingMinutes, getBusTravelMinutes } = require('./routeScorer');
+const { getWalkingMinutes, getBusTravelMinutes } = require('./routingEngine');
 
 /**
  * Get route geometry key
@@ -48,11 +48,13 @@ function buildWalkResponse(originCoords, destLocation, distance, alternativeBus 
             lat: originCoords.lat,
             lon: originCoords.lon
         },
-        message: actualDistance < 100
-            ? 'Your destination is right here!'
-            : actualDistance < 300
-                ? 'Your destination is very close.'
-                : `Walk ${actualDistance}m to your destination.`,
+        message: alternativeBus?.warning
+            ? `No buses available at this time. Passable by walking (${actualDistance}m).`
+            : actualDistance < 100
+                ? 'Your destination is right here!'
+                : actualDistance < 300
+                    ? 'Your destination is very close.'
+                    : `Walk ${actualDistance}m to your destination.`,
         destination: destLocation,
         totalWalkingDistance: actualDistance,
         totalDuration: walkDuration,
@@ -83,7 +85,8 @@ function buildDirectResponse({
     dayName,
     departureDay,
     walkingToOriginDetails = null,
-    walkingFromDestDetails = null
+    walkingFromDestDetails = null,
+    originName = null
 }) {
     const routeGeometries = getRouteGeometries();
 
@@ -91,12 +94,13 @@ function buildDirectResponse({
     const walkFromDest = haversineDistance(destStop.lat, destStop.lon, destLocation.lat, destLocation.lon);
 
     // Use precise duration if details available, otherwise estimate
+    // Note: step.duration is already in minutes (converted in walkingService.js)
     const walkToDuration = walkingToOriginDetails
-        ? Math.ceil(walkingToOriginDetails.reduce((acc, step) => acc + step.duration, 0) / 60)
+        ? Math.ceil(walkingToOriginDetails.reduce((acc, step) => acc + step.duration, 0))
         : getWalkingMinutes(walkToOrigin);
 
     const walkFromDuration = walkingFromDestDetails
-        ? Math.ceil(walkingFromDestDetails.reduce((acc, step) => acc + step.duration, 0) / 60)
+        ? Math.ceil(walkingFromDestDetails.reduce((acc, step) => acc + step.duration, 0))
         : getWalkingMinutes(walkFromDest);
 
     // Calculate arrival time
@@ -180,7 +184,7 @@ function buildDirectResponse({
     return {
         type: 'DIRECT',
         origin: {
-            name: originStop.name,
+            name: originName || originStop.name, // Use specific origin name if provided (e.g. M19)
             lat: originCoords.lat,
             lon: originCoords.lon
         },
@@ -215,13 +219,13 @@ function buildDirectResponse({
  * @param {Object} params - Transfer parameters
  * @returns {Object} TRANSFER response
  */
+/**
+ * Build a multi-leg transfer response
+ * @param {Object} params - Transfer parameters
+ * @returns {Object} TRANSFER response
+ */
 function buildTransferResponse({
-    firstLeg,
-    secondLeg,
-    transferStop,
-    transferPointId,
-    firstDeparture,
-    secondDeparture,
+    busLegs, // Array of { route, departure, arrivalTime }
     originCoords,
     originStop,
     destStop,
@@ -230,169 +234,142 @@ function buildTransferResponse({
     currentTime,
     departureDay,
     walkingToOriginDetails = null,
-    walkingFromDestDetails = null
+    walkingFromDestDetails = null,
+    originName = null
 }) {
     const routeGeometries = getRouteGeometries();
-
     const walkToOrigin = haversineDistance(originCoords.lat, originCoords.lon, originStop.lat, originStop.lon);
     const walkFromDest = haversineDistance(destStop.lat, destStop.lon, destLocation.lat, destLocation.lon);
 
     const walkToDuration = walkingToOriginDetails
-        ? Math.ceil(walkingToOriginDetails.reduce((acc, step) => acc + step.duration, 0) / 60)
+        ? Math.ceil(walkingToOriginDetails.reduce((acc, step) => acc + step.duration, 0))
         : getWalkingMinutes(walkToOrigin);
 
     const walkFromDuration = walkingFromDestDetails
-        ? Math.ceil(walkingFromDestDetails.reduce((acc, step) => acc + step.duration, 0) / 60)
+        ? Math.ceil(walkingFromDestDetails.reduce((acc, step) => acc + step.duration, 0))
         : getWalkingMinutes(walkFromDest);
 
-    const firstLegOffset = getDynamicOffset(firstLeg.routeName, firstLeg.headsign, firstLeg.destStopIndex);
-    const firstLegArrivalTime = addMinutesToTime(firstDeparture.tripStartTime, firstLegOffset);
+    const steps = [];
 
-    const secondLegOffset = getDynamicOffset(secondLeg.routeName, secondLeg.headsign, secondLeg.destStopIndex);
-    const secondLegArrivalTime = secondDeparture
-        ? addMinutesToTime(secondDeparture.tripStartTime, secondLegOffset)
-        : null;
+    // 1. Initial Walk
+    steps.push({
+        type: 'walk',
+        instruction: `Walk to ${originStop.name}`,
+        from: originCoords,
+        to: { lat: originStop.lat, lon: originStop.lon },
+        distance: Math.round(walkToOrigin),
+        duration: walkToDuration,
+        details: walkingToOriginDetails,
+        expanded: false
+    });
 
-    const steps = [
-        {
-            type: 'walk',
-            instruction: `Walk to ${originStop.name}`,
-            from: originCoords,
-            to: { lat: originStop.lat, lon: originStop.lon },
-            distance: Math.round(walkToOrigin),
-            duration: walkToDuration,
-            details: walkingToOriginDetails,
-            expanded: false
-        },
-        {
-            type: 'board',
-            instruction: `Board ${firstLeg.routeName} (${firstLeg.headsign})`,
-            stopName: originStop.name,
-            stopId: originStop.id,
-            time: firstDeparture.time,
-            routeGeometryKey: getRouteGeometryKey(firstLeg.routeName, firstLeg.headsign)
-        },
-        {
-            type: 'alight',
-            instruction: `Alight at ${transferStop.name}`,
-            stopName: transferStop.name,
-            stopId: transferPointId,
-            time: firstLegArrivalTime
-        },
-        // Only add transfer walk if significant distance/transfer logic requires it (usually 0 for same stop transfer)
-        // For simplicity we assume same stop transfer for now unless separated
-        {
-            type: 'board',
-            instruction: `Transfer to ${secondLeg.routeName} (${secondLeg.headsign})`,
-            stopName: transferStop.name,
-            stopId: transferPointId,
-            time: secondDeparture ? secondDeparture.time : 'Wait...',
-            routeGeometryKey: getRouteGeometryKey(secondLeg.routeName, secondLeg.headsign)
-        },
-        {
-            type: 'alight',
-            instruction: `Alight at ${destStop.name}`,
-            stopName: destStop.name,
-            stopId: destStop.id,
-            time: secondLegArrivalTime
-        },
-        {
-            type: 'walk',
-            instruction: `Walk to ${destLocation.name}`,
-            from: { lat: destStop.lat, lon: destStop.lon },
-            to: destLocation,
-            distance: Math.round(walkFromDest),
-            duration: walkFromDuration,
-            details: walkingFromDestDetails,
-            expanded: false
+    // 2. Bus Legs and Transfers
+    busLegs.forEach((leg, index) => {
+        const { route, departure, arrivalTime } = leg;
+
+        const stopCount = route.isLoop
+            ? route.stopsSequence.length - 1
+            : route.destStopIndex - route.originStopIndex;
+
+        // Boarding step
+        steps.push({
+            type: index === 0 ? 'board' : 'transfer',
+            instruction: index === 0
+                ? `Board ${route.routeName} (${route.headsign})`
+                : `Transfer to ${route.routeName} (${route.headsign})`,
+            stopName: route.fromStopName || (index === 0 ? originStop.name : busLegs[index - 1].toStopName),
+            stopId: route.fromStopId || (index === 0 ? originStop.id : busLegs[index - 1].toStopId),
+            time: departure.time,
+            routeGeometryKey: getRouteGeometryKey(route.routeName, route.headsign)
+        });
+
+        // Ride step
+        steps.push({
+            type: 'ride',
+            instruction: `Ride ${stopCount} stops to ${route.toStopName || (index === busLegs.length - 1 ? destStop.name : 'transfer point')}`,
+            duration: Math.round((timeToMinutes(arrivalTime) - timeToMinutes(departure.time) + 1440) % 1440)
+        });
+
+        // Alight step (only if not transferring immediately)
+        if (index === busLegs.length - 1) {
+            steps.push({
+                type: 'alight',
+                instruction: `Alight at ${destStop.name}`,
+                stopName: destStop.name,
+                stopId: destStop.id,
+                time: arrivalTime
+            });
         }
-    ];
+    });
+
+    // 3. Final Walk
+    steps.push({
+        type: 'walk',
+        instruction: `Walk to ${destLocation.name}`,
+        from: { lat: destStop.lat, lon: destStop.lon },
+        to: destLocation,
+        distance: Math.round(walkFromDest),
+        duration: walkFromDuration,
+        details: walkingFromDestDetails,
+        expanded: false
+    });
+
+    const firstLeg = busLegs[0];
+    const lastLeg = busLegs[busLegs.length - 1];
 
     // Calculate total duration
-    let totalDuration = null;
-    if (secondDeparture && secondLegArrivalTime) {
-        const currentMins = timeToMinutes(currentTime);
-        const arrivalMins = timeToMinutes(secondLegArrivalTime);
-        let diff = arrivalMins - currentMins;
-        if (diff < 0) diff += 24 * 60;
-        totalDuration = diff + walkFromDuration;
-    }
+    const currentMins = timeToMinutes(currentTime);
+    const finalArrivalMins = timeToMinutes(lastLeg.arrivalTime);
+    let diff = finalArrivalMins - currentMins;
+    if (diff < 0) diff += 24 * 60;
+    const totalDuration = diff + walkFromDuration;
 
     return {
         type: 'TRANSFER',
         origin: {
-            name: originStop.name,
+            name: originName || originStop.name,
             lat: originCoords.lat,
             lon: originCoords.lon
         },
         destination: destLocation,
         originStop,
-        transferPointId,
         summary: {
-            route: `${firstLeg.routeName} → ${secondLeg.routeName}`,
-            headsign: `${firstLeg.headsign} → ${secondLeg.headsign}`,
-            departure: firstDeparture.time,
-            transferAt: transferStop.name,
+            route: busLegs.map(l => l.route.routeName).join(' → '),
+            headsign: busLegs.map(l => l.route.headsign).join(' → '),
+            departure: firstLeg.departure.time,
             departureDay,
             totalDuration,
-            busArrivalTime: secondLegArrivalTime,
-            eta: secondLegArrivalTime ? addMinutesToTime(secondLegArrivalTime, walkFromDuration) : null
+            busArrivalTime: lastLeg.arrivalTime,
+            eta: addMinutesToTime(lastLeg.arrivalTime, walkFromDuration)
         },
         steps,
         totalWalkingDistance: Math.round(walkToOrigin + walkFromDest),
         directWalkDistance: Math.round(directDistance),
-        routeGeometries: (() => {
-            // Handle loop routes that have concatenated headsigns like "To X → To Y"
-            // For loop routes, we need BOTH geometries to show the full path
-            const getGeometriesForLeg = (leg) => {
-                if (leg.isLoop && leg.headsign.includes('→')) {
-                    // Loop route - return both origin and dest trip geometries
-                    const originHeadsign = leg.originTrip?.headsign || leg.headsign.split('→')[0].trim();
-                    const destHeadsign = leg.destTrip?.headsign || leg.headsign.split('→')[1]?.trim();
+        // backward compatibility for simple consumers
+        firstLeg: firstLeg.route,
+        secondLeg: lastLeg.route,
 
-                    const originKey = getRouteGeometryKey(leg.routeName, originHeadsign);
-                    const destKey = getRouteGeometryKey(leg.routeName, destHeadsign);
-
-                    return {
-                        isLoop: true,
-                        first: routeGeometries[originKey],
-                        second: routeGeometries[destKey],
-                        originHeadsign,
-                        destHeadsign
-                    };
-                }
-
-                // Regular route - single geometry
-                const key = getRouteGeometryKey(leg.routeName, leg.headsign);
-                return {
-                    isLoop: false,
-                    geometry: routeGeometries[key]
-                };
+        // Comprehensive geometries for the map
+        routeGeometries: busLegs.map(leg => {
+            const { route } = leg;
+            const res = {
+                routeName: route.routeName,
+                headsign: route.headsign,
+                isLoop: false,
+                fromStop: { lat: route.fromStopLat, lon: route.fromStopLon },
+                toStop: { lat: route.toStopLat, lon: route.toStopLon }
             };
 
-            const firstLegGeom = getGeometriesForLeg(firstLeg);
-            const secondLegGeom = getGeometriesForLeg(secondLeg);
-
-            console.log('TRANSFER route geometry keys:', {
-                firstLegIsLoop: firstLegGeom.isLoop,
-                secondLegIsLoop: secondLegGeom.isLoop,
-                firstLegHasGeom: firstLegGeom.isLoop ? !!(firstLegGeom.first && firstLegGeom.second) : !!firstLegGeom.geometry,
-                secondLegHasGeom: secondLegGeom.isLoop ? !!(secondLegGeom.first && secondLegGeom.second) : !!secondLegGeom.geometry
-            });
-
-            // Build result - for loop legs, combine both geometries
-            return {
-                firstLeg: firstLegGeom.isLoop
-                    ? (firstLegGeom.first || firstLegGeom.second)
-                    : firstLegGeom.geometry,
-                secondLeg: secondLegGeom.isLoop
-                    ? (secondLegGeom.first || secondLegGeom.second)
-                    : secondLegGeom.geometry,
-                // Additional info for loop routes
-                firstLegParts: firstLegGeom.isLoop ? { first: firstLegGeom.first, second: firstLegGeom.second } : null,
-                secondLegParts: secondLegGeom.isLoop ? { first: secondLegGeom.first, second: secondLegGeom.second } : null
-            };
-        })(),
+            if (route.isLoop && route.headsign.includes('→')) {
+                const parts = route.headsign.split('→');
+                res.isLoop = true;
+                res.first = routeGeometries[getRouteGeometryKey(route.routeName, parts[0].trim())];
+                res.second = routeGeometries[getRouteGeometryKey(route.routeName, parts[1].trim())];
+            } else {
+                res.geometry = routeGeometries[getRouteGeometryKey(route.routeName, route.headsign)];
+            }
+            return res;
+        }),
         destStop
     };
 }

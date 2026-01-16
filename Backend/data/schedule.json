@@ -320,7 +320,7 @@
         },
         {
             "id": "UI",
-            "name": "UI",
+            "name": "UTM International",
             "lat": 1.556706,
             "lon": 103.642561
         },
@@ -329,6 +329,18 @@
             "name": "K33",
             "lat": 1.564444,
             "lon": 103.633800
+        },
+        {
+            "id": "STADIUM",
+            "name": "STADIUM",
+            "lat": 1.556982,
+            "lon": 103.656303
+        },
+        {
+            "id": "V01",
+            "name": "V01",
+            "lat": 1.543925,
+            "lon": 103.632305
         }
     ],
     "routes": [
@@ -869,6 +881,64 @@
             ]
         },
         {
+            "name": "Route E(CP)",
+            "services": [
+                {
+                    "service_id": "WEEKDAY",
+                    "days": [
+                        "monday",
+                        "tuesday",
+                        "wednesday",
+                        "thursday",
+                        "friday"
+                    ],
+                    "trips": [
+                        {
+                            "headsign": "To Centre Point (CP)",
+                            "stops_sequence": [
+                                "KDOJ_XB2",
+                                "KDOJ",
+                                "KLG_E",
+                                "KDSE_E",
+                                "PKU_E",
+                                "K6",
+                                "KTF",
+                                "H01",
+                                "CP"
+                            ],
+                            "times": [
+                                "19:45",
+                                "20:15"
+                            ]
+                        },
+                        {
+                            "headsign": "To KDOJ",
+                            "stops_sequence": [
+                                "JA1",
+                                "JA2",
+                                "JA3",
+                                "JA4",
+                                "P19A",
+                                "AM",
+                                "KRP",
+                                "PKU_W",
+                                "KDSE_W",
+                                "K11",
+                                "KLG_W",
+                                "KDOJ",
+                                "KDOJ_XB2"
+                            ],
+                            "times": [
+                                "20:00",
+                                "22:00",
+                                "23:00"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
             "name": "Route E(N24)",
             "services": [
                 {
@@ -1281,6 +1351,171 @@
                                 "18:10",
                                 "18:40",
                                 "18:50"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Route H",
+            "services": [
+                {
+                    "service_id": "WEEKDAY",
+                    "days": [
+                        "monday",
+                        "tuesday",
+                        "wednesday",
+                        "thursday",
+                        "friday"
+                    ],
+                    "trips": [
+                        {
+                            "headsign": "To V01",
+                            "stops_sequence": [
+                                "CP",
+                                "JA1",
+                                "JA2",
+                                "JA3",
+                                "JA4",
+                                "P19A",
+                                "V01"
+                            ],
+                            "times": [
+                                "07:15",
+                                "07:45",
+                                "08:15",
+                                "08:45",
+                                "09:15",
+                                "09:45",
+                                "11:20",
+                                "12:00",
+                                "12:40",
+                                "13:20",
+                                "14:00",
+                                "16:00",
+                                "16:40",
+                                "17:20",
+                                "18:00"
+                            ]
+                        },
+                        {
+                            "headsign": "To Centre Point (CP)",
+                            "stops_sequence": [
+                                "V01",
+                                "CP"
+                            ],
+                            "times": [
+                                "07:30",
+                                "08:00",
+                                "08:30",
+                                "09:00",
+                                "09:30",
+                                "10:00",
+                                "11:40",
+                                "12:20",
+                                "13:00",
+                                "13:40",
+                                "14:20",
+                                "16:20",
+                                "17:00",
+                                "17:40",
+                                "18:20"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Route J",
+            "services": [
+                {
+                    "service_id": "WEEKDAY",
+                    "days": [
+                        "monday",
+                        "tuesday",
+                        "wednesday",
+                        "thursday",
+                        "friday"
+                    ],
+                    "trips": [
+                        {
+                            "headsign": "To Stadium",
+                            "stops_sequence": [
+                                "CP",
+                                "JA1",
+                                "JA2",
+                                "JA3",
+                                "JA4",
+                                "P19A2",
+                                "UI",
+                                "KTC_B1E",
+                                "STADIUM"
+                            ],
+                            "times": [
+                                "16:30",
+                                "17:00",
+                                "17:30",
+                                "18:15",
+                                "18:45"
+                            ]
+                        },
+                        {
+                            "headsign": "To Centre Point (CP)",
+                            "stops_sequence": [
+                                "STADIUM",
+                                "KTC_B1W",
+                                "KTC_B2W",
+                                "P19A",
+                                "CP"
+                            ],
+                            "times": [
+                                "16:45",
+                                "17:15",
+                                "18:00",
+                                "18:30",
+                                "19:00"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "service_id": "TUESDAY",
+                    "days": [
+                        "tuesday"
+                    ],
+                    "trips": [
+                        {
+                            "headsign": "To Stadium",
+                            "stops_sequence": [
+                                "CP",
+                                "JA1",
+                                "JA2",
+                                "JA3",
+                                "JA4",
+                                "P19A2",
+                                "UI",
+                                "KTC_B1E",
+                                "STADIUM"
+                            ],
+                            "times": [
+                                "14:30",
+                                "15:00"
+                            ]
+                        },
+                        {
+                            "headsign": "To Centre Point (CP)",
+                            "stops_sequence": [
+                                "STADIUM",
+                                "KTC_B1W",
+                                "KTC_B2W",
+                                "P19A",
+                                "CP"
+                            ],
+                            "times": [
+                                "14:45",
+                                "15:15"
                             ]
                         }
                     ]

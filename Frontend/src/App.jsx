@@ -323,156 +323,54 @@ function App() {
                         }
                     }
 
-                } else if (result.type === 'TRANSFER' && result.routeGeometries) {
-                    // TRANSFER route: two separate bus legs with a transfer point
-                    const legs = routeStr.split(/→|->/).map(s => s.trim());
-                    const firstLegColor = getRouteColor(legs[0]);
-                    const secondLegColor = legs.length > 1 ? getRouteColor(legs[1]) : firstLegColor;
-                    const transferId = result.transferPointId || 'CP';
-                    const transferStop = data.stops.find(s => s.id === transferId);
+                } else if (result.routeGeometries && Array.isArray(result.routeGeometries)) {
+                    // Generic N-Leg Support: Iterate through all legs
+                    result.routeGeometries.forEach((legGeom) => {
+                        const legColor = getRouteColor(legGeom.routeName);
+                        const { fromStop, toStop } = legGeom;
 
-                    console.log('TRANSFER route detected:', {
-                        transferId,
-                        transferStop: transferStop?.name,
-                        hasFirstLeg: !!result.routeGeometries?.firstLeg,
-                        hasSecondLeg: !!result.routeGeometries?.secondLeg,
-                        hasSecondLegParts: !!result.routeGeometries?.secondLegParts,
-                        originStop: result.originStop?.name,
-                        destStop: result.destStop?.name
+                        if (legGeom.isLoop && legGeom.first && legGeom.second) {
+                            // Loop route with two parts
+                            const firstPart = legGeom.first;
+                            const secondPart = legGeom.second;
+
+                            if (firstPart?.coordinates?.length > 0) {
+                                const lastCoord = firstPart.coordinates[firstPart.coordinates.length - 1];
+                                const terminusPoint = { lat: lastCoord[1], lon: lastCoord[0] };
+                                const seg1 = extractDirectedRouteSegment(firstPart, fromStop, terminusPoint);
+                                if (seg1?.coordinates) newSegments.push({ coordinates: seg1.coordinates, color: legColor, type: 'bus' });
+                            }
+
+                            if (secondPart?.coordinates?.length > 0) {
+                                const firstCoord = secondPart.coordinates[0];
+                                const terminusPoint = { lat: firstCoord[1], lon: firstCoord[0] };
+                                const seg2 = extractDirectedRouteSegment(secondPart, terminusPoint, toStop);
+                                if (seg2?.coordinates) newSegments.push({ coordinates: seg2.coordinates, color: legColor, type: 'bus' });
+                            }
+                        } else if (legGeom.geometry && fromStop && toStop) {
+                            // Regular single-part route
+                            const seg = extractDirectedRouteSegment(legGeom.geometry, fromStop, toStop);
+                            if (seg?.coordinates) {
+                                newSegments.push({ coordinates: seg.coordinates, color: legColor, type: 'bus' });
+                            } else if (legGeom.geometry.coordinates) {
+                                // Fallback: just show the whole thing if extraction fails
+                                newSegments.push({ coordinates: legGeom.geometry.coordinates, color: legColor, type: 'bus' });
+                            }
+                        }
                     });
-
-                    // First leg: origin stop to transfer stop
-                    if (result.routeGeometries.firstLeg && result.originStop && transferStop) {
-                        const seg = extractDirectedRouteSegment(
-                            result.routeGeometries.firstLeg,
-                            { lat: result.originStop.lat, lon: result.originStop.lon },
-                            { lat: transferStop.lat, lon: transferStop.lon }
-                        );
-                        if (seg?.coordinates) {
-                            newSegments.push({ coordinates: seg.coordinates, color: firstLegColor, type: 'bus' });
-                        } else if (result.routeGeometries.firstLeg.coordinates) {
-                            newSegments.push({ coordinates: result.routeGeometries.firstLeg.coordinates, color: firstLegColor, type: 'bus' });
-                        }
-                    }
-
-                    // Second leg: transfer stop to destination stop
-                    // Check if it's a loop route with two parts
-                    if (result.routeGeometries.secondLegParts && transferStop && result.destStop) {
-                        // Loop route - need to render both parts
-                        const { first: firstPart, second: secondPart } = result.routeGeometries.secondLegParts;
-
-                        // Find the terminus (end of first part / start of second part)
-                        // For loop routes, the terminus is typically the last stop of the first trip
-                        if (firstPart?.coordinates && firstPart.coordinates.length > 0) {
-                            // Render first part: from transfer to terminus
-                            const lastCoord = firstPart.coordinates[firstPart.coordinates.length - 1];
-                            const terminusPoint = { lat: lastCoord[1], lon: lastCoord[0] };
-
-                            const seg1 = extractDirectedRouteSegment(
-                                firstPart,
-                                { lat: transferStop.lat, lon: transferStop.lon },
-                                terminusPoint
-                            );
-                            if (seg1?.coordinates) {
-                                newSegments.push({ coordinates: seg1.coordinates, color: secondLegColor, type: 'bus' });
-                            }
-                        }
-
-                        if (secondPart?.coordinates && secondPart.coordinates.length > 0) {
-                            // Render second part: from terminus to destination
-                            const firstCoord = secondPart.coordinates[0];
-                            const terminusPoint = { lat: firstCoord[1], lon: firstCoord[0] };
-
-                            const seg2 = extractDirectedRouteSegment(
-                                secondPart,
-                                terminusPoint,
-                                { lat: result.destStop.lat, lon: result.destStop.lon }
-                            );
-                            if (seg2?.coordinates) {
-                                newSegments.push({ coordinates: seg2.coordinates, color: secondLegColor, type: 'bus' });
-                            }
-                        }
-                    } else if (result.routeGeometries.secondLeg && transferStop && result.destStop) {
-                        // Regular route - single geometry
-                        const seg = extractDirectedRouteSegment(
-                            result.routeGeometries.secondLeg,
-                            { lat: transferStop.lat, lon: transferStop.lon },
-                            { lat: result.destStop.lat, lon: result.destStop.lon }
-                        );
-                        if (seg?.coordinates) {
-                            newSegments.push({ coordinates: seg.coordinates, color: secondLegColor, type: 'bus' });
-                        } else if (result.routeGeometries.secondLeg.coordinates) {
-                            newSegments.push({ coordinates: result.routeGeometries.secondLeg.coordinates, color: secondLegColor, type: 'bus' });
-                        }
-                    }
-
-
-                } else if (result.isLoopRoute && result.routeGeometries && result.loopInfo) {
-                    const transferStop = data.stops.find(s => s.id === result.loopInfo.transferPoint);
-
-                    if (result.routeGeometries.firstLeg && result.originStop && transferStop) {
-                        const seg1 = extractDirectedRouteSegment(
-                            result.routeGeometries.firstLeg,
-                            { lat: result.originStop.lat, lon: result.originStop.lon },
-                            { lat: transferStop.lat, lon: transferStop.lon }
-                        );
-                        if (seg1?.coordinates) {
-                            newSegments.push({ coordinates: seg1.coordinates, color: color1, type: 'bus' });
-                        }
-                    }
-
-                    if (result.routeGeometries.secondLeg && transferStop && result.destStop) {
-                        const seg2 = extractDirectedRouteSegment(
-                            result.routeGeometries.secondLeg,
-                            { lat: transferStop.lat, lon: transferStop.lon },
-                            { lat: result.destStop.lat, lon: result.destStop.lon }
-                        );
-                        if (seg2?.coordinates) {
-                            newSegments.push({ coordinates: seg2.coordinates, color: color2, type: 'bus' });
-                        }
-                    }
-
-                } else if (result.routeGeometries) {
-                    // Generic fallback for routeGeometries (e.g., BUS_ROUTE type)
-                    const legs = routeStr.split(/→|->/).map(s => s.trim());
-                    const firstLegColor = getRouteColor(legs[0]);
-                    const secondLegColor = legs.length > 1 ? getRouteColor(legs[1]) : firstLegColor;
-
-                    if (result.routeGeometries.firstLeg && result.originStop) {
-                        const transferId = result.transferPointId || 'CP';
-                        const transferStop = data.stops.find(s => s.id === transferId);
-
-                        if (transferStop) {
-                            const seg = extractDirectedRouteSegment(
-                                result.routeGeometries.firstLeg,
-                                { lat: result.originStop.lat, lon: result.originStop.lon },
-                                { lat: transferStop.lat, lon: transferStop.lon }
-                            );
-                            if (seg) {
-                                newSegments.push({ coordinates: seg.coordinates, color: firstLegColor, type: 'bus' });
-                            } else {
-                                newSegments.push({ coordinates: result.routeGeometries.firstLeg.coordinates, color: firstLegColor, type: 'bus' });
-                            }
-                        }
-                    }
-
-                    if (result.routeGeometries.secondLeg && result.destStop) {
-                        const transferId = result.transferPointId || 'CP';
-                        const transferStop = data.stops.find(s => s.id === transferId);
-
-                        if (transferStop) {
-                            const seg = extractDirectedRouteSegment(
-                                result.routeGeometries.secondLeg,
-                                { lat: transferStop.lat, lon: transferStop.lon },
-                                { lat: result.destStop.lat, lon: result.destStop.lon }
-                            );
-                            if (seg) {
-                                newSegments.push({ coordinates: seg.coordinates, color: secondLegColor, type: 'bus' });
-                            } else {
-                                newSegments.push({ coordinates: result.routeGeometries.secondLeg.coordinates, color: secondLegColor, type: 'bus' });
-                            }
-                        }
-                    }
+                } else if (result.routeGeometry && result.originStop && result.destStop) {
+                    // Legacy Fallback for single leg
+                    const color = getRouteColor(routeParts[0]);
+                    const segment = extractDirectedRouteSegment(
+                        result.routeGeometry,
+                        { lat: result.originStop.lat, lon: result.originStop.lon },
+                        { lat: result.destStop.lat, lon: result.destStop.lon }
+                    );
+                    newSegments.push({
+                        coordinates: segment ? segment.coordinates : result.routeGeometry.coordinates,
+                        color: color,
+                        type: 'bus'
+                    });
                 }
                 setBusRouteSegments(newSegments);
 

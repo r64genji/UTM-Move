@@ -7,7 +7,7 @@ const {
     isWalkingBetter,
     scoreRoute,
     getBusTravelMinutes
-} = require('../directions/routeScorer');
+} = require('../directions/routingEngine');
 
 // Mock scheduler dependencies
 jest.mock('../directions/scheduler', () => ({

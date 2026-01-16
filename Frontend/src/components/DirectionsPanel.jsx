@@ -158,6 +158,7 @@ const DirectionsPanel = ({ directions, onClose, loading, onPlanFutureTrip }) => 
                         >
                             {step.type === 'walk' && <span style={{ color: '#22c55e' }}>🚶</span>}
                             {step.type === 'board' && '🚌'}
+                            {step.type === 'transfer' && '🔄'}
                             {step.type === 'ride' && '➡️'}
                             {step.type === 'alight' && '📍'}
 
@@ -192,7 +193,7 @@ const DirectionsPanel = ({ directions, onClose, loading, onPlanFutureTrip }) => 
                                 </>
                             )}
 
-                            {step.type === 'board' && (
+                            {(step.type === 'board' || step.type === 'transfer') && (
                                 <div className="step-meta">
                                     <span className="stop-name">at {step.stopName}</span>
                                     {step.upcomingTimes && step.upcomingTimes.length > 1 && (

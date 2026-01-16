@@ -37,16 +37,17 @@ jest.mock('../directions/scheduler', () => ({
 }));
 const scheduler = require('../directions/scheduler');
 
-jest.mock('../directions/routeScorer', () => ({
+jest.mock('../directions/routingEngine', () => ({
     evaluateCandidates: jest.fn(),
     isWalkingBetter: jest.fn(),
     getWalkingMinutes: jest.fn(() => 5),
-    WALK_ONLY_THRESHOLD_M: 500
+    WALK_ONLY_THRESHOLD_M: 500,
+    findOptimalPath: jest.fn()
 }));
-const routeScorer = require('../directions/routeScorer');
+const routingEngine = require('../directions/routingEngine');
 
 jest.mock('../directions/responseBuilder', () => ({
-    buildWalkResponse: jest.fn(val => val), // passthrough for check
+    buildWalkResponse: jest.fn(val => ({ type: 'WALK_ONLY', ...val })), // passthrough for check
     buildDirectResponse: jest.fn(val => val),
     buildTransferResponse: jest.fn(val => val),
     getRouteGeometryKey: jest.fn()
@@ -57,10 +58,14 @@ jest.mock('../directions/walkingService', () => ({
 }));
 
 jest.mock('../directions/dataLoader', () => ({
-    getIndexes: jest.fn(() => ({ stopsById: new Map() })),
+    getIndexes: jest.fn(() => ({ stopsById: new Map(), stopsArray: [], routesArray: [], routesByStop: new Map() })),
     getRouteGeometries: jest.fn()
 }));
+const dataLoader = require('../directions/dataLoader');
 
+
+// routingEngine handles both astar and scoring
+// (removed redundant astar mock)
 
 describe('getDirections Integration', () => {
     beforeEach(() => {
@@ -68,79 +73,100 @@ describe('getDirections Integration', () => {
 
         // Default mocks
         locationService.getLocationById.mockReturnValue({ id: 'DestLoc', lat: 10, lon: 10 });
-        locationService.findNearestStopsSync.mockReturnValue([{ id: 'DestStop', lat: 10.001, lon: 10.001 }]); // dest stop
-        locationService.getStopById.mockReturnValue({ id: 'OriginStop', lat: 0, lon: 0 }); // origin stop
-        locationService.findNearestStops.mockResolvedValue([{ id: 'OriginStop', lat: 0, lon: 0 }]); // origin nearest
+        locationService.findNearestStopsSync.mockReturnValue([{ id: 'DestStop', lat: 10.001, lon: 10.001 }]);
+        locationService.getStopById.mockReturnValue({ id: 'OriginStop', lat: 0, lon: 0 });
+        locationService.findNearestStops.mockResolvedValue([{ id: 'OriginStop', lat: 0, lon: 0 }]);
+        haversineDistance.mockReturnValue(2000);
 
-        haversineDistance.mockReturnValue(2000); // 2km default (bus needed)
-
-        // Default: no direct routes found
-        routeFinder.findDirectRoutes.mockReturnValue([]);
-        routeFinder.findRoutesToNearbyStops.mockReturnValue([]);
-
-        // Default scorer
-        routeScorer.evaluateCandidates.mockReturnValue({});
+        // Indexes for route lookup in index.js
+        dataLoader.getIndexes.mockReturnValue({
+            stopsArray: [],
+            routesArray: [{ name: 'Route1', isLoop: false }, { name: 'Route2', isLoop: false }],
+            routesByStop: new Map([
+                ['OriginStop', [{ routeName: 'Route1', headsign: 'To Dest', stopsSequence: ['OriginStop', 'DestStop'] }]],
+                ['TransferStop', [{ routeName: 'Route2', headsign: 'To Dest', stopsSequence: ['TransferStop', 'DestStop'] }]]
+            ])
+        });
     });
 
-    test('returns direct bus route using findRoutesToNearbyStops', async () => {
-        // Setup: findRoutesToNearbyStops returns a candidate
-        const candidate = {
-            route: { routeName: 'Route1', headsign: 'To Dest' },
-            destStop: { id: 'DestStop' }
-        };
-        routeFinder.findRoutesToNearbyStops.mockReturnValue([candidate]);
-
-        // Scorer selects it
-        routeScorer.evaluateCandidates.mockReturnValue({
-            route: candidate.route,
-            destStop: candidate.destStop,
-            departure: { time: '10:00', minutesUntil: 5, tripStartTime: '10:00' }
+    test('returns direct bus route from A* result', async () => {
+        // Mock A* returning a direct bus path
+        routingEngine.findOptimalPath.mockReturnValue({
+            path: [
+                { type: 'WALK', from: { lat: 0, lon: 0 }, to: { id: 'OriginStop' } },
+                {
+                    type: 'BUS',
+                    routeName: 'Route1',
+                    headsign: 'To Dest',
+                    from: { id: 'OriginStop' },
+                    to: { id: 'DestStop' },
+                    departureTime: '10:00',
+                    waitTime: 5
+                },
+                { type: 'WALK', from: { id: 'DestStop' }, to: { lat: 10, lon: 10 } }
+            ],
+            totalEndTime: 600
         });
 
         const result = await directions.getDirections(0, 0, null, 'DestLoc', '09:55');
 
         expect(result).toBeDefined();
-        // Should call buildDirectResponse
-        // We can check the structure directly since we mocked buildDirectResponse to passthrough
         expect(result.route.routeName).toBe('Route1');
         expect(result.departure.time).toBe('10:00');
     });
 
-    test('falls back to transfer route using findTransferCandidates', async () => {
-        // No direct routes
-        routeFinder.findRoutesToNearbyStops.mockReturnValue([]);
+    test('falls back to transfer route from A* result', async () => {
+        // Mock A* returning a transfer path
+        routingEngine.findOptimalPath.mockReturnValue({
+            path: [
+                { type: 'WALK' },
+                {
+                    type: 'BUS',
+                    routeName: 'Route1',
+                    headsign: 'To Dest',
+                    from: { id: 'OriginStop' },
+                    to: { id: 'TransferStop' },
+                    departureTime: '10:00'
+                },
+                {
+                    type: 'BUS',
+                    routeName: 'Route2',
+                    headsign: 'To Dest',
+                    from: { id: 'TransferStop' },
+                    to: { id: 'DestStop' },
+                    departureTime: '10:30'
+                },
+                { type: 'WALK' }
+            ],
+            totalEndTime: 700
+        });
 
-        // Transfer candidate logic
-        const transferCandidate = {
-            type: 'TRANSFER',
-            transferPoint: 'CP',
-            firstLegs: [{ routeName: 'Route1', headsign: 'To CP', originStopIndex: 0, destStopIndex: 1 }],
-            secondLeg: { routeName: 'Route2', headsign: 'To Dest', originStopIndex: 0, destStopIndex: 1 },
-            destStop: { id: 'DestStop', lat: 10, lon: 10 },
-            originStop: { id: 'OriginStop', lat: 0, lon: 0 }
-        };
-
-        // Mock findTransferCandidates to return this
-        routeFinder.findTransferCandidates.mockReturnValue([transferCandidate]);
-
-        // Mock Scheduler for transfer evaluation
-        scheduler.getNextDeparture.mockReturnValueOnce({ time: '10:00', minutesUntil: 5 }); // Leg 1
-        scheduler.getNextDeparture.mockReturnValueOnce({ time: '10:15', minutesUntil: 15 }); // Leg 2 (called later)
+        // Mock indexes for both routes
+        dataLoader.getIndexes.mockReturnValue({
+            stopsArray: [],
+            routesArray: [{ name: 'Route1' }, { name: 'Route2' }],
+            routesByStop: new Map([
+                ['OriginStop', [{ routeName: 'Route1', headsign: 'To Dest', stopsSequence: ['OriginStop', 'TransferStop'] }]],
+                ['TransferStop', [{ routeName: 'Route2', headsign: 'To Dest', stopsSequence: ['TransferStop', 'DestStop'] }]]
+            ])
+        });
 
         const result = await directions.getDirections(0, 0, null, 'DestLoc', '09:55');
 
         expect(result).toBeDefined();
-        expect(result.firstLeg.routeName).toBe('Route1');
-        expect(result.secondLeg.routeName).toBe('Route2');
+        // Check mock response pass-through (it now returns busLegs array)
+        expect(result.busLegs[0].route.routeName).toBe('Route1');
+        expect(result.busLegs[1].route.routeName).toBe('Route2');
     });
 
-    test('returns error if no routes found', async () => {
-        routeFinder.findRoutesToNearbyStops.mockReturnValue([]);
-        routeFinder.findTransferCandidates.mockReturnValue([]);
-        routeFinder.getRoutesForStop.mockReturnValue([]);
+    test('returns walk only if A* returns no bus legs', async () => {
+        routingEngine.findOptimalPath.mockReturnValue({
+            path: [{ type: 'WALK' }],
+            totalEndTime: 100
+        });
 
         const result = await directions.getDirections(0, 0, null, 'DestLoc', '09:55');
 
-        expect(result.error).toBe('No route found');
+        expect(result.type).toBe('WALK_ONLY');
     });
 });

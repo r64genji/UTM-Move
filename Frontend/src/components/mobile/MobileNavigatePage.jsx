@@ -343,10 +343,11 @@ const MobileNavigatePage = ({
                                                         borderColor: step.type === 'walk' ? '#22c55e' : (step.type === 'board' ? 'var(--border-color, #e5e7eb)' : 'transparent')
                                                     }}
                                                 >
-                                                    <span className="material-symbols-outlined text-sm" style={{ color: step.type === 'walk' ? '#22c55e' : (step.type === 'board' ? '#3b82f6' : 'gray') }}>
+                                                    <span className="material-symbols-outlined text-sm" style={{ color: step.type === 'walk' ? '#22c55e' : (step.type === 'board' || step.type === 'transfer' ? '#3b82f6' : 'gray') }}>
                                                         {step.type === 'walk' ? 'directions_walk' :
                                                             step.type === 'board' ? 'directions_bus' :
-                                                                step.type === 'alight' ? 'location_on' : 'arrow_downward'}
+                                                                step.type === 'transfer' ? 'transfer_within_a_station' :
+                                                                    step.type === 'alight' ? 'location_on' : 'arrow_downward'}
                                                     </span>
                                                 </div>
                                                 <div className="flex-1">
@@ -409,15 +410,34 @@ const MobileNavigatePage = ({
 
                             {directions.type === 'WALK_ONLY' && !directions.error && (
                                 <div className="space-y-4">
-                                    {/* Header */}
-                                    <div className="bg-green-50 dark:bg-green-900/10 rounded-2xl p-4 text-center border border-green-100 dark:border-green-900/20">
+                                    {/* Header - Adaptive Color based on Warning */}
+                                    <div className={`rounded-2xl p-4 text-center border ${directions.alternativeBus?.warning
+                                        ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-900/20'
+                                        : 'bg-green-50 dark:bg-green-900/10 border-green-100 dark:border-green-900/20'
+                                        }`}>
                                         <div className="flex items-center justify-center gap-3">
-                                            <div className="size-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
-                                                <span className="material-symbols-outlined text-xl text-green-600 dark:text-green-400">directions_walk</span>
+                                            <div className={`size-10 rounded-full flex items-center justify-center ${directions.alternativeBus?.warning
+                                                ? 'bg-amber-100 dark:bg-amber-900/30'
+                                                : 'bg-green-100 dark:bg-green-900/30'
+                                                }`}>
+                                                <span className={`material-symbols-outlined text-xl ${directions.alternativeBus?.warning
+                                                    ? 'text-amber-600 dark:text-amber-400'
+                                                    : 'text-green-600 dark:text-green-400'
+                                                    }`}>
+                                                    {directions.alternativeBus?.warning ? 'warning' : 'directions_walk'}
+                                                </span>
                                             </div>
                                             <div className="text-left">
-                                                <p className="text-green-800 dark:text-green-300 font-semibold">{directions.message}</p>
-                                                <p className="text-sm text-green-600/80 dark:text-green-400/60">
+                                                <p className={`${directions.alternativeBus?.warning
+                                                    ? 'text-amber-800 dark:text-amber-300'
+                                                    : 'text-green-800 dark:text-green-300'
+                                                    } font-semibold`}>
+                                                    {directions.message}
+                                                </p>
+                                                <p className={`text-sm ${directions.alternativeBus?.warning
+                                                    ? 'text-amber-600/80 dark:text-amber-400/60'
+                                                    : 'text-green-600/80 dark:text-green-400/60'
+                                                    }`}>
                                                     {directions.totalWalkingDistance}m • ~{directions.totalDuration} min
                                                 </p>
                                             </div>
@@ -456,13 +476,46 @@ const MobileNavigatePage = ({
                                         </div>
                                     )}
 
-                                    {/* Alternative bus option */}
-                                    {directions.alternativeBus && (
-                                        <div className="bg-blue-50 dark:bg-blue-900/10 rounded-xl p-3 border border-blue-100 dark:border-blue-900/20">
-                                            <p className="text-xs text-blue-600 dark:text-blue-400 font-medium mb-1">Or take a bus:</p>
-                                            <p className="text-sm text-blue-800 dark:text-blue-300">
-                                                {directions.alternativeBus.routeName} arrives in {directions.alternativeBus.minutesUntil} min
-                                            </p>
+                                    {/* Alternative bus option - Only show if route found */}
+                                    {directions.alternativeBus && directions.alternativeBus.routeName && (
+                                        <div className="bg-blue-50 dark:bg-blue-900/10 rounded-xl p-4 border border-blue-100 dark:border-blue-900/20">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <p className="text-xs text-blue-600 dark:text-blue-400 font-bold uppercase tracking-wider">Next Available Option</p>
+                                                {directions.alternativeBus.minutesUntil > 60 && (
+                                                    <span className="text-[10px] bg-blue-100 dark:bg-blue-900/40 text-blue-600 px-2 py-0.5 rounded-full font-bold">
+                                                        Future Trip
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <p className="text-base text-blue-900 dark:text-blue-100 font-bold">
+                                                        Route {directions.alternativeBus.routeName}
+                                                    </p>
+                                                    {directions.alternativeBus.originName && (
+                                                        <p className="text-xs text-blue-800 dark:text-blue-200 font-medium mt-0.5">
+                                                            From: {directions.alternativeBus.originName}
+                                                        </p>
+                                                    )}
+                                                    <p className="text-sm text-blue-700 dark:text-blue-300 mt-0.5">
+                                                        {directions.alternativeBus.minutesUntil > 120
+                                                            ? `Departs at ${directions.alternativeBus.nextDeparture}`
+                                                            : `Arrives in ${directions.alternativeBus.minutesUntil} min`
+                                                        }
+                                                    </p>
+                                                </div>
+
+                                                {onPlanFutureTrip && (
+                                                    <button
+                                                        onClick={() => onPlanFutureTrip(directions.alternativeBus)}
+                                                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition-colors shadow-sm flex items-center gap-1"
+                                                    >
+                                                        View Details
+                                                        <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                     )}
                                 </div>

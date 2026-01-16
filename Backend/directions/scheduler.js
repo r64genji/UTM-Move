@@ -86,7 +86,10 @@ function getDynamicOffset(routeName, headsign, targetIndex) {
     const maxIdx = Math.min(targetIndex, data.segments.length);
     for (let i = 0; i < maxIdx; i++) {
         if (data.segments[i]) {
-            cumulativeSecs += data.segments[i].totalSecs;
+            // Use drivingSecs + 20s dwell buffer instead of totalSecs (which acts as allocated slot padding)
+            // This provides more realistic travel time estimates for A*
+            const segmentTime = data.segments[i].drivingSecs || data.segments[i].totalSecs;
+            cumulativeSecs += segmentTime + 20;
         }
     }
 
