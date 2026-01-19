@@ -3,7 +3,7 @@ import BottomNavigation from './BottomNavigation';
 import MapComponent from '../Map';
 import { getRouteColor } from '../../constants';
 
-const MobileRouteDetailPage = ({ activeTab, onTabChange, route, stops, onBack, userLocation, routeGeometry, onDirectionSelect, selectedServiceIndex }) => {
+const MobileRouteDetailPage = ({ activeTab, onTabChange, route, routes, stops, onBack, userLocation, routeGeometry, onDirectionSelect, selectedServiceIndex }) => {
     const [selectedDirection, setSelectedDirection] = useState(0);
     const [isExpanded, setIsExpanded] = useState(false);
 
@@ -245,10 +245,14 @@ const MobileRouteDetailPage = ({ activeTab, onTabChange, route, stops, onBack, u
                 <div className="absolute inset-0 z-0">
                     <MapComponent
                         stops={mapStops}
+                        routes={routes}
                         selectedRouteStops={stopSequence}
                         routeGeometry={routeGeometry}
                         routeColor={color}
                         userLocation={userLocation}
+                        showArrivalInfo={true}
+                        selectedRouteName={routeName}
+                        selectedHeadsign={currentTrip?.headsign}
                     />
 
                     {/* Recenter FAB */}

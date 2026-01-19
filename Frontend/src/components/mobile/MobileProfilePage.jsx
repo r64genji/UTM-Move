@@ -1,8 +1,6 @@
-import { useState } from 'react';
 import BottomNavigation from './BottomNavigation';
 
 const MobileContributePage = ({ activeTab, onTabChange }) => {
-    const [showQR, setShowQR] = useState(false);
     const handleOpenLink = (url) => {
         window.open(url, '_blank', 'noopener,noreferrer');
     };
@@ -88,62 +86,6 @@ const MobileContributePage = ({ activeTab, onTabChange }) => {
                             </div>
                         </div>
                     </section>
-
-                    {/* Support Development Section */}
-                    <section>
-                        <h3 className="text-sm font-bold text-[#617589] dark:text-gray-400 uppercase tracking-widest px-1 mb-3">Support Development</h3>
-                        <div className="bg-[#1a2633] rounded-2xl overflow-hidden border border-gray-800 shadow-sm">
-                            <div
-                                onClick={() => setShowQR(true)}
-                                className="flex items-center gap-4 px-5 py-5 hover:bg-gray-800/50 transition-colors cursor-pointer"
-                            >
-                                <div className="size-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                                    <span className="material-symbols-outlined text-primary">qr_code_2</span>
-                                </div>
-                                <div className="flex flex-1 flex-col justify-center">
-                                    <p className="text-base font-bold leading-normal text-white">Donate via Touch 'n Go</p>
-                                    <p className="text-xs text-[#617589] dark:text-gray-400">Scan QR code to support the developer</p>
-                                </div>
-                                <span className="material-symbols-outlined text-blue-500 dark:text-blue-400">favorite</span>
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* TNG QR Modal */}
-                    {showQR && (
-                        <div
-                            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
-                            onClick={() => setShowQR(false)}
-                        >
-                            <div
-                                className="bg-white dark:bg-[#1a2632] rounded-2xl p-6 max-w-sm w-full shadow-2xl"
-                                onClick={(e) => e.stopPropagation()}
-                            >
-                                <div className="flex justify-between items-center mb-4">
-                                    <h3 className="text-lg font-bold text-white">Donate via TNG</h3>
-                                    <button
-                                        className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                                        onClick={() => setShowQR(false)}
-                                    >
-                                        <span className="material-symbols-outlined text-[#617589]">close</span>
-                                    </button>
-                                </div>
-                                <div className="flex flex-col items-center gap-4">
-                                    <img
-                                        src="/tng-qr.jpg"
-                                        alt="Touch 'n Go QR Code"
-                                        className="w-full max-w-[280px] rounded-xl shadow-md"
-                                    />
-                                    <p className="text-sm text-center text-[#617589] dark:text-gray-400">
-                                        Scan with Touch 'n Go, banking apps, or any eWallet to donate
-                                    </p>
-                                    <p className="text-xs text-center text-[#617589] dark:text-gray-500">
-                                        Thank you for your support! 💙
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    )}
 
                     {/* About Section */}
                     <section>

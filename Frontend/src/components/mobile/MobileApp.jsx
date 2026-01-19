@@ -41,9 +41,52 @@ const MobileApp = ({
     const [pinMode, setPinMode] = useState(null); // 'origin' | 'destination' | null
     const [pinnedLocation, setPinnedLocation] = useState(null); // { lat, lon, type }
 
+    // Show all stops on map toggle
+    const [showAllStops, setShowAllStops] = useState(false);
+
     // Saved journey state for restoring when returning to navigate tab
     const savedJourneyRef = useRef(null);
     const previousTabRef = useRef('home');
+
+    // Track if navigation is from popstate (back button) to prevent pushing duplicate history
+    const isPopstateNavigation = useRef(false);
+
+    // Initialize history state on mount
+    useEffect(() => {
+        // Replace current state with initial view
+        window.history.replaceState({ view: 'home', route: null }, '', window.location.href);
+
+        // Handle browser back/forward button
+        const handlePopState = (event) => {
+            if (event.state) {
+                isPopstateNavigation.current = true;
+                const { view, route } = event.state;
+
+                if (view === 'route-detail' && route) {
+                    setSelectedRoute(route);
+                    setMobileView('route-detail');
+                    if (onSelectRoute) {
+                        onSelectRoute(route.name, undefined);
+                    }
+                } else {
+                    setSelectedRoute(null);
+                    setMobileView(view || 'home');
+                    // Clear route geometry when going back to routes or other views
+                    if (onSelectRoute) {
+                        onSelectRoute(null, undefined, true);
+                    }
+                }
+
+                // Reset flag after a short delay
+                setTimeout(() => {
+                    isPopstateNavigation.current = false;
+                }, 100);
+            }
+        };
+
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, [onSelectRoute]);
 
     // Handle map click when in pin mode
     const handleMapClick = (lat, lon, type) => {
@@ -161,6 +204,11 @@ const MobileApp = ({
             onSelectRoute(null, undefined, true);
         }
         previousTabRef.current = currentTab;
+
+        // Push to browser history (skip if this was triggered by back button)
+        if (!isPopstateNavigation.current) {
+            window.history.pushState({ view: tab, route: null }, '', window.location.href);
+        }
     };
 
     const handleSelectRoute = (route, serviceId) => {
@@ -169,6 +217,11 @@ const MobileApp = ({
             onSelectRoute(route.name, serviceId);
         }
         setMobileView('route-detail');
+
+        // Push to browser history with route data
+        if (!isPopstateNavigation.current) {
+            window.history.pushState({ view: 'route-detail', route: route }, '', window.location.href);
+        }
     };
 
     const handlePreviewRoute = (route) => {
@@ -180,20 +233,23 @@ const MobileApp = ({
     };
 
     const handleBackFromRouteDetail = () => {
-        setSelectedRoute(null);
-        if (onSelectRoute) {
-            onSelectRoute(null, undefined, true);
-        }
-        setMobileView('routes');
+        // Use browser history to go back
+        window.history.back();
     };
 
     const handleOpenSearch = (type = 'destination') => {
         setSearchType(type);
         setMobileView('search');
+
+        // Push to browser history
+        if (!isPopstateNavigation.current) {
+            window.history.pushState({ view: 'search', route: null }, '', window.location.href);
+        }
     };
 
     const handleBackFromSearch = () => {
-        setMobileView('navigate');
+        // Use browser history to go back
+        window.history.back();
     };
 
     // Show welcome screen on first visit
@@ -217,7 +273,7 @@ const MobileApp = ({
                     routes={data?.routes || []}
                     userLocation={userLocation}
                     mode={mode}
-                    visibleStops={visibleStops}
+                    visibleStops={showAllStops ? (data?.stops || []) : visibleStops}
                     selectedStopIds={selectedStopIds}
                     routeGeometry={routeGeometry}
                     route_geometries={data?.route_geometries || {}}
@@ -228,6 +284,9 @@ const MobileApp = ({
                     onSelectRoute={handlePreviewRoute}
                     selectedRoute={selectedRoute}
                     onGetDirections={onGetDirections}
+                    showAllStops={showAllStops}
+                    onToggleShowAllStops={() => setShowAllStops(!showAllStops)}
+                    onNavigateToRoute={handleSelectRoute}
                 />
             );
 
@@ -247,6 +306,7 @@ const MobileApp = ({
                     activeTab="routes"
                     onTabChange={handleTabChange}
                     route={selectedRoute}
+                    routes={data?.routes || []}
                     stops={data?.stops || []}
                     onBack={handleBackFromRouteDetail}
                     userLocation={userLocation}

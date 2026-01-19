@@ -15,9 +15,9 @@ const BottomNavigation = ({ activeTab, onTabChange }) => {
                     <button
                         key={tab.id}
                         onClick={() => onTabChange(tab.id)}
-                        className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${activeTab === tab.id
+                        className={`flex flex-col items-center justify-center gap-1 w-full h-full ${activeTab === tab.id
                             ? 'text-primary'
-                            : 'text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary'
+                            : 'text-gray-400 dark:text-gray-500 active:text-primary'
                             }`}
                     >
                         <span

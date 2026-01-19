@@ -20,7 +20,10 @@ const MobileHomePage = ({
     directionsMarkers,
     onSelectRoute,
     selectedRoute,
-    onGetDirections
+    onGetDirections,
+    showAllStops,
+    onToggleShowAllStops,
+    onNavigateToRoute
 }) => {
     // Compute all route geometries when no specific route is selected
     const allRouteGeometries = useMemo(() => {
@@ -97,26 +100,18 @@ const MobileHomePage = ({
         <div className="relative flex h-screen w-full flex-col group/design-root overflow-hidden max-w-md mx-auto border-x border-gray-200 dark:border-gray-800 bg-[#101922]">
             {/* Header - Stays on top */}
             <div className="px-4 pt-6 pb-4 flex flex-col gap-4 bg-[#1e2a35] z-20 shadow-md shrink-0">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h2 className="text-white tracking-tight text-[22px] font-bold leading-tight">
-                            {getGreeting()}, Student
-                        </h2>
-                        <p className="text-gray-400 text-sm font-normal">
-                            Where do you want to go today?
-                        </p>
-                    </div>
-                    <div
-                        className="h-10 w-10 rounded-full bg-gray-700 bg-center bg-cover flex items-center justify-center cursor-pointer active:scale-95 transition-transform"
-                        onClick={() => onTabChange('profile')}
-                    >
-                        <span className="material-symbols-outlined text-gray-300">person</span>
-                    </div>
+                <div>
+                    <h2 className="text-white tracking-tight text-[22px] font-bold leading-tight">
+                        {getGreeting()}, Student
+                    </h2>
+                    <p className="text-gray-400 text-sm font-normal">
+                        Where do you want to go today?
+                    </p>
                 </div>
 
                 {/* Search Bar */}
                 <label className="flex flex-col h-11 w-full" onClick={() => onTabChange('search')}>
-                    <div className="flex w-full flex-1 items-stretch rounded-xl h-full shadow-sm cursor-pointer active:scale-[0.98] transition-transform bg-[#2a3b4d] border border-gray-700 active:border-primary/50">
+                    <div className="flex w-full flex-1 items-stretch rounded-xl h-full shadow-sm cursor-pointer active:scale-[0.98] active:opacity-80 bg-[#2a3b4d] border border-gray-700 active:border-primary/50">
                         <div className="text-gray-400 flex border-none items-center justify-center pl-4 rounded-l-xl border-r-0">
                             <span className="material-symbols-outlined text-[20px]">search</span>
                         </div>
@@ -144,6 +139,8 @@ const MobileHomePage = ({
                         busRouteSegments={mode === 'directions' ? busRouteSegments : []}
                         userLocation={userLocation}
                         directionsMarkers={directionsMarkers}
+                        routes={routes}
+                        onSelectRoute={onNavigateToRoute || onSelectRoute}
                     />
                 </div>
 
@@ -171,7 +168,7 @@ const MobileHomePage = ({
                                     </div>
                                 </div>
                                 <button
-                                    className="flex items-center justify-center h-9 w-9 bg-primary rounded-full hover:bg-blue-600 active:scale-90 transition-all shadow-md active:bg-blue-700"
+                                    className="flex items-center justify-center h-9 w-9 bg-primary rounded-full active:scale-90 active:opacity-80 shadow-md"
                                     onClick={() => {
                                         if (onGetDirections && nearestStop) {
                                             const stopToNavigate = {
@@ -197,10 +194,22 @@ const MobileHomePage = ({
                     {/* Route Filter Pills - Floating below card */}
                     <div className="px-4 mt-2 overflow-x-auto no-scrollbar pointer-events-auto">
                         <div className="flex gap-3 w-max">
+                            {/* Show All Stops Toggle */}
                             <button
-                                className={`flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-full pl-4 pr-4 shadow-md transition-transform active:scale-95 duration-200 ${!selectedRoute
+                                className={`flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-full pl-3 pr-4 shadow-md active:scale-95 active:opacity-80 ${showAllStops
+                                    ? 'bg-emerald-600 text-white shadow-emerald-900/20'
+                                    : 'bg-[#2a3b4d] border border-gray-700 text-gray-200'
+                                    }`}
+                                onClick={() => onToggleShowAllStops && onToggleShowAllStops()}
+                            >
+                                <span className="material-symbols-outlined text-[16px]">{showAllStops ? 'visibility' : 'visibility_off'}</span>
+                                <p className={`text-sm font-medium leading-normal ${showAllStops ? 'text-white' : 'text-gray-200'}`}>Stops</p>
+                            </button>
+
+                            <button
+                                className={`flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-full pl-4 pr-4 shadow-md active:scale-95 active:opacity-80 ${!selectedRoute
                                     ? 'bg-blue-600 text-white shadow-blue-900/20'
-                                    : 'bg-[#2a3b4d] border border-gray-700 text-gray-200 hover:bg-gray-700 active:bg-blue-600'
+                                    : 'bg-[#2a3b4d] border border-gray-700 text-gray-200'
                                     }`}
                                 onClick={() => onSelectRoute && onSelectRoute(null)}
                             >
@@ -213,7 +222,7 @@ const MobileHomePage = ({
                                     <button
                                         key={route.name}
                                         onClick={() => onSelectRoute && onSelectRoute(route)} // Pass FULL route object
-                                        className={`flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-full pl-4 pr-4 shadow-md transition-transform active:scale-95 duration-200 border`}
+                                        className={`flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-full pl-4 pr-4 shadow-md active:scale-95 active:opacity-80 border`}
                                         style={{
                                             backgroundColor: isSelected ? routeColor : '#2a3b4d',
                                             borderColor: isSelected ? routeColor : '#374151',

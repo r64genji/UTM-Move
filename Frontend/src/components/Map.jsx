@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, CircleMarker, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { getRouteColor } from '../constants';
 
 // Fix for default marker icon in React-Leaflet
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -47,6 +48,14 @@ const pinnedDestinationIcon = L.divIcon({
     iconAnchor: [16, 16]
 });
 
+// Custom icon for bus stops
+const busStopIcon = L.divIcon({
+    className: 'bus-stop-marker',
+    html: '<div style="background: #3b82f6; width: 26px; height: 26px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: white;"><span class="material-symbols-outlined" style="font-size: 16px;">directions_bus</span></div>',
+    iconSize: [26, 26],
+    iconAnchor: [13, 13]
+});
+
 import 'leaflet-arrowheads';
 
 // Helper component to handle map click events for pinning locations
@@ -87,6 +96,7 @@ function MapUpdater({ bounds }) {
 
 const MapComponent = ({
     stops,
+    routes = [],                // All routes data for computing which routes serve each stop
     selectedRouteStops,
     routeGeometry,
     routeColor = '#3b82f6',     // Custom color for the explorer route
@@ -100,13 +110,82 @@ const MapComponent = ({
     // Pin location props
     onMapClick = null,          // Callback: (lat, lon, type) => void
     pinnedLocation = null,      // { lat, lon, type: 'origin' | 'destination' }
-    pinMode = null              // 'origin' | 'destination' | null
+    pinMode = null,             // 'origin' | 'destination' | null
+    onSelectRoute = null,        // Callback: (route) => void - for selecting route from stop popup
+    // Arrival info props (for route detail page)
+    showArrivalInfo = false,     // Whether to show next arrival time in popup
+    selectedRouteName = null,    // Currently selected route name for ETA
+    selectedHeadsign = null      // Currently selected headsign for ETA
 }) => {
     // UTM Coordinates as default center
     const defaultCenter = [1.559704, 103.634727];
     const busPolylineRef = React.useRef(null);
     const segmentRefs = React.useRef({});
     const routePolylineRefs = React.useRef({});
+
+    // Helper: Get routes that serve a specific stop
+    const getRoutesForStop = React.useCallback((stopId) => {
+        if (!routes || routes.length === 0) return [];
+        const targetId = String(stopId);
+        return routes.filter(route =>
+            route.services?.some(service =>
+                service.trips?.some(trip =>
+                    trip.stops_sequence?.some(id => String(id) === targetId)
+                )
+            )
+        );
+    }, [routes]);
+
+    // Helper: Get next arrival time for a route at a specific stop
+    const getNextArrival = React.useCallback((stopId, routeName, headsign) => {
+        if (!routes || !routeName) return null;
+
+        const route = routes.find(r => r.name === routeName);
+        if (!route) return null;
+
+        const now = new Date();
+        const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+        const today = days[now.getDay()];
+        const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        const currentMins = now.getHours() * 60 + now.getMinutes();
+
+        // Find active service for today
+        const service = route.services?.find(s => s.days?.includes(today));
+        if (!service) return null;
+
+        // Find the trip matching the headsign (or use first trip)
+        const trip = headsign
+            ? service.trips?.find(t => t.headsign === headsign)
+            : service.trips?.[0];
+        if (!trip) return null;
+
+        // Find stop index in the sequence
+        const stopIndex = trip.stops_sequence?.findIndex(id => String(id) === String(stopId));
+        if (stopIndex === -1 || stopIndex === undefined) return null;
+
+        // Calculate arrival offset for this stop
+        const arrivalOffset = trip.arrival_offsets?.[stopIndex] || (stopIndex * 3);
+
+        // Find next departure time
+        for (const departTime of trip.times || []) {
+            const [h, m] = departTime.split(':').map(Number);
+            const departMins = h * 60 + m;
+            const arrivalMins = departMins + arrivalOffset;
+
+            // Skip Friday prayer break (12:40 - 14:00)
+            if (today === 'friday' && arrivalMins >= 760 && arrivalMins < 840) continue;
+
+            if (arrivalMins >= currentMins) {
+                const arrivalH = Math.floor(arrivalMins / 60) % 24;
+                const arrivalM = arrivalMins % 60;
+                const arrivalTime = `${String(arrivalH).padStart(2, '0')}:${String(arrivalM).padStart(2, '0')}`;
+                const minsUntil = arrivalMins - currentMins;
+                return { time: arrivalTime, minsUntil };
+            }
+        }
+
+        return null;
+    }, [routes]);
 
     // Convert GeoJSON LineString (lon, lat) to Leaflet (lat, lon)
     const polylinePositions = React.useMemo(() => {
@@ -315,12 +394,136 @@ const MapComponent = ({
                 {/* Draw Stops */}
                 {stops.map(stop => {
                     const isSelected = selectedRouteStops && selectedRouteStops.includes(stop.id);
+                    const stopRoutes = getRoutesForStop(stop.id);
 
                     return (
-                        <Marker key={stop.id} position={[stop.lat, stop.lon]}>
-                            <Popup>
-                                <strong>{stop.name}</strong><br />
-                                ID: {stop.id}
+                        <Marker
+                            key={stop.id}
+                            position={[stop.lat, stop.lon]}
+                            icon={busStopIcon}
+                            zIndexOffset={100}
+                        >
+                            <Popup autoPan={false} closeButton={true} className="custom-popup">
+                                <div className="font-display" style={{
+                                    backgroundColor: '#1a2633',
+                                    color: '#e5e7eb',
+                                    padding: '8px 4px',
+                                    borderRadius: '8px',
+                                    minWidth: '160px'
+                                }}>
+                                    <h3 style={{
+                                        margin: '0 0 8px 0',
+                                        fontSize: '14px',
+                                        fontWeight: '700',
+                                        color: '#ffffff',
+                                        lineHeight: '1.2'
+                                    }}>
+                                        {stop.name}
+                                    </h3>
+
+                                    {/* Next Arrival (only when showArrivalInfo is enabled) */}
+                                    {showArrivalInfo && selectedRouteName && (() => {
+                                        const arrival = getNextArrival(stop.id, selectedRouteName, selectedHeadsign);
+                                        if (!arrival) return null;
+                                        return (
+                                            <div style={{
+                                                marginBottom: '8px',
+                                                padding: '6px 8px',
+                                                backgroundColor: 'rgba(34, 197, 94, 0.15)',
+                                                borderRadius: '6px',
+                                                border: '1px solid rgba(34, 197, 94, 0.3)'
+                                            }}>
+                                                <div style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '6px'
+                                                }}>
+                                                    <span style={{
+                                                        backgroundColor: getRouteColor(selectedRouteName),
+                                                        color: '#fff',
+                                                        fontWeight: '700',
+                                                        fontSize: '11px',
+                                                        padding: '2px 8px',
+                                                        borderRadius: '9999px',
+                                                        minWidth: '20px',
+                                                        textAlign: 'center'
+                                                    }}>
+                                                        {selectedRouteName.replace('Route ', '')}
+                                                    </span>
+                                                    <span style={{
+                                                        color: '#22c55e',
+                                                        fontWeight: '700',
+                                                        fontSize: '13px'
+                                                    }}>
+                                                        {arrival.minsUntil <= 1 ? 'Arriving now' : `${arrival.minsUntil} min`}
+                                                    </span>
+                                                    <span style={{
+                                                        color: '#9ca3af',
+                                                        fontSize: '11px',
+                                                        marginLeft: 'auto'
+                                                    }}>
+                                                        @ {arrival.time}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
+
+                                    {/* Transfers / Other Routes */}
+                                    {(() => {
+                                        const transferRoutes = showArrivalInfo && selectedRouteName
+                                            ? stopRoutes.filter(r => r.name !== selectedRouteName)
+                                            : stopRoutes;
+                                        const label = showArrivalInfo && selectedRouteName ? 'TRANSFERS:' : 'BUSES:';
+
+                                        return (
+                                            <div style={{
+                                                display: 'flex',
+                                                alignItems: 'baseline',
+                                                gap: '6px',
+                                                fontSize: '12px'
+                                            }}>
+                                                <span style={{
+                                                    color: '#9ca3af',
+                                                    fontWeight: '500',
+                                                    textTransform: 'uppercase',
+                                                    letterSpacing: '0.05em',
+                                                    fontSize: '10px'
+                                                }}>
+                                                    {label}
+                                                </span>
+                                                {transferRoutes.length > 0 ? (
+                                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                                                        {transferRoutes.map(route => {
+                                                            const routeNameShort = route.name.replace('Route ', '');
+                                                            return (
+                                                                <span
+                                                                    key={route.name}
+                                                                    onClick={() => onSelectRoute && onSelectRoute(route)}
+                                                                    style={{
+                                                                        backgroundColor: 'rgba(30, 64, 175, 0.3)',
+                                                                        border: '1px solid rgba(59, 130, 246, 0.3)',
+                                                                        color: getRouteColor(route.name),
+                                                                        fontWeight: '700',
+                                                                        cursor: 'pointer',
+                                                                        padding: '2px 10px',
+                                                                        borderRadius: '9999px',
+                                                                        fontSize: '11px',
+                                                                        transition: 'all 0.2s'
+                                                                    }}
+                                                                >
+                                                                    {routeNameShort}
+                                                                </span>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                ) : (
+                                                    <span style={{ color: '#6b7280', fontStyle: 'italic' }}>None</span>
+                                                )}
+                                            </div>
+                                        );
+                                    })()}
+                                </div>
                             </Popup>
                         </Marker>
                     );

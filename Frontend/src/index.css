@@ -55,6 +55,15 @@
     padding: 0;
 }
 
+/* Mobile Touch Optimizations - excluding Leaflet elements */
+button:not(.leaflet-control-zoom-in):not(.leaflet-control-zoom-out),
+a:not([class*="leaflet"]),
+[role="button"],
+.cursor-pointer {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
 html,
 body {
     height: 100%;
@@ -341,6 +350,20 @@ body {
     background: #18181b !important;
 }
 
+/* Fix for grid lines/gaps between map tiles */
+.leaflet-tile {
+    outline: 1px solid transparent;
+    -webkit-backface-visibility: hidden;
+    max-width: none !important;
+}
+
+
+
+.leaflet-tile-container {
+    will-change: transform;
+}
+
+
 .leaflet-bar a {
     background-color: var(--surface-dark) !important;
     color: white !important;
@@ -349,6 +372,30 @@ body {
 
 .leaflet-bar a:hover {
     background-color: var(--border-color) !important;
+}
+
+/* Leaflet Custom Popup Dark Theme */
+.custom-popup .leaflet-popup-content-wrapper,
+.custom-popup .leaflet-popup-tip {
+    background: #1a2633 !important;
+    border: 1px solid #374151 !important;
+    color: white !important;
+}
+
+.custom-popup .leaflet-popup-content {
+    margin: 0 !important;
+    line-height: normal !important;
+}
+
+.custom-popup .leaflet-popup-close-button {
+    color: #9ca3af !important;
+    font-size: 16px !important;
+    padding: 8px !important;
+}
+
+.custom-popup .leaflet-popup-close-button:hover {
+    color: white !important;
+    background: transparent !important;
 }
 
 /* Scrollbar */

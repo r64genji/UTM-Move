@@ -83,19 +83,44 @@ function App() {
 
     // Get user's GPS location
     useEffect(() => {
-        if ('geolocation' in navigator) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    setUserLocation({
-                        lat: position.coords.latitude,
-                        lon: position.coords.longitude
-                    });
-                },
-                (error) => {
-                    console.warn('Could not get location:', error);
-                }
-            );
+        if (!('geolocation' in navigator)) {
+            console.warn('Geolocation is not supported by this browser');
+            return;
         }
+
+        // Request permission and watch position for continuous updates
+        const watchId = navigator.geolocation.watchPosition(
+            (position) => {
+                setUserLocation({
+                    lat: position.coords.latitude,
+                    lon: position.coords.longitude
+                });
+            },
+            (error) => {
+                // Detailed error handling for debugging
+                switch (error.code) {
+                    case error.PERMISSION_DENIED:
+                        console.warn('Location permission denied. Please enable location access in your browser settings.');
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        console.warn('Location unavailable. Make sure GPS is enabled.');
+                        break;
+                    case error.TIMEOUT:
+                        console.warn('Location request timed out. Trying again...');
+                        break;
+                    default:
+                        console.warn('Could not get location:', error.message);
+                }
+            },
+            {
+                enableHighAccuracy: true,  // Use GPS on mobile
+                timeout: 10000,            // Wait up to 10 seconds
+                maximumAge: 60000          // Accept cached position up to 1 minute old
+            }
+        );
+
+        // Clean up watch on unmount
+        return () => navigator.geolocation.clearWatch(watchId);
     }, []);
 
     // When route changes, pick default headsign
