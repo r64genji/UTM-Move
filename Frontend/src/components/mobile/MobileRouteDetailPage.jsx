@@ -9,20 +9,95 @@ const MobileRouteDetailPage = ({ activeTab, onTabChange, route, routes, stops, o
 
 
 
-    const routeName = route?.name || 'Route A';
+    const routeName = route?.displayName || route?.name || 'Route A';
     const color = getRouteColor(routeName);
+    const isMergedRouteE = route?.isMerged && route?.name === 'Route E';
+
+    // State for selected variant (for merged Route E)
+    const [selectedVariant, setSelectedVariant] = useState(null);
 
     // Get available trips/directions
     const serviceIdx = (selectedServiceIndex !== undefined && selectedServiceIndex >= 0) ? selectedServiceIndex : 0;
-    const trips = route?.services?.[serviceIdx]?.trips || [];
+
+    // For merged Route E, create unified trips that combine all variants by headsign
+    const unifiedTrips = useMemo(() => {
+        if (!isMergedRouteE || !route?.variants) {
+            return route?.services?.[serviceIdx]?.trips || [];
+        }
+
+        // Group trips by normalized headsign (e.g., "To Cluster (T02)" or "To KDOJ")
+        const headsignMap = new Map();
+
+        route.variants.forEach(variant => {
+            const weekdayService = variant.services?.find(s => s.service_id === 'WEEKDAY');
+            weekdayService?.trips?.forEach(trip => {
+                // Normalize headsign - some variants have slightly different names
+                let normalizedHeadsign = trip.headsign;
+
+                // Get or create entry for this headsign
+                if (!headsignMap.has(normalizedHeadsign)) {
+                    headsignMap.set(normalizedHeadsign, {
+                        headsign: normalizedHeadsign,
+                        stops_sequence: trip.stops_sequence, // Use first variant's stops as default
+                        times: [],
+                        arrival_offsets: trip.arrival_offsets,
+                        mergedTimes: [] // Array of { time, variant, variantLabel, stops_sequence, arrival_offsets }
+                    });
+                }
+
+                const entry = headsignMap.get(normalizedHeadsign);
+                const variantLabel = variant.name.match(/\(([^)]+)\)/)?.[1] || '';
+
+                // Add times with variant info
+                trip.times?.forEach(time => {
+                    entry.mergedTimes.push({
+                        time,
+                        variant: variant.name,
+                        variantLabel,
+                        stops_sequence: trip.stops_sequence,
+                        arrival_offsets: trip.arrival_offsets
+                    });
+                    // Also add to times array for backward compatibility
+                    if (!entry.times.includes(time)) {
+                        entry.times.push(time);
+                    }
+                });
+            });
+        });
+
+        // Sort times and mergedTimes within each headsign and convert to array
+        return Array.from(headsignMap.values()).map(entry => ({
+            ...entry,
+            times: [...entry.times].sort(),
+            mergedTimes: entry.mergedTimes.sort((a, b) => a.time.localeCompare(b.time))
+        }));
+    }, [isMergedRouteE, route, serviceIdx]);
+
+    const trips = isMergedRouteE ? unifiedTrips : (route?.services?.[serviceIdx]?.trips || []);
     const currentTrip = trips[selectedDirection] || trips[0];
     const stopSequence = currentTrip?.stops_sequence || [];
 
-    // Filter stops for map
-    const mapStops = stops.filter(s => stopSequence.includes(s.id));
+    // For merged Route E, find the actual variant route for geometry
+    const activeVariantRoute = useMemo(() => {
+        if (!isMergedRouteE || !selectedVariant) return null;
+        return route.variants?.find(v => v.name === selectedVariant);
+    }, [isMergedRouteE, selectedVariant, route]);
+
+    // Filter stops for map - use variant's stops if available
+    const mapStops = useMemo(() => {
+        if (activeVariantRoute && currentTrip) {
+            const variantService = activeVariantRoute.services?.find(s => s.service_id === 'WEEKDAY');
+            const variantTrip = variantService?.trips?.find(t => t.headsign === currentTrip?.headsign);
+            if (variantTrip?.stops_sequence) {
+                return stops.filter(s => variantTrip.stops_sequence.includes(s.id));
+            }
+        }
+        return stops.filter(s => stopSequence.includes(s.id));
+    }, [activeVariantRoute, stopSequence, stops, currentTrip]);
 
     const handleDirectionChange = (idx) => {
         setSelectedDirection(idx);
+        setSelectedVariant(null); // Reset variant when direction changes
         if (onDirectionSelect && trips[idx]) {
             onDirectionSelect(routeName, trips[idx].headsign);
         }
@@ -47,32 +122,82 @@ const MobileRouteDetailPage = ({ activeTab, onTabChange, route, routes, stops, o
     useEffect(() => {
         setSelectedTimeStr(null);
         setOpenSection(null);
-    }, [currentTrip]);
+        // Reset variant when direction changes
+        if (isMergedRouteE) {
+            setSelectedVariant(null);
+        }
+    }, [currentTrip, isMergedRouteE]);
 
-    // Group times logic - now de-duplicates and sorts for robustness
+    // For merged Route E: Set default variant on initial load
+    useEffect(() => {
+        if (isMergedRouteE && !selectedVariant && currentTrip?.mergedTimes?.length > 0) {
+            // Find the next upcoming departure's variant
+            const now = new Date();
+            const currentMins = now.getHours() * 60 + now.getMinutes();
+            const currentTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+            // Find next upcoming time
+            const nextDeparture = currentTrip.mergedTimes.find(entry => entry.time >= currentTimeStr);
+            if (nextDeparture) {
+                setSelectedVariant(nextDeparture.variant);
+            } else if (currentTrip.mergedTimes[0]) {
+                // If no upcoming, use first variant
+                setSelectedVariant(currentTrip.mergedTimes[0].variant);
+            }
+        }
+    }, [isMergedRouteE, selectedVariant, currentTrip]);
+
+    // For merged Route E: Update geometry when a variant is selected
+    useEffect(() => {
+        if (isMergedRouteE && selectedVariant && currentTrip && onDirectionSelect) {
+            // Use the variant's route name for geometry lookup (e.g., "Route E(JA)")
+            onDirectionSelect(selectedVariant, currentTrip.headsign);
+        }
+    }, [selectedVariant, currentTrip, isMergedRouteE, onDirectionSelect]);
+
+    // Group times logic - handles merged Route E with variant labels
     const groupedTimes = useMemo(() => {
-        if (!currentTrip || !currentTrip.times) return { morning: [], afternoon: [], evening: [] };
-
         const groups = { morning: [], afternoon: [], evening: [] };
         const now = new Date();
         const isFriday = now.getDay() === 5;
 
-        // Use Set to remove duplicates and sort to ensure grid order is correct
-        const uniqueSortedTimes = [...new Set(currentTrip.times)].sort((a, b) => a.localeCompare(b));
+        // For merged Route E, use mergedTimes which has variant info
+        if (isMergedRouteE && currentTrip?.mergedTimes) {
+            currentTrip.mergedTimes.forEach(entry => {
+                const [h, m] = entry.time.split(':').map(Number);
+                const totalMins = h * 60 + m;
+                if (isFriday && totalMins >= 760 && totalMins < 840) return;
 
-        uniqueSortedTimes.forEach(t => {
-            const [h, m] = t.split(':').map(Number);
-            const totalMins = h * 60 + m;
+                const timeEntry = {
+                    time: entry.time,
+                    variant: entry.variant,
+                    variantLabel: entry.variantLabel,
+                    stops_sequence: entry.stops_sequence,
+                    arrival_offsets: entry.arrival_offsets
+                };
+                if (h < 12) groups.morning.push(timeEntry);
+                else if (h < 18) groups.afternoon.push(timeEntry);
+                else groups.evening.push(timeEntry);
+            });
+        } else if (!currentTrip || !currentTrip.times) {
+            return groups;
+        } else {
+            // Standard route - no variant labels
+            const uniqueSortedTimes = [...new Set(currentTrip.times)].sort();
+            uniqueSortedTimes.forEach(t => {
+                const [h, m] = t.split(':').map(Number);
+                const totalMins = h * 60 + m;
+                if (isFriday && totalMins >= 760 && totalMins < 840) return;
 
-            if (isFriday && totalMins >= 760 && totalMins < 840) return;
-
-            if (h < 12) groups.morning.push(t);
-            else if (h < 18) groups.afternoon.push(t);
-            else groups.evening.push(t);
-        });
+                const timeEntry = { time: t, variant: null, variantLabel: null };
+                if (h < 12) groups.morning.push(timeEntry);
+                else if (h < 18) groups.afternoon.push(timeEntry);
+                else groups.evening.push(timeEntry);
+            });
+        }
 
         return groups;
-    }, [currentTrip]);
+    }, [currentTrip, isMergedRouteE]);
 
     // Active Status Logic
     const routeStatus = useMemo(() => {
@@ -129,7 +254,10 @@ const MobileRouteDetailPage = ({ activeTab, onTabChange, route, routes, stops, o
             const now = new Date();
             const currentTotalMins = now.getHours() * 60 + now.getMinutes();
 
-            const allValidTimes = [...groupedTimes.morning, ...groupedTimes.afternoon, ...groupedTimes.evening].sort();
+            // Extract time strings from time entries (which may be objects or strings)
+            const allValidTimes = [...groupedTimes.morning, ...groupedTimes.afternoon, ...groupedTimes.evening]
+                .map(entry => typeof entry === 'string' ? entry : entry.time)
+                .sort();
             if (allValidTimes.length === 0) return [];
 
             startTimeStr = allValidTimes[0];
@@ -197,22 +325,38 @@ const MobileRouteDetailPage = ({ activeTab, onTabChange, route, routes, stops, o
                     </span>
                 </button>
 
-                <div className={`overflow-hidden transition-[max-height] duration-300 ease-in-out ${isOpen ? 'max-h-60' : 'max-h-0'}`}>
-                    <div className="grid grid-cols-4 gap-2 px-5 pb-4 pt-1">
-                        {times.map((time) => (
-                            <button
-                                key={time}
-                                onClick={() => setSelectedTimeStr(time)}
-                                className={`px-2 py-1.5 rounded-lg text-xs font-bold transition-all ${selectedTimeStr === time
-                                    ? 'bg-primary text-white shadow-md'
-                                    : (scheduleItems[0]?.calculatedTime === time && !selectedTimeStr)
-                                        ? 'bg-blue-100 dark:bg-blue-900/30 text-primary dark:text-blue-300 border border-blue-200 dark:border-blue-800'
-                                        : 'bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                                    }`}
-                            >
-                                {time}
-                            </button>
-                        ))}
+                <div className={`overflow-hidden transition-[max-height] duration-300 ease-in-out ${isOpen ? 'max-h-96' : 'max-h-0'}`}>
+                    <div className="grid grid-cols-3 gap-2 px-5 pb-4 pt-1">
+                        {times.map((entry, idx) => {
+                            const timeStr = typeof entry === 'string' ? entry : entry.time;
+                            const variantLabel = typeof entry === 'object' ? entry.variantLabel : null;
+                            const variantName = typeof entry === 'object' ? entry.variant : null;
+                            const isSelected = selectedTimeStr === timeStr && selectedVariant === variantName;
+                            const isDefault = scheduleItems[0]?.calculatedTime === timeStr && !selectedTimeStr;
+
+                            return (
+                                <button
+                                    key={`${timeStr}-${variantLabel || idx}`}
+                                    onClick={() => {
+                                        setSelectedTimeStr(timeStr);
+                                        if (variantName) setSelectedVariant(variantName);
+                                    }}
+                                    className={`px-2 py-1.5 rounded-lg text-xs font-bold transition-all flex flex-col items-center gap-0.5 ${isSelected
+                                        ? 'bg-primary text-white shadow-md'
+                                        : isDefault
+                                            ? 'bg-blue-100 dark:bg-blue-900/30 text-primary dark:text-blue-300 border border-blue-200 dark:border-blue-800'
+                                            : 'bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                                        }`}
+                                >
+                                    <span>{timeStr}</span>
+                                    {variantLabel && (
+                                        <span className={`text-[9px] font-medium ${isSelected ? 'text-blue-100' : 'text-gray-400'}`}>
+                                            via {variantLabel}
+                                        </span>
+                                    )}
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
             </div>

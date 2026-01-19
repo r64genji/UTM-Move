@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import BottomNavigation from './BottomNavigation';
 import { fetchNextBus } from '../../services/api';
 import { getRouteColor } from '../../constants';
@@ -32,6 +32,80 @@ const MobileRoutesPage = ({ activeTab, onTabChange, routes, onSelectRoute }) => 
         const interval = setInterval(loadNextBuses, 60000); // Update every minute
         return () => clearInterval(interval);
     }, [routes]);
+
+    // Merge weekday Route E variants into a single "Route E" entry
+    const displayRoutes = useMemo(() => {
+        if (!routes || routes.length === 0) return [];
+
+        let result = [];
+
+        // For WEEKEND, just rename E(N24) to "Route E"
+        if (selectedService === 'WEEKEND') {
+            result = routes.map(r => {
+                if (r.name === 'Route E(N24)') {
+                    return { ...r, displayName: 'Route E' };
+                }
+                return { ...r, displayName: r.name };
+            });
+        } else {
+            // For WEEKDAY, merge E(JA), E(CP), E(N24) into single "Route E"
+            const routeEVariants = routes.filter(r =>
+                r.name.startsWith('Route E(') &&
+                r.services?.some(s => s.service_id === 'WEEKDAY')
+            );
+            const otherRoutes = routes.filter(r => !r.name.startsWith('Route E('));
+
+            if (routeEVariants.length > 0) {
+                // Create merged Route E with all variants' data
+                const mergedRouteE = {
+                    name: 'Route E',
+                    displayName: 'Route E',
+                    isMerged: true,
+                    variants: routeEVariants,
+                    services: [{
+                        service_id: 'WEEKDAY',
+                        days: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'],
+                        trips: routeEVariants.flatMap(variant => {
+                            const weekdayService = variant.services?.find(s => s.service_id === 'WEEKDAY');
+                            return (weekdayService?.trips || []).map(trip => ({
+                                ...trip,
+                                variantName: variant.name,
+                                variantLabel: variant.name.match(/\(([^)]+)\)/)?.[1] || ''
+                            }));
+                        })
+                    }]
+                };
+                result = [...otherRoutes.map(r => ({ ...r, displayName: r.name })), mergedRouteE];
+            } else {
+                result = routes.map(r => ({ ...r, displayName: r.name }));
+            }
+        }
+
+        // Sort routes alphabetically by displayName
+        return result.sort((a, b) => a.displayName.localeCompare(b.displayName));
+    }, [routes, selectedService]);
+
+    // Get next bus time across all E variants for merged Route E
+    const getNextBusForMergedE = useMemo(() => {
+        if (selectedService !== 'WEEKDAY') return null;
+
+        const eVariantNames = ['Route E(JA)', 'Route E(CP)', 'Route E(N24)'];
+        let earliest = null;
+        let earliestVariant = null;
+
+        for (const name of eVariantNames) {
+            const data = nextBusData[name];
+            if (data?.nextBus?.time) {
+                if (!earliest || data.nextBus.time < earliest) {
+                    earliest = data.nextBus.time;
+                    earliestVariant = name.match(/\(([^)]+)\)/)?.[1] || '';
+                }
+            }
+        }
+
+        return earliest ? { time: earliest, variant: earliestVariant } : null;
+    }, [nextBusData, selectedService]);
+
 
     return (
         <div className="relative flex h-full min-h-screen w-full flex-col overflow-x-hidden max-w-md mx-auto bg-[#101922] shadow-xl">
@@ -76,15 +150,23 @@ const MobileRoutesPage = ({ activeTab, onTabChange, routes, onSelectRoute }) => 
             {/* Routes List */}
             <div className="flex-1 overflow-y-auto bg-[#101922] pb-24">
                 <div className="px-4 py-4 space-y-3">
-                    {routes && routes.length > 0 ? (
-                        routes
+                    {displayRoutes && displayRoutes.length > 0 ? (
+                        displayRoutes
                             .filter(route => route.services?.some(s => s.service_id === selectedService))
                             .map((route) => {
-                                const color = getRouteColor(route.name);
+                                const color = getRouteColor(route.displayName || route.name);
                                 const activeService = route.services?.find(s => s.service_id === selectedService);
-                                const routeInfo = nextBusData[route.name];
-                                const nextTime = routeInfo?.next_trip?.time;
-                                const headsign = routeInfo?.next_trip?.headsign || activeService?.trips?.[0]?.headsign || 'View Schedule';
+
+                                // For merged Route E, use the combined next bus data
+                                let nextTime, headsign;
+                                if (route.isMerged && route.name === 'Route E') {
+                                    nextTime = getNextBusForMergedE?.time;
+                                    headsign = getNextBusForMergedE ? `via ${getNextBusForMergedE.variant}` : 'View Schedule';
+                                } else {
+                                    const routeInfo = nextBusData[route.name];
+                                    nextTime = routeInfo?.nextBus?.time;
+                                    headsign = routeInfo?.nextBus?.headsign || activeService?.trips?.[0]?.headsign || 'View Schedule';
+                                }
 
                                 // Calculate Status
                                 const now = new Date();
@@ -163,11 +245,8 @@ const MobileRoutesPage = ({ activeTab, onTabChange, routes, onSelectRoute }) => 
                                     statusColor = 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200';
                                 }
 
-                                // Format Display Name
-                                let displayName = route.name;
-                                if (selectedService === 'WEEKEND' && route.name === 'Route E(N24)') {
-                                    displayName = 'Route E';
-                                }
+                                // Use displayName from merged routes logic
+                                const displayName = route.displayName || route.name;
 
                                 return (
                                     <div
