@@ -6,9 +6,8 @@ const axios = require('axios');
 const { haversineDistance } = require('../utils/geo');
 const { getIndexes, getScheduleData, getCampusLocations } = require('./dataLoader');
 
-// GraphHopper Local API (self-hosted)
-// Note: Matrix API requires --web.max_matrix_size config in GraphHopper
-const GRAPHHOPPER_BASE_URL = 'http://192.168.1.119:8989';
+// GraphHopper Local API - configured via environment variable
+const GRAPHHOPPER_BASE_URL = process.env.GRAPHHOPPER_URL || 'http://localhost:8989';
 
 // LRU Cache for nearest stops (key: "lat,lon" → stops array)
 const nearestStopsCache = new Map();

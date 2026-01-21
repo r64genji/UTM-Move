@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+
+# Environment files with secrets
+.env
+.env.local
+.env.production
+
+# Debug and log files
+*.log
+debug_output.txt
+
+# Test coverage
+coverage/
+
+# IDE
+.vscode/
+.idea/

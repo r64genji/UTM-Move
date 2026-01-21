@@ -56,3 +56,26 @@ export const fetchDirections = async (params) => {
         return { error: 'Failed to get directions. Please try again.' };
     }
 };
+
+export const submitReport = async (type, details) => {
+    try {
+        const response = await axios.post(`${API_BASE_URL}/report`, {
+            type,
+            details
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error submitting report:', error);
+        throw error;
+    }
+};
+
+export const fetchReports = async () => {
+    try {
+        const response = await axios.get(`${API_BASE_URL}/reports`);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching reports:', error);
+        return [];
+    }
+};

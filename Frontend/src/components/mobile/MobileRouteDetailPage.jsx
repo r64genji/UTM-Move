@@ -1,11 +1,13 @@
 import { useState, useMemo, useEffect } from 'react';
 import BottomNavigation from './BottomNavigation';
 import MapComponent from '../Map';
+import ReportDialog from '../ReportDialog';
 import { getRouteColor } from '../../constants';
 
 const MobileRouteDetailPage = ({ activeTab, onTabChange, route, routes, stops, onBack, userLocation, routeGeometry, onDirectionSelect, selectedServiceIndex }) => {
     const [selectedDirection, setSelectedDirection] = useState(0);
     const [isExpanded, setIsExpanded] = useState(false);
+    const [showReportDialog, setShowReportDialog] = useState(false);
 
 
 
@@ -162,7 +164,49 @@ const MobileRouteDetailPage = ({ activeTab, onTabChange, route, routes, stops, o
         const isFriday = now.getDay() === 5;
 
         // For merged Route E, use mergedTimes which has variant info
-        if (isMergedRouteE && currentTrip?.mergedTimes) {
+        if (route?.name === 'Route J') {
+            route.services.forEach(service => {
+                const trip = service.trips.find(t => t.headsign === currentTrip?.headsign);
+                if (trip && trip.times) {
+                    trip.times.forEach(t => {
+                        const [h, m] = t.split(':').map(Number);
+                        const totalMins = h * 60 + m;
+                        if (isFriday && totalMins >= 760 && totalMins < 840) return;
+
+                        // Check if time already exists to avoid duplicates (though rare for distinct services)
+                        const exists = groups.morning.concat(groups.afternoon, groups.evening)
+                            .some(existing => existing.time === t);
+
+                        // User requested to show all, but we should probably avoid exact duplicates if they overlap
+                        // But here they are likely distinct times.
+
+                        const label = service.service_id === 'TUESDAY' ? 'Tuesday Only' : 'Weekday';
+
+                        const timeEntry = {
+                            time: t,
+                            variant: service.service_id,
+                            variantLabel: label
+                        };
+
+                        if (!exists) {
+                            if (h < 12) groups.morning.push(timeEntry);
+                            else if (h < 18) groups.afternoon.push(timeEntry);
+                            else groups.evening.push(timeEntry);
+                        }
+                    });
+                }
+            });
+
+            // Sort groups
+            ['morning', 'afternoon', 'evening'].forEach(key => {
+                groups[key].sort((a, b) => {
+                    const [h1, m1] = a.time.split(':').map(Number);
+                    const [h2, m2] = b.time.split(':').map(Number);
+                    return (h1 * 60 + m1) - (h2 * 60 + m2);
+                });
+            });
+
+        } else if (isMergedRouteE && currentTrip?.mergedTimes) {
             currentTrip.mergedTimes.forEach(entry => {
                 const [h, m] = entry.time.split(':').map(Number);
                 const totalMins = h * 60 + m;
@@ -222,15 +266,26 @@ const MobileRouteDetailPage = ({ activeTab, onTabChange, route, routes, stops, o
             return { status: 'Friday Prayer Break', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200' };
         }
 
-        if (currentTrip.times && currentTrip.times.length > 0) {
-            const times = currentTrip.times.map(t => {
+        let timesToCheck = currentTrip.times;
+
+        // For Route J (or merged Route E), use the merged times from groupedTimes to calculate status
+        if ((route?.name === 'Route J' || isMergedRouteE) && groupedTimes) {
+            const allMergedTimes = [...groupedTimes.morning, ...groupedTimes.afternoon, ...groupedTimes.evening]
+                .map(t => typeof t === 'string' ? t : t.time);
+            if (allMergedTimes.length > 0) {
+                timesToCheck = allMergedTimes;
+            }
+        }
+
+        if (timesToCheck && timesToCheck.length > 0) {
+            const times = timesToCheck.map(t => {
                 const [h, m] = t.split(':').map(Number);
                 return h * 60 + m;
             }).sort((a, b) => a - b);
 
             const firstBus = times[0];
             const currentTimeStr = `${String(currentHours).padStart(2, '0')}:${String(currentMinutes).padStart(2, '0')}`;
-            const hasRemainingTrips = currentTrip.times.some(time => time > currentTimeStr);
+            const hasRemainingTrips = timesToCheck.some(time => time > currentTimeStr);
 
             if (currentTotalMins < firstBus) {
                 return { status: 'Starting Soon', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200' };
@@ -351,7 +406,7 @@ const MobileRouteDetailPage = ({ activeTab, onTabChange, route, routes, stops, o
                                     <span>{timeStr}</span>
                                     {variantLabel && (
                                         <span className={`text-[9px] font-medium ${isSelected ? 'text-blue-100' : 'text-gray-400'}`}>
-                                            via {variantLabel}
+                                            {variantLabel === 'Tuesday Only' || variantLabel === 'Weekday' ? variantLabel : `via ${variantLabel}`}
                                         </span>
                                     )}
                                 </button>
@@ -376,12 +431,23 @@ const MobileRouteDetailPage = ({ activeTab, onTabChange, route, routes, stops, o
                 <h2 className="text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center">
                     {routeName}
                 </h2>
-                <div className="flex w-12 items-center justify-end">
-                    <button className="flex size-12 cursor-pointer items-center justify-center rounded-full text-white hover:bg-gray-800 transition-colors">
-                        <span className="material-symbols-outlined">favorite_border</span>
+                <div className="flex items-center justify-end gap-1">
+                    <button
+                        onClick={() => setShowReportDialog(true)}
+                        className="flex size-10 cursor-pointer items-center justify-center rounded-full text-white hover:bg-gray-800 transition-colors"
+                        title="Report Issue"
+                    >
+                        <span className="material-symbols-outlined text-orange-400">report_problem</span>
                     </button>
                 </div>
             </header>
+
+            <ReportDialog
+                isOpen={showReportDialog}
+                onClose={() => setShowReportDialog(false)}
+                defaultType="route_fix"
+                defaultDetails={`Issue with ${routeName}: `}
+            />
 
             {/* Content Container */}
             <main className="flex-1 relative overflow-hidden h-full">

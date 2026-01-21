@@ -5,8 +5,8 @@
 
 const axios = require('axios');
 
-// GraphHopper Local API (self-hosted)
-const GRAPHHOPPER_BASE_URL = 'http://192.168.1.119:8989';
+// GraphHopper Local API - configured via environment variable
+const GRAPHHOPPER_BASE_URL = process.env.GRAPHHOPPER_URL || 'http://localhost:8989';
 
 // Walking time cache to speed up A* pathfinding
 const walkingTimeCache = new Map();

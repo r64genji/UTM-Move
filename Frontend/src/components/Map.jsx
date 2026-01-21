@@ -140,51 +140,64 @@ const MapComponent = ({
     const getNextArrival = React.useCallback((stopId, routeName, headsign) => {
         if (!routes || !routeName) return null;
 
-        const route = routes.find(r => r.name === routeName);
-        if (!route) return null;
-
         const now = new Date();
         const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
         const today = days[now.getDay()];
-        const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
         const currentMins = now.getHours() * 60 + now.getMinutes();
 
-        // Find active service for today
-        const service = route.services?.find(s => s.days?.includes(today));
-        if (!service) return null;
+        // For Route E, check all variants (E(JA), E(CP), E(N24))
+        const routesToCheck = routeName === 'Route E'
+            ? routes.filter(r => r.name.startsWith('Route E'))
+            : [routes.find(r => r.name === routeName)].filter(Boolean);
 
-        // Find the trip matching the headsign (or use first trip)
-        const trip = headsign
-            ? service.trips?.find(t => t.headsign === headsign)
-            : service.trips?.[0];
-        if (!trip) return null;
+        if (routesToCheck.length === 0) return null;
 
-        // Find stop index in the sequence
-        const stopIndex = trip.stops_sequence?.findIndex(id => String(id) === String(stopId));
-        if (stopIndex === -1 || stopIndex === undefined) return null;
+        let earliestArrival = null;
 
-        // Calculate arrival offset for this stop
-        const arrivalOffset = trip.arrival_offsets?.[stopIndex] || (stopIndex * 3);
+        for (const route of routesToCheck) {
+            // Find active service for today
+            const service = route.services?.find(s => s.days?.includes(today));
+            if (!service) continue;
 
-        // Find next departure time
-        for (const departTime of trip.times || []) {
-            const [h, m] = departTime.split(':').map(Number);
-            const departMins = h * 60 + m;
-            const arrivalMins = departMins + arrivalOffset;
+            // Find trips - if headsign specified, filter to that headsign
+            const tripsToCheck = headsign
+                ? service.trips?.filter(t => t.headsign === headsign)
+                : service.trips || [];
 
-            // Skip Friday prayer break (12:40 - 14:00)
-            if (today === 'friday' && arrivalMins >= 760 && arrivalMins < 840) continue;
+            for (const trip of tripsToCheck) {
+                // Find stop index in the sequence
+                const stopIndex = trip.stops_sequence?.findIndex(id => String(id) === String(stopId));
+                if (stopIndex === -1 || stopIndex === undefined) continue;
 
-            if (arrivalMins >= currentMins) {
-                const arrivalH = Math.floor(arrivalMins / 60) % 24;
-                const arrivalM = arrivalMins % 60;
-                const arrivalTime = `${String(arrivalH).padStart(2, '0')}:${String(arrivalM).padStart(2, '0')}`;
-                const minsUntil = arrivalMins - currentMins;
-                return { time: arrivalTime, minsUntil };
+                // Calculate arrival offset for this stop
+                const arrivalOffset = trip.arrival_offsets?.[stopIndex] || (stopIndex * 3);
+
+                // Find next departure time
+                for (const departTime of trip.times || []) {
+                    const [h, m] = departTime.split(':').map(Number);
+                    const departMins = h * 60 + m;
+                    const arrivalMins = departMins + arrivalOffset;
+
+                    // Skip Friday prayer break (12:40 - 14:00)
+                    if (today === 'friday' && arrivalMins >= 760 && arrivalMins < 840) continue;
+
+                    if (arrivalMins >= currentMins) {
+                        if (!earliestArrival || arrivalMins < earliestArrival.arrivalMins) {
+                            const arrivalH = Math.floor(arrivalMins / 60) % 24;
+                            const arrivalM = arrivalMins % 60;
+                            earliestArrival = {
+                                time: `${String(arrivalH).padStart(2, '0')}:${String(arrivalM).padStart(2, '0')}`,
+                                minsUntil: arrivalMins - currentMins,
+                                arrivalMins
+                            };
+                        }
+                        break; // Found next for this trip, check other routes
+                    }
+                }
             }
         }
 
-        return null;
+        return earliestArrival;
     }, [routes]);
 
     // Convert GeoJSON LineString (lon, lat) to Leaflet (lat, lon)
@@ -476,6 +489,24 @@ const MapComponent = ({
                                             : stopRoutes;
                                         const label = showArrivalInfo && selectedRouteName ? 'TRANSFERS:' : 'BUSES:';
 
+                                        // Consolidate Route E variants into single "E" entry
+                                        const consolidatedRoutes = [];
+                                        const seenBaseRoutes = new Set();
+
+                                        transferRoutes.forEach(route => {
+                                            // Extract base route name (e.g., "Route E" from "Route E(JA)")
+                                            const baseName = route.name.replace(/\([^)]+\)/g, '').trim();
+
+                                            if (!seenBaseRoutes.has(baseName)) {
+                                                seenBaseRoutes.add(baseName);
+                                                consolidatedRoutes.push({
+                                                    ...route,
+                                                    displayName: baseName,
+                                                    originalName: route.name
+                                                });
+                                            }
+                                        });
+
                                         return (
                                             <div style={{
                                                 display: 'flex',
@@ -492,18 +523,18 @@ const MapComponent = ({
                                                 }}>
                                                     {label}
                                                 </span>
-                                                {transferRoutes.length > 0 ? (
+                                                {consolidatedRoutes.length > 0 ? (
                                                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                                                        {transferRoutes.map(route => {
-                                                            const routeNameShort = route.name.replace('Route ', '');
+                                                        {consolidatedRoutes.map(route => {
+                                                            const routeNameShort = route.displayName.replace('Route ', '');
                                                             return (
                                                                 <span
-                                                                    key={route.name}
+                                                                    key={route.displayName}
                                                                     onClick={() => onSelectRoute && onSelectRoute(route)}
                                                                     style={{
                                                                         backgroundColor: 'rgba(30, 64, 175, 0.3)',
                                                                         border: '1px solid rgba(59, 130, 246, 0.3)',
-                                                                        color: getRouteColor(route.name),
+                                                                        color: getRouteColor(route.displayName),
                                                                         fontWeight: '700',
                                                                         cursor: 'pointer',
                                                                         padding: '2px 10px',

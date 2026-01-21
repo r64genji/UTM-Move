@@ -12,6 +12,7 @@ import SearchBar from './components/SearchBar';
 import DirectionsPanel from './components/DirectionsPanel';
 import MobileApp from './components/mobile/MobileApp';
 import DevPanel from './components/DevPanel';
+import AdminDashboard from './components/AdminDashboard';
 
 // Helper to safely get route from data
 const findRoute = (data, name) => {
@@ -20,6 +21,11 @@ const findRoute = (data, name) => {
 };
 
 function App() {
+    // Check for admin dashboard
+    if (new URLSearchParams(window.location.search).has('admin')) {
+        return <AdminDashboard />;
+    }
+
     const [data, setData] = useState({ stops: [], routes: [], locations: [], route_geometries: {} });
     const [selectedRouteName, setSelectedRouteName] = useState(null);
     const [selectedHeadsign, setSelectedHeadsign] = useState(null);

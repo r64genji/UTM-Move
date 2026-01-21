@@ -233,8 +233,12 @@ const MobileApp = ({
     };
 
     const handleBackFromRouteDetail = () => {
-        // Use browser history to go back
-        window.history.back();
+        // Explicitly go to routes list (safer than history.back() which might skip to home)
+        setMobileView('routes');
+        setSelectedRoute(null);
+        if (onSelectRoute) {
+            onSelectRoute(null, undefined, true);
+        }
     };
 
     const handleOpenSearch = (type = 'destination') => {

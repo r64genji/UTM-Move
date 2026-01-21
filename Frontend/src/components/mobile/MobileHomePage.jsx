@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import BottomNavigation from './BottomNavigation';
 import MapComponent from '../Map';
 import { getRouteColor } from '../../constants';
+import { fetchNextBus } from '../../services/api';
 
 const MobileHomePage = ({
     activeTab,
@@ -96,6 +97,58 @@ const MobileHomePage = ({
         return 'Good Evening';
     };
 
+    // Fetch next arrivals for nearest stop
+    const [nearestArrivals, setNearestArrivals] = useState([]);
+
+    useEffect(() => {
+        let isMounted = true;
+
+        const getArrivals = async () => {
+            if (!nearestStop || !routesAtStop || routesAtStop.length === 0) {
+                if (isMounted) setNearestArrivals([]);
+                return;
+            }
+
+            const now = new Date();
+            const timeStr = now.toTimeString().slice(0, 5);
+            const routesToCheck = routesAtStop.map(r => r.name);
+
+            try {
+                const promises = routesToCheck.map(routeName =>
+                    fetchNextBus(routeName, timeStr, nearestStop.id)
+                );
+
+                const results = await Promise.all(promises);
+
+                let allUpcoming = [];
+                results.forEach(res => {
+                    if (res && res.upcoming && Array.isArray(res.upcoming)) {
+                        allUpcoming = [...allUpcoming, ...res.upcoming];
+                    } else if (res && res.nextBus && res.nextBus.remaining !== undefined) {
+                        allUpcoming.push(res.nextBus);
+                    }
+                });
+
+                // Sort by remaining time
+                allUpcoming.sort((a, b) => a.remaining - b.remaining);
+
+                if (isMounted) {
+                    setNearestArrivals(allUpcoming);
+                }
+            } catch (err) {
+                console.error("Failed to fetch nearest stop arrivals", err);
+            }
+        };
+
+        getArrivals();
+
+        const interval = setInterval(getArrivals, 60000);
+        return () => {
+            isMounted = false;
+            clearInterval(interval);
+        };
+    }, [nearestStop, routesAtStop]);
+
     return (
         <div className="relative flex h-screen w-full flex-col group/design-root overflow-hidden max-w-md mx-auto border-x border-gray-200 dark:border-gray-800 bg-[#101922]">
             {/* Header - Stays on top */}
@@ -162,9 +215,44 @@ const MobileHomePage = ({
                                         <h4 className="text-white text-base font-bold leading-tight truncate">
                                             {nearestStop ? nearestStop.name : 'Centre Point'}
                                         </h4>
-                                        <p className="text-gray-400 text-[11px] font-medium">
-                                            {nearestStop?.distance ? `${Math.round(nearestStop.distance)}m` : '150m'} • ~{nearestStop?.distance ? Math.round(nearestStop.distance / 80) : '2'} min walk
-                                        </p>
+                                        <div className="mt-1 flex flex-col gap-0.5">
+                                            {nearestArrivals && nearestArrivals.length > 0 ? (
+                                                // Filter to show only unique routes (earliest arrival per BASE route name)
+                                                // Consolidate "Route E(N24)" and "Route E(JA)" into just "E"
+                                                nearestArrivals
+                                                    .filter((arrival, index, self) => {
+                                                        const getBaseName = (name) => name.replace(/\(.*\)/, '').trim();
+                                                        const currentBase = getBaseName(arrival.route);
+                                                        // Find first occurrence of this base name
+                                                        const firstIndex = self.findIndex(t => getBaseName(t.route) === currentBase);
+                                                        return index === firstIndex;
+                                                    })
+                                                    .slice(0, 3)
+                                                    .map((arrival, idx) => {
+                                                        const routeName = arrival.route.replace('Route ', '').replace(/\(.*\)/, '').trim();
+                                                        const routeColor = getRouteColor(arrival.route);
+                                                        return (
+                                                            <p key={idx} className="text-emerald-400 font-bold text-xs flex items-center">
+                                                                <span
+                                                                    className="px-1.5 py-0.5 rounded text-[10px] mr-1.5 leading-none shrink-0 shadow-sm border"
+                                                                    style={{
+                                                                        backgroundColor: `${routeColor}20`, // 12% opacity
+                                                                        borderColor: `${routeColor}40`,     // 25% opacity border
+                                                                        color: routeColor
+                                                                    }}
+                                                                >
+                                                                    {routeName}
+                                                                </span>
+                                                                <span>: {arrival.remaining} min</span>
+                                                            </p>
+                                                        );
+                                                    })
+                                            ) : (
+                                                <p className="text-gray-400 text-[11px] font-medium">
+                                                    {nearestStop?.distance ? `${Math.round(nearestStop.distance)}m` : '150m'} • ~{nearestStop?.distance ? Math.round(nearestStop.distance / 80) : '2'} min walk
+                                                </p>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                                 <button

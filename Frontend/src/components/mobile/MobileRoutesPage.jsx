@@ -1,11 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
 import BottomNavigation from './BottomNavigation';
+import ReportDialog from '../ReportDialog';
 import { fetchNextBus } from '../../services/api';
 import { getRouteColor } from '../../constants';
 
 const MobileRoutesPage = ({ activeTab, onTabChange, routes, onSelectRoute }) => {
     const [selectedService, setSelectedService] = useState('WEEKDAY');
     const [nextBusData, setNextBusData] = useState({});
+    const [showReportDialog, setShowReportDialog] = useState(false);
 
     useEffect(() => {
         if (!routes || routes.length === 0) return;
@@ -110,18 +112,32 @@ const MobileRoutesPage = ({ activeTab, onTabChange, routes, onSelectRoute }) => 
     return (
         <div className="relative flex h-full min-h-screen w-full flex-col overflow-x-hidden max-w-md mx-auto bg-[#101922] shadow-xl">
             {/* Header */}
-            <div className="flex items-center px-4 py-3 justify-between sticky top-0 bg-[#101922] z-20 border-b border-gray-800">
-                <div className="size-10"></div> {/* Left spacer since menu is removed */}
-                <div className="flex flex-col items-center">
+            <div className="flex items-center px-4 py-3 sticky top-0 bg-[#101922] z-20 border-b border-gray-800">
+                <div className="w-[84px]"></div> {/* Left spacer matches right group */}
+                <div className="flex-1 flex flex-col items-center">
                     <h2 className="text-lg font-bold text-white leading-tight tracking-tight">All Routes</h2>
                 </div>
-                <button
-                    onClick={() => onTabChange('info')}
-                    className="flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-gray-800 cursor-pointer text-white transition-colors"
-                >
-                    <span className="material-symbols-outlined">info</span>
-                </button>
+                <div className="flex items-center justify-end gap-1 w-[84px]">
+                    <button
+                        onClick={() => setShowReportDialog(true)}
+                        className="flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-gray-800 cursor-pointer text-white transition-colors"
+                        title="Report Issue"
+                    >
+                        <span className="material-symbols-outlined text-orange-400">report_problem</span>
+                    </button>
+                    <button
+                        onClick={() => onTabChange('info')}
+                        className="flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-gray-800 cursor-pointer text-white transition-colors"
+                    >
+                        <span className="material-symbols-outlined">info</span>
+                    </button>
+                </div>
             </div>
+
+            <ReportDialog
+                isOpen={showReportDialog}
+                onClose={() => setShowReportDialog(false)}
+            />
 
             {/* Service Type Tabs */}
             <div className="px-4 py-2 bg-[#101922]">
