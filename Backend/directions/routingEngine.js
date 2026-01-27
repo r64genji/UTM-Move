@@ -17,13 +17,14 @@ const TIMEOUT_MINUTES = 120;        // Max search horizon
 
 // Reluctance & Penalties (Tuned for optimal behavior)
 const WALK_RELUCTANCE_FACTOR = 3.0;   // Penalty for walking during transfers
-const INITIAL_WALK_RELUCTANCE = 8.0;  // Favor closer boarding stops
-const FINAL_WALK_RELUCTANCE = 1.1;    // Aggressively favor speed near destination
+const INITIAL_WALK_RELUCTANCE = 10;  // Favor closer boarding stops
+const FINAL_WALK_RELUCTANCE = 100;    // Aggressively favor speed near destination
 const TRANSFER_PENALTY_MINS = 10;     // Balanced penalty for route switching
 const BUS_BOARD_PENALTY = 2;          // Minor penalty for every bus boarded
 const SAME_ROUTE_HOP_PENALTY = 0.8;   // Discourage long loops
-const TRANSFER_WALK_LIMIT_M = 200;    // Allow walking between nearby stops for transfers
+const TRANSFER_WALK_LIMIT_M = 300;    // Allow walking between nearby stops for transfers (increased to enable AM→CP transfer)
 const TRANSFER_WALK_PENALTY = 2;      // Extra penalty for walking between different-ID stops during transfer
+const DIRECT_TO_DEST_BONUS = 0.35;    // Aggressively reduce walk penalty when stop has direct route to destination stop
 
 // Strategy Thresholds
 const WALK_ONLY_THRESHOLD_M = 500;    // Suggest walking under 500m
@@ -154,6 +155,42 @@ function findOptimalPath(originLat, originLon, destLocation, startTime, dayName)
     const indexes = getIndexes();
     const startTimeMins = timeToMinutes(startTime);
 
+    // Check if destination is a bus stop OR near a bus stop - if so, favor routes that go directly there
+    const destIsStop = indexes.stopsById.has(destLocation.id);
+    const routesServingDest = new Set();
+    let nearbyDestStop = null; // The bus stop near the destination (for pinned locations)
+    const NEAR_STOP_THRESHOLD_M = 150; // Consider destination "at" a stop if within 150m
+
+    if (destIsStop) {
+        // Destination IS a bus stop
+        nearbyDestStop = indexes.stopsById.get(destLocation.id);
+        const destRoutes = indexes.routesByStop.get(destLocation.id) || [];
+        destRoutes.forEach(r => {
+            if (r.stopsSequence.includes(destLocation.id)) {
+                routesServingDest.add(`${r.routeName}:${r.headsign}`);
+            }
+        });
+    } else {
+        // Check if destination is NEAR a bus stop (for pinned locations)
+        for (const stop of indexes.stopsArray) {
+            const distToStop = haversineDistance(destLocation.lat, destLocation.lon, stop.lat, stop.lon);
+            if (distToStop <= NEAR_STOP_THRESHOLD_M) {
+                // Found a nearby stop - treat this as if destination is that stop
+                nearbyDestStop = stop;
+                const destRoutes = indexes.routesByStop.get(stop.id) || [];
+                destRoutes.forEach(r => {
+                    if (r.stopsSequence.includes(stop.id)) {
+                        routesServingDest.add(`${r.routeName}:${r.headsign}`);
+                    }
+                });
+                break; // Use the first nearby stop found
+            }
+        }
+    }
+
+    // Flag for detecting if we should apply direct route preference
+    const hasNearbyDestStop = nearbyDestStop !== null;
+
     const openSet = new PriorityQueue();
     const closedSet = new Map(); // stopId -> min g-score
 
@@ -188,7 +225,28 @@ function findOptimalPath(originLat, originLon, destLocation, startTime, dayName)
 
     startStopsSet.forEach(({ stop, dist }) => {
         const walkTime = dist / WALK_SPEED_M_PER_MIN;
-        const walkPenalty = walkTime * (INITIAL_WALK_RELUCTANCE - 1);
+
+        // Check if this stop has a direct route to the destination stop (or nearby stop)
+        let hasDirectRouteToDest = false;
+        if (hasNearbyDestStop && routesServingDest.size > 0) {
+            const stopRoutes = indexes.routesByStop.get(stop.id) || [];
+            hasDirectRouteToDest = stopRoutes.some(r => {
+                const routeKey = `${r.routeName}:${r.headsign}`;
+                // Check if this route serves the destination AND destination comes after this stop
+                if (routesServingDest.has(routeKey)) {
+                    const destIdx = r.stopsSequence.indexOf(nearbyDestStop.id);
+                    return destIdx > r.stopIndex; // Destination must be reachable from this stop
+                }
+                return false;
+            });
+        }
+
+        // Reduce walk penalty if this stop offers a direct route to the destination
+        const effectiveReluctance = hasDirectRouteToDest
+            ? INITIAL_WALK_RELUCTANCE * DIRECT_TO_DEST_BONUS
+            : INITIAL_WALK_RELUCTANCE;
+        const walkPenalty = walkTime * (effectiveReluctance - 1);
+
         const arrivalTime = startTimeMins + walkTime;
         const gCost = arrivalTime + walkPenalty;
         const h = heuristic(stop, destLocation);
@@ -227,7 +285,16 @@ function findOptimalPath(originLat, originLon, destLocation, startTime, dayName)
 
         if (distToDest <= MAX_WALKING_DIST_M) {
             const walkTime = distToDest / WALK_SPEED_M_PER_MIN;
-            const walkPenalty = walkTime * (FINAL_WALK_RELUCTANCE - 1);
+
+            // When destination is near a bus stop, strongly penalize alighting at a different stop
+            // This encourages waiting for a bus that goes directly to (or very close to) the destination
+            const isAtNearbyDestStop = hasNearbyDestStop && (current.stopId === nearbyDestStop.id);
+            // Use HIGH penalty (FINAL_WALK_RELUCTANCE) when NOT at the nearby dest stop, LOW (1.1) when at it
+            const finalReluctance = (hasNearbyDestStop && !isAtNearbyDestStop)
+                ? FINAL_WALK_RELUCTANCE   // High penalty for walking from wrong stop when dest is near a bus stop
+                : 1.1;                     // Minimal penalty when at the correct stop or no nearby stop
+            const walkPenalty = walkTime * (finalReluctance - 1);
+
             const totalEndTime = current.arrivalTime + walkTime;
             const totalCost = totalEndTime + current.accPenalty + walkPenalty;
 

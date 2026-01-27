@@ -289,23 +289,44 @@ async function getDirections(originLat, originLon, originStopId, destLocationId,
             currentTime,
             dayName,
             departureDay: dayName,
-            walkingToOriginDetails: walkingToOriginDetails?.steps,
-            walkingFromDestDetails: walkingFromDestDetails?.steps,
+            walkingToOriginDetails: walkingToOriginDetails,
+            walkingFromDestDetails: walkingFromDestDetails,
             originName: originLocation?.name
         });
     }
 
     // Case C: Transfer (2+ Legs)
     if (busLegs.length >= 2) {
+        // Extract transfer walks (walks that occur BETWEEN bus legs)
+        const transferWalks = [];
+        let busLegIndex = 0;
+        for (let i = 0; i < bestPath.path.length; i++) {
+            const step = bestPath.path[i];
+            if (step.type === 'BUS') {
+                busLegIndex++;
+            } else if (step.type === 'WALK' && busLegIndex > 0 && busLegIndex < busLegs.length) {
+                // This is a walk between bus legs (transfer walk)
+                transferWalks.push({
+                    afterBusLegIndex: busLegIndex - 1,
+                    from: step.from,
+                    to: step.to,
+                    distance: step.distance,
+                    duration: step.duration
+                });
+            }
+        }
+
         // Resolve all bus legs from A* results
         const resolvedBusLegs = await Promise.all(busLegs.map(async (leg) => {
             const routes = indexes.routesByStop.get(leg.from.id);
             const routeDef = routes.find(r => r.routeName === leg.routeName && r.headsign === leg.headsign);
+            const originIndex = routeDef.stopsSequence.indexOf(leg.from.id);
             const destIndex = routeDef.stopsSequence.indexOf(leg.to.id);
 
             return {
                 route: {
                     ...routeDef,
+                    originStopIndex: originIndex,  // Fix NaN stops bug
                     destStopIndex: destIndex,
                     fromStopName: leg.from.name,
                     toStopName: leg.to.name,
@@ -320,6 +341,43 @@ async function getDirections(originLat, originLon, originStopId, destLocationId,
                 arrivalTime: leg.arrivalTimeStr
             };
         }));
+
+        // Merge consecutive same-route legs (e.g., Route F to KTR -> Route F to P19A)
+        // These are "stay on bus" transfers where user doesn't need to alight
+        const mergedBusLegs = [];
+        for (let i = 0; i < resolvedBusLegs.length; i++) {
+            const current = resolvedBusLegs[i];
+
+            // Check if this can be merged with the next leg
+            if (i < resolvedBusLegs.length - 1) {
+                const next = resolvedBusLegs[i + 1];
+                // Same route name and same transfer stop = stay on bus
+                if (current.route.routeName === next.route.routeName &&
+                    current.route.toStopId === next.route.fromStopId) {
+                    // Merge: extend current to next's destination
+                    mergedBusLegs.push({
+                        route: {
+                            ...current.route,
+                            toStopName: next.route.toStopName,
+                            toStopId: next.route.toStopId,
+                            toStopLat: next.route.toStopLat,
+                            toStopLon: next.route.toStopLon,
+                            destStopIndex: next.route.destStopIndex,
+                            headsign: current.route.headsign + ' → ' + next.route.headsign,
+                            isMergedLeg: true
+                        },
+                        departure: current.departure,
+                        arrivalTime: next.arrivalTime
+                    });
+                    i++; // Skip the next leg since it's merged
+                    continue;
+                }
+            }
+            mergedBusLegs.push(current);
+        }
+
+        // Use merged legs instead of original
+        const finalBusLegs = mergedBusLegs;
 
         const leg1 = resolvedBusLegs[0];
         const lastLeg = resolvedBusLegs[resolvedBusLegs.length - 1];
@@ -341,7 +399,8 @@ async function getDirections(originLat, originLon, originStopId, destLocationId,
         }
 
         return buildTransferResponse({
-            busLegs: resolvedBusLegs,
+            busLegs: finalBusLegs,  // Use merged bus legs
+            transferWalks,  // Pass transfer walks to response builder
             originCoords,
             originStop: busLegs[0].from,
             destStop: busLegs[busLegs.length - 1].to,
@@ -349,8 +408,8 @@ async function getDirections(originLat, originLon, originStopId, destLocationId,
             directDistance: walkOnlyDist,
             currentTime,
             departureDay: dayName,
-            walkingToOriginDetails: walkingToOriginDetails?.steps,
-            walkingFromDestDetails: walkingFromDestDetails?.steps
+            walkingToOriginDetails: walkingToOriginDetails,
+            walkingFromDestDetails: walkingFromDestDetails
         });
     }
 }
@@ -499,8 +558,8 @@ async function selectAndBuildBestTransfer(candidates, originCoords, destLocation
         directDistance,
         currentTime,
         departureDay: leg1Departure.day || null,
-        walkingToOriginDetails: walkingToOriginDetails?.steps,
-        walkingFromDestDetails: walkingFromDestDetails?.steps,
+        walkingToOriginDetails: walkingToOriginDetails,
+        walkingFromDestDetails: walkingFromDestDetails,
         originName: originLocation?.name
     });
 }

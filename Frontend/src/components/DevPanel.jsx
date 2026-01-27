@@ -19,28 +19,9 @@ const DevPanel = ({ devSettings, onSettingsChange }) => {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, []);
 
+    // Hidden when not opened - only accessible via Ctrl+Shift+D
     if (!isOpen) {
-        return (
-            <div
-                style={{
-                    position: 'fixed',
-                    bottom: 80,
-                    right: 10,
-                    zIndex: 9999,
-                    background: '#1a1a2e',
-                    color: '#0f0',
-                    padding: '4px 8px',
-                    borderRadius: 4,
-                    fontSize: 10,
-                    cursor: 'pointer',
-                    opacity: devSettings.enabled ? 1 : 0.3
-                }}
-                onClick={() => setIsOpen(true)}
-                title="Dev Panel (Ctrl+Shift+D)"
-            >
-                🛠️ DEV
-            </div>
-        );
+        return null;
     }
 
     const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];

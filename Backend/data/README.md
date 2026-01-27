@@ -93,6 +93,33 @@ Pre-cached route paths (GeoJSON LineStrings).
 
 Key format: `"Route Name : Headsign"`
 
+### geometry_manifest.json
+
+Metadata about route geometries for cache management.
+
+```json
+{
+  "Route A : To Arked": {
+    "lastUpdated": "2025-12-01T10:30:00Z",
+    "source": "graphhopper"
+  }
+}
+```
+
+### utm polygon.geojson
+
+GeoJSON polygon defining UTM campus boundaries. Used for location validation.
+
+```json
+{
+  "type": "Feature",
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [...]
+  }
+}
+```
+
 ### route_durations.json
 
 Travel time estimates per route segment.

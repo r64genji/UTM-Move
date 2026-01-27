@@ -7,7 +7,8 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { getDirections } = require('./directions/index');
 const { getScheduleData, getCampusLocations, getRouteGeometries } = require('./directions/dataLoader');
-const { validateCoord, validateTime, validateDay, sanitizeString } = require('./utils/validators');
+const { validateCoord, validateTime, validateDay, sanitizeString, validateReportInput } = require('./utils/validators');
+
 const path = require('path');
 const fs = require('fs');
 const axios = require('axios');
@@ -412,21 +413,17 @@ app.post('/api/report', apiLimiter, async (req, res) => {
     try {
         const { type, details } = req.body;
 
-        if (!type || !details) {
-            return res.status(400).json({ error: 'Missing type or details' });
-        }
-
-        // Sanitize input (allow up to 2000 chars)
-        const sanitizedDetails = sanitizeString(details, 2000);
-        if (!sanitizedDetails) {
-            return res.status(400).json({ error: 'Invalid details provided' });
+        // Security Validation (Fail Fast)
+        const validation = validateReportInput(type, details);
+        if (!validation.valid) {
+            return res.status(400).json({ error: validation.error });
         }
 
         const report = {
             id: Date.now().toString(),
             timestamp: new Date().toISOString(),
             type,
-            details: sanitizedDetails,
+            details: validation.sanitizedDetails, // Use sanitized version
             ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress
         };
 
@@ -451,8 +448,33 @@ app.post('/api/report', apiLimiter, async (req, res) => {
     }
 });
 
-// Endpoint: Get All Reports (Simple Admin)
-app.get('/api/reports', apiLimiter, (req, res) => {
+// Middleware: Basic Authentication
+const basicAuth = (req, res, next) => {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader) {
+        res.setHeader('WWW-Authenticate', 'Basic realm="Admin Console"');
+        return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const auth = Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
+    const user = auth[0];
+    const pass = auth[1];
+
+    // Default credentials (admin:admin) - Change in .env for production!
+    const validUser = process.env.ADMIN_USER || 'admin';
+    const validPass = process.env.ADMIN_PASS || 'admin';
+
+    if (user === validUser && pass === validPass) {
+        next();
+    } else {
+        res.setHeader('WWW-Authenticate', 'Basic realm="Admin Console"');
+        return res.status(401).json({ error: 'Invalid credentials' });
+    }
+};
+
+// Endpoint: Get All Reports (Protected Admin Area)
+app.get('/api/reports', apiLimiter, basicAuth, (req, res) => {
     const reportsDir = path.join(__dirname, 'reports');
     const reportsFile = path.join(reportsDir, 'reports.jsonl');
 

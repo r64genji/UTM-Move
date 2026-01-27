@@ -14,8 +14,6 @@ The UTM Move backend is a Node.js/Express server that provides:
 Backend/
 ├── server.js               # Express server & API routes
 ├── directionLogic.js       # Re-exports from directions/
-├── scheduleLogic.js        # Database query layer
-├── busLogic.js             # Service availability logic
 ├── enrich_schedule_logic.js # Schedule enhancement
 │
 ├── directions/             # Modular routing engine
@@ -23,22 +21,25 @@ Backend/
 │   ├── dataLoader.js       # Cached data loading + indexes
 │   ├── locationService.js  # Stop/location lookups
 │   ├── routeFinder.js      # Route discovery algorithms
+│   ├── routingEngine.js    # A* pathfinding + route scoring
 │   ├── scheduler.js        # Departure time calculations
-│   ├── routeScorer.js      # Route optimization
 │   ├── responseBuilder.js  # Response formatting
-│   └── walkingService.js   # ORS walking directions
+│   └── walkingService.js   # GraphHopper walking directions
 │
 ├── data/                   # JSON data files
-├── tests/                  # Jest test files
-├── scripts/                # Development utilities
-└── utils/geo.js            # Shared geo functions
+├── tests/                  # Jest test files (13 suites)
+├── scripts/                # Development utilities (32 scripts)
+└── utils/
+    ├── geo.js              # Haversine distance
+    └── validators.js       # Input validation
 ```
 
 ## Core Modules
 
 ### server.js
 
-Express server with three main endpoints:
+Express server with four main endpoints:
+- `GET /api/health` - Health check
 - `GET /api/static-data` - All schedule and location data
 - `GET /api/next-bus` - Next bus for a route
 - `GET /api/directions` - Complete directions
@@ -96,7 +97,7 @@ Time calculations with Friday prayer support:
 
 ### directions/walkingService.js
 
-ORS integration for turn-by-turn walking:
+GraphHopper integration for turn-by-turn walking:
 ```javascript
 const { getWalkingDirections } = require('./walkingService');
 
@@ -104,8 +105,32 @@ const result = await getWalkingDirections(
     { lat: 1.55, lon: 103.63 },
     { lat: 1.56, lon: 103.64 }
 );
-// Returns: { distance, duration, steps: [...] }
+// Returns: { distance, duration, ascent, descent, steps: [...], geometry }
 ```
+
+### directions/routingEngine.js
+
+Unified routing engine combining A* pathfinding with strategic scoring:
+
+```javascript
+const { findOptimalPath, isWalkingBetter } = require('./routingEngine');
+
+// Find optimal bus route using A*
+const path = await findOptimalPath(
+    originLat, originLon,
+    destLocation,
+    startTime,
+    dayName
+);
+
+// Returns: { type, stops, route, departure, arrival, totalTime }
+```
+
+Key features:
+- **A* Search** - Priority queue-based optimal path finding
+- **Multi-modal** - Supports walking + bus combinations
+- **Transfer Detection** - Finds routes requiring transfers
+- **Walking Optimization** - Suggests walking when faster than bus
 
 ## Response Types
 
@@ -162,10 +187,16 @@ npm test -- --watch  # Watch mode
 ```
 
 Test files:
+- `astar.test.js` - A* pathfinding
+- `constants.test.js` - Constants validation
 - `directionLogic.test.js` - Direction finding
-- `scheduleLogic.test.js` - Schedule queries
-- `buslogic.test.js` - Service availability
+- `directionsIntegration.test.js` - Integration tests
+- `enrich_schedule_logic.test.js` - Schedule enrichment
 - `geo.test.js` - Distance calculations
+- `routeFinder.test.js` - Route discovery
+- `routeScorer.test.js` - Route scoring
+- `routing_edge_cases.test.js` - Edge cases
+- `security.test.js` - Security middleware
 
 ## Performance Optimizations
 

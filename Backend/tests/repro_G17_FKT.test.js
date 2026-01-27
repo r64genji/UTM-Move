@@ -75,8 +75,10 @@ describe('G17 to FKT Debug', () => {
         expect(['CP', 'PKU_E', 'KTF']).toContain(result.originStop.id); // Accept valid nearby stops on Route D
 
         // Check summary.route instead of route.routeName (API response format)
-        // Ensure it is a valid direct route (Route D or Route E)
-        expect(['Route D', 'Route E(N24)']).toContain(result.summary.route);
+        // Accept direct routes OR transfer routes that end at FKT
+        // With increased transfer walk limit, E(N24)→D transfer from KTF is optimal (closer boarding)
+        const validRoutes = ['Route D', 'Route E(N24)', 'Route E(N24) → Route D'];
+        expect(validRoutes).toContain(result.summary.route);
 
         // Alighting at N24 or FKT is acceptable if walkable
         expect(['FKT', 'N24']).toContain(result.destStop.id);

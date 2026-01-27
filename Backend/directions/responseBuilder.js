@@ -31,6 +31,8 @@ function getRouteGeometryKey(routeName, headsign) {
 function buildWalkResponse(originCoords, destLocation, distance, alternativeBus = null, walkingDetails = null, originName = null) {
     const walkDuration = walkingDetails?.duration || getWalkingMinutes(distance);
     const actualDistance = walkingDetails?.distance || Math.round(distance);
+    const ascent = walkingDetails?.ascent || 0;
+    const descent = walkingDetails?.descent || 0;
 
     // Format walking steps if available
     const walkingSteps = walkingDetails?.steps?.map((step, index) => ({
@@ -56,6 +58,23 @@ function buildWalkResponse(originCoords, destLocation, distance, alternativeBus 
                     ? 'Your destination is very close.'
                     : `Walk ${actualDistance}m to your destination.`,
         destination: destLocation,
+        // Add summary for consistent frontend handling
+        summary: {
+            totalDuration: walkDuration,
+            route: null,
+            headsign: null
+        },
+        // Walk step for metrics display
+        steps: [{
+            type: 'walk',
+            instruction: `Walk to ${destLocation.name}`,
+            distance: actualDistance,
+            duration: walkDuration,
+            ascent: ascent,
+            descent: descent,
+            from: originCoords,
+            to: { lat: destLocation.lat, lon: destLocation.lon }
+        }],
         totalWalkingDistance: actualDistance,
         totalDuration: walkDuration,
         alternativeBus,
@@ -94,13 +113,13 @@ function buildDirectResponse({
     const walkFromDest = haversineDistance(destStop.lat, destStop.lon, destLocation.lat, destLocation.lon);
 
     // Use precise duration if details available, otherwise estimate
-    // Note: step.duration is already in minutes (converted in walkingService.js)
-    const walkToDuration = walkingToOriginDetails
-        ? Math.ceil(walkingToOriginDetails.reduce((acc, step) => acc + step.duration, 0))
+    // Note: walkingDetails is an object with { distance, duration, steps, ascent, descent }
+    const walkToDuration = walkingToOriginDetails?.duration
+        ? Math.ceil(walkingToOriginDetails.duration)
         : getWalkingMinutes(walkToOrigin);
 
-    const walkFromDuration = walkingFromDestDetails
-        ? Math.ceil(walkingFromDestDetails.reduce((acc, step) => acc + step.duration, 0))
+    const walkFromDuration = walkingFromDestDetails?.duration
+        ? Math.ceil(walkingFromDestDetails.duration)
         : getWalkingMinutes(walkFromDest);
 
     // Calculate arrival time
@@ -140,9 +159,11 @@ function buildDirectResponse({
             instruction: `Walk to ${originStop.name}`,
             from: originCoords,
             to: { lat: originStop.lat, lon: originStop.lon },
-            distance: Math.round(walkToOrigin),
+            distance: walkingToOriginDetails?.distance || Math.round(walkToOrigin),
             duration: walkToDuration,
-            details: walkingToOriginDetails,
+            ascent: walkingToOriginDetails?.ascent || 0,
+            descent: walkingToOriginDetails?.descent || 0,
+            details: walkingToOriginDetails?.steps,
             expanded: false
         },
         {
@@ -171,9 +192,11 @@ function buildDirectResponse({
             instruction: `Walk to ${destLocation.name}`,
             from: { lat: destStop.lat, lon: destStop.lon },
             to: destLocation,
-            distance: Math.round(walkFromDest),
+            distance: walkingFromDestDetails?.distance || Math.round(walkFromDest),
             duration: walkFromDuration,
-            details: walkingFromDestDetails,
+            ascent: walkingFromDestDetails?.ascent || 0,
+            descent: walkingFromDestDetails?.descent || 0,
+            details: walkingFromDestDetails?.steps,
             expanded: false
         }
     ];
@@ -226,6 +249,7 @@ function buildDirectResponse({
  */
 function buildTransferResponse({
     busLegs, // Array of { route, departure, arrivalTime }
+    transferWalks = [], // Array of { afterBusLegIndex, from, to, distance, duration }
     originCoords,
     originStop,
     destStop,
@@ -241,12 +265,12 @@ function buildTransferResponse({
     const walkToOrigin = haversineDistance(originCoords.lat, originCoords.lon, originStop.lat, originStop.lon);
     const walkFromDest = haversineDistance(destStop.lat, destStop.lon, destLocation.lat, destLocation.lon);
 
-    const walkToDuration = walkingToOriginDetails
-        ? Math.ceil(walkingToOriginDetails.reduce((acc, step) => acc + step.duration, 0))
+    const walkToDuration = walkingToOriginDetails?.duration
+        ? Math.ceil(walkingToOriginDetails.duration)
         : getWalkingMinutes(walkToOrigin);
 
-    const walkFromDuration = walkingFromDestDetails
-        ? Math.ceil(walkingFromDestDetails.reduce((acc, step) => acc + step.duration, 0))
+    const walkFromDuration = walkingFromDestDetails?.duration
+        ? Math.ceil(walkingFromDestDetails.duration)
         : getWalkingMinutes(walkFromDest);
 
     const steps = [];
@@ -257,13 +281,17 @@ function buildTransferResponse({
         instruction: `Walk to ${originStop.name}`,
         from: originCoords,
         to: { lat: originStop.lat, lon: originStop.lon },
-        distance: Math.round(walkToOrigin),
+        distance: walkingToOriginDetails?.distance || Math.round(walkToOrigin),
         duration: walkToDuration,
-        details: walkingToOriginDetails,
+        ascent: walkingToOriginDetails?.ascent || 0,
+        descent: walkingToOriginDetails?.descent || 0,
+        details: walkingToOriginDetails?.steps,
         expanded: false
     });
 
     // 2. Bus Legs and Transfers
+    let totalTransferWalkDistance = 0;
+
     busLegs.forEach((leg, index) => {
         const { route, departure, arrivalTime } = leg;
 
@@ -277,8 +305,8 @@ function buildTransferResponse({
             instruction: index === 0
                 ? `Board ${route.routeName} (${route.headsign})`
                 : `Transfer to ${route.routeName} (${route.headsign})`,
-            stopName: route.fromStopName || (index === 0 ? originStop.name : busLegs[index - 1].toStopName),
-            stopId: route.fromStopId || (index === 0 ? originStop.id : busLegs[index - 1].toStopId),
+            stopName: route.fromStopName || (index === 0 ? originStop.name : busLegs[index - 1].route.toStopName),
+            stopId: route.fromStopId || (index === 0 ? originStop.id : busLegs[index - 1].route.toStopId),
             time: departure.time,
             routeGeometryKey: getRouteGeometryKey(route.routeName, route.headsign)
         });
@@ -290,15 +318,44 @@ function buildTransferResponse({
             duration: Math.round((timeToMinutes(arrivalTime) - timeToMinutes(departure.time) + 1440) % 1440)
         });
 
-        // Alight step (only if not transferring immediately)
-        if (index === busLegs.length - 1) {
-            steps.push({
-                type: 'alight',
-                instruction: `Alight at ${destStop.name}`,
-                stopName: destStop.name,
-                stopId: destStop.id,
-                time: arrivalTime
-            });
+        // Alight step
+        const isLastLeg = index === busLegs.length - 1;
+        const alightStop = isLastLeg ? destStop : {
+            name: route.toStopName,
+            id: route.toStopId,
+            lat: route.toStopLat,
+            lon: route.toStopLon
+        };
+
+        steps.push({
+            type: 'alight',
+            instruction: `Alight at ${alightStop.name}`,
+            stopName: alightStop.name,
+            stopId: alightStop.id,
+            time: arrivalTime
+        });
+
+        // If not the last leg, check for transfer walk
+        if (!isLastLeg) {
+            // Find transfer walk for this leg
+            const transferWalk = transferWalks.find(tw => tw.afterBusLegIndex === index);
+            if (transferWalk && transferWalk.distance > 10) {
+                // Add transfer walk step if there's significant walking
+                steps.push({
+                    type: 'walk',
+                    instruction: `Walk to ${busLegs[index + 1].route.fromStopName || 'next stop'}`,
+                    from: { lat: transferWalk.from.lat, lon: transferWalk.from.lon },
+                    to: { lat: transferWalk.to.lat, lon: transferWalk.to.lon },
+                    distance: Math.round(transferWalk.distance),
+                    duration: Math.ceil(transferWalk.duration),
+                    ascent: 0,
+                    descent: 0,
+                    details: null,
+                    expanded: false,
+                    isTransferWalk: true  // Flag for frontend to identify transfer walks
+                });
+                totalTransferWalkDistance += transferWalk.distance;
+            }
         }
     });
 
@@ -308,9 +365,11 @@ function buildTransferResponse({
         instruction: `Walk to ${destLocation.name}`,
         from: { lat: destStop.lat, lon: destStop.lon },
         to: destLocation,
-        distance: Math.round(walkFromDest),
+        distance: walkingFromDestDetails?.distance || Math.round(walkFromDest),
         duration: walkFromDuration,
-        details: walkingFromDestDetails,
+        ascent: walkingFromDestDetails?.ascent || 0,
+        descent: walkingFromDestDetails?.descent || 0,
+        details: walkingFromDestDetails?.steps,
         expanded: false
     });
 
@@ -343,7 +402,7 @@ function buildTransferResponse({
             eta: addMinutesToTime(lastLeg.arrivalTime, walkFromDuration)
         },
         steps,
-        totalWalkingDistance: Math.round(walkToOrigin + walkFromDest),
+        totalWalkingDistance: Math.round(walkToOrigin + walkFromDest + totalTransferWalkDistance),
         directWalkDistance: Math.round(directDistance),
         // backward compatibility for simple consumers
         firstLeg: firstLeg.route,
@@ -356,11 +415,18 @@ function buildTransferResponse({
                 routeName: route.routeName,
                 headsign: route.headsign,
                 isLoop: false,
+                isMergedLeg: route.isMergedLeg || false,
                 fromStop: { lat: route.fromStopLat, lon: route.fromStopLon },
                 toStop: { lat: route.toStopLat, lon: route.toStopLon }
             };
 
-            if (route.isLoop && route.headsign.includes('→')) {
+            // Handle merged legs (same route, continuous ride through headsign change)
+            if (route.isMergedLeg && route.headsign.includes('→')) {
+                const parts = route.headsign.split('→');
+                res.isMergedLeg = true;
+                res.first = routeGeometries[getRouteGeometryKey(route.routeName, parts[0].trim())];
+                res.second = routeGeometries[getRouteGeometryKey(route.routeName, parts[1].trim())];
+            } else if (route.isLoop && route.headsign.includes('→')) {
                 const parts = route.headsign.split('→');
                 res.isLoop = true;
                 res.first = routeGeometries[getRouteGeometryKey(route.routeName, parts[0].trim())];

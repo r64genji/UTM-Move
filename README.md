@@ -8,14 +8,13 @@ A modern bus navigation app for Universiti Teknologi Malaysia (UTM) campus. Get 
 
 ## Features
 
-- 🗺️ **Interactive Campus Map** - View all bus stops and routes on an interactive map
-- 🚌 **Real-time Bus Schedules** - Check when the next bus arrives at any stop
-- 📍 **Smart Directions** - Get optimal routes combining walking and bus travel
-- 🔄 **Transfer Support** - Automatic transfer suggestions when direct routes aren't available
-- 🚶 **Walking Directions** - Turn-by-turn walking instructions from ORS
-- 🕌 **Friday Prayer Support** - Automatic service adjustments during Friday prayer time
-- 📱 **Mobile-First Design** - Responsive UI optimized for mobile devices
-- 🌙 **Dark Mode** - Easy on the eyes dark theme
+-  **Interactive Campus Map** - View all bus stops and routes on an interactive map
+-  **Real-time Bus Schedules** - Check when the next bus arrives at any stop
+-  **Smart Directions** - Get optimal routes combining walking and bus travel
+-  **Transfer Support** - Automatic transfer suggestions when direct routes aren't available
+-  **Walking Directions** - Turn-by-turn walking instructions from GraphHopper
+-  **Mobile-First Design** - Responsive UI optimized for mobile devices
+-  **Dark Mode** - Easy on the eyes dark theme
 
 ## Quick Start
 
@@ -23,13 +22,13 @@ A modern bus navigation app for Universiti Teknologi Malaysia (UTM) campus. Get 
 
 - Node.js 18+ 
 - npm or yarn
-- Local ORS server at `http://192.168.1.119:8082/ors/v2` (for walking directions)
+- Local GraphHopper server at `http://localhost:8989` (for walking directions)
 
 ### Installation
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/utm-move.git
+git clone https://github.com/r64genji/UTM-Move.git
 cd utm-move
 
 # Install dependencies
@@ -65,35 +64,44 @@ UTM Move/
 ├── Backend/                 # Express.js API server
 │   ├── server.js           # Main server entry point
 │   ├── data/               # JSON data files
-│   │   ├── schedule.json       # Bus schedules
+│   │   ├── schedule.json           # Bus schedules
 │   │   ├── campus_locations.json   # Campus locations
 │   │   ├── route_geometries.json   # Route paths
-│   │   └── route_durations.json    # Travel times
+│   │   ├── route_durations.json    # Travel times
+│   │   └── geometry_manifest.json  # Geometry metadata
 │   ├── directions/         # Modular routing engine
 │   │   ├── index.js            # Main orchestrator
 │   │   ├── dataLoader.js       # Data loading & caching
 │   │   ├── locationService.js  # Location lookups
 │   │   ├── routeFinder.js      # Route discovery
+│   │   ├── routingEngine.js    # A* pathfinding & scoring
 │   │   ├── scheduler.js        # Departure times
-│   │   ├── routeScorer.js      # Route optimization
 │   │   ├── responseBuilder.js  # Response formatting
-│   │   └── walkingService.js   # ORS walking directions
-│   ├── tests/              # Jest test files
-│   ├── scripts/            # Utility scripts
+│   │   └── walkingService.js   # GraphHopper walking directions
+│   ├── tests/              # Jest test files (13 test suites)
+│   ├── scripts/            # Utility scripts (32 scripts)
 │   └── utils/              # Shared utilities
 │
 ├── Frontend/               # React (Vite) frontend
 │   ├── src/
 │   │   ├── App.jsx             # Main app component
-│   │   ├── components/         # UI components
-│   │   │   ├── mobile/         # Mobile-specific pages
-│   │   │   └── *.jsx           # Shared components
+│   │   ├── components/         # UI components (10 shared)
+│   │   │   └── mobile/         # Mobile-specific pages (10)
 │   │   ├── services/api.js     # API client
 │   │   └── utils/              # Frontend utilities
 │   └── dist/               # Production build
 │
+├── graphhopper/            # Local GraphHopper server
+│   ├── graphhopper-web-11.0.jar
+│   ├── config.yml
+│   └── malaysia-singapore-brunei-260113.osm.pbf
+│
+├── docs/                   # Additional documentation
+│   └── API.md              # Detailed API reference
+│
 ├── start_public.bat        # Full startup script
-└── README.md              # This file
+├── start_dev.bat           # Development startup
+└── README.md               # This file
 ```
 
 ## API Reference
@@ -153,15 +161,20 @@ Create `.env` in the Frontend directory:
 VITE_API_URL=http://localhost:3000/api
 ```
 
-### ORS Server
+### GraphHopper Server
 
-The app uses a local OpenRouteService server for walking directions. Configure the URL in:
+The app uses a local GraphHopper server for walking directions. Configure via environment variable or in:
 - `Backend/directions/walkingService.js`
-- `Backend/directions/locationService.js`
-- `Frontend/src/utils/osrm.js`
 
-```javascript
-const ORS_BASE_URL = 'http://192.168.1.119:8082/ors/v2';
+```bash
+# .env
+GRAPHHOPPER_URL=http://localhost:8989
+```
+
+To start GraphHopper:
+```bash
+cd graphhopper
+run.bat
 ```
 
 ## Data Files
@@ -234,9 +247,7 @@ npm test
 ### Adding New Routes
 
 1. Edit `Backend/data/schedule.json`
-2. Run `node importSchedule.js` to update the database
-3. Generate route geometry using ORS and add to `route_geometries.json`
-
+2. Run `update_geometries.bat` to generate the routes and update it to `route_geometries.json`
 ### Adding New Locations
 
 1. Add entries to `Backend/data/campus_locations.json`
@@ -257,13 +268,9 @@ Press `Ctrl+Shift+D` in the app to open the developer panel for:
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## License
-
-This project is licensed under the MIT License.
-
 ## Acknowledgments
 
 - UTM for route and schedule data
-- [OpenRouteService](https://openrouteservice.org/) for walking directions
-- [Leaflet](https://leafletjs.com/) for maps
+- [GraphHopper](https://www.graphhopper.com/) for walking directions
+- [Leaflet](https://leafletjs.com/) and [OpenStreetMap](https://www.openstreetmap.org/) for maps
 - [React](https://react.dev/) and [Vite](https://vitejs.dev/)

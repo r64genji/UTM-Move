@@ -22,29 +22,33 @@ src/
 ├── constants.js           # Shared constants (colors, etc.)
 │
 ├── components/
-│   ├── Map.jsx                 # Leaflet map component
-│   ├── RouteSelector.jsx       # Route dropdown
-│   ├── ServiceSelector.jsx     # Weekday/Weekend toggle
+│   ├── AdminDashboard.jsx      # Admin tools
+│   ├── DevPanel.jsx            # Developer tools (Ctrl+Shift+D)
 │   ├── DirectionSelector.jsx   # Headsign selector
+│   ├── DirectionsPanel.jsx     # Desktop directions
+│   ├── Map.jsx                 # Leaflet map component
+│   ├── ReportDialog.jsx        # Issue reporting dialog
+│   ├── RouteSelector.jsx       # Route dropdown
 │   ├── ScheduleView.jsx        # Timetable display
 │   ├── SearchBar.jsx           # Location search
-│   ├── DirectionsPanel.jsx     # Desktop directions
-│   ├── DevPanel.jsx            # Developer tools
+│   ├── ServiceSelector.jsx     # Weekday/Weekend toggle
 │   │
 │   └── mobile/
+│       ├── BottomNavigation.jsx    # Tab bar
 │       ├── MobileApp.jsx           # Mobile router
 │       ├── MobileHomePage.jsx      # Home with map
+│       ├── MobileInfoPage.jsx      # Info/help page
 │       ├── MobileNavigatePage.jsx  # Navigation view
-│       ├── MobileSearchPage.jsx    # Location search
-│       ├── MobileRoutesPage.jsx    # Route list
+│       ├── MobileProfilePage.jsx   # User profile/settings
 │       ├── MobileRouteDetailPage.jsx # Route details
-│       └── BottomNavigation.jsx    # Tab bar
+│       ├── MobileRoutesPage.jsx    # Route list
+│       ├── MobileSearchPage.jsx    # Location search
+│       └── MobileWelcomePage.jsx   # Onboarding
 │
 ├── services/
 │   └── api.js              # Backend API client
 │
 └── utils/
-    ├── osrm.js             # ORS routing client
     └── routeGeometryUtils.js # Geometry helpers
 ```
 
@@ -103,14 +107,15 @@ const directions = await fetchDirections({
 ## Routing Utilities
 
 ```javascript
-// utils/osrm.js
-import { fetchRouteGeom, fetchWalkingRoute } from './utils/osrm';
+// utils/routeGeometryUtils.js
+import { extractDirectedRouteSegment } from './utils/routeGeometryUtils';
 
-// Get bus route geometry
-const geometry = await fetchRouteGeom(stops);
-
-// Get walking route
-const walkRoute = await fetchWalkingRoute(origin, destination);
+// Extract segment of route between two stops
+const segment = extractDirectedRouteSegment(
+    routeGeometry,
+    originStop,
+    destStop
+);
 ```
 
 ## State Management

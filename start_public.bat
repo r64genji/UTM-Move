@@ -33,5 +33,6 @@ echo.
 echo (Press Ctrl+C to stop)
 echo.
 
+set NODE_ENV=production
 node server.js
 pause

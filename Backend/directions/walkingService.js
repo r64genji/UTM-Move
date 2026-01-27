@@ -32,6 +32,7 @@ async function getWalkingDirections(origin, destination) {
         params.append('instructions', 'true');
         params.append('locale', 'en');
         params.append('points_encoded', 'true');
+        params.append('elevation', 'true'); // Request elevation data
 
         const response = await axios.get(
             `${GRAPHHOPPER_BASE_URL}/route`,
@@ -57,6 +58,8 @@ async function getWalkingDirections(origin, destination) {
             return {
                 distance: Math.round(path.distance || 0),
                 duration: Math.ceil((path.time || 0) / 60000), // convert ms to minutes
+                ascent: path.ascend || 0,   // Total elevation gain in meters
+                descent: path.descend || 0, // Total elevation loss in meters
                 steps,
                 geometry: path.points // Encoded polyline
             };

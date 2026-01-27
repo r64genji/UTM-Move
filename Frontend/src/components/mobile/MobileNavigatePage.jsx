@@ -160,21 +160,41 @@ const MobileNavigatePage = ({
                 </div>
             </div>
 
-            {/* MAP CONTROLS (Floating Right) */}
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 z-[15] flex flex-col gap-3">
-                <div className="flex flex-col gap-0.5 rounded-lg shadow-lg overflow-hidden bg-white dark:bg-[#1e293b]">
-                    <button className="flex size-10 items-center justify-center bg-white dark:bg-[#1e293b] hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                        <span className="material-symbols-outlined text-gray-800 dark:text-white">add</span>
-                    </button>
-                    <div className="h-[1px] w-full bg-gray-200 dark:bg-gray-600"></div>
-                    <button className="flex size-10 items-center justify-center bg-white dark:bg-[#1e293b] hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                        <span className="material-symbols-outlined text-gray-800 dark:text-white">remove</span>
+            {/* MAP CONTROLS (Floating Right) - z-5 to be behind direction sheet (z-10) */}
+            {!isExpanded && (
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 z-[5] flex flex-col gap-3">
+                    <div className="flex flex-col gap-0.5 rounded-lg shadow-lg overflow-hidden bg-white dark:bg-[#1e293b]">
+                        <button
+                            onClick={() => {
+                                // Zoom in - dispatch custom event to map
+                                window.dispatchEvent(new CustomEvent('map-zoom', { detail: { direction: 'in' } }));
+                            }}
+                            className="flex size-10 items-center justify-center bg-white dark:bg-[#1e293b] hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors active:scale-95"
+                        >
+                            <span className="material-symbols-outlined text-gray-800 dark:text-white">add</span>
+                        </button>
+                        <div className="h-[1px] w-full bg-gray-200 dark:bg-gray-600"></div>
+                        <button
+                            onClick={() => {
+                                // Zoom out - dispatch custom event to map
+                                window.dispatchEvent(new CustomEvent('map-zoom', { detail: { direction: 'out' } }));
+                            }}
+                            className="flex size-10 items-center justify-center bg-white dark:bg-[#1e293b] hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors active:scale-95"
+                        >
+                            <span className="material-symbols-outlined text-gray-800 dark:text-white">remove</span>
+                        </button>
+                    </div>
+                    <button
+                        onClick={() => {
+                            // Center on user location - dispatch custom event
+                            window.dispatchEvent(new CustomEvent('map-center-user'));
+                        }}
+                        className="flex size-10 items-center justify-center rounded-lg bg-white dark:bg-[#1e293b] shadow-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors active:scale-95"
+                    >
+                        <span className="material-symbols-outlined text-primary">my_location</span>
                     </button>
                 </div>
-                <button className="flex size-10 items-center justify-center rounded-lg bg-white dark:bg-[#1e293b] shadow-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                    <span className="material-symbols-outlined text-primary">my_location</span>
-                </button>
-            </div>
+            )}
 
             {/* LOADING STATE overlay */}
             {loading && (
@@ -301,18 +321,48 @@ const MobileNavigatePage = ({
 
                                     <div className="w-[1px] bg-gray-800 self-stretch my-1"></div>
 
-                                    {/* Arrival Time */}
+                                    {/* Walking Info - Distance, Time, Incline */}
                                     <div className="flex flex-col min-w-0">
-                                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1 truncate">Arrival Time</span>
-                                        <span className="text-xl font-black text-blue-500 leading-none whitespace-nowrap">{getETA() || '--:--'}</span>
+                                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1 truncate">Walking</span>
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <span className="text-lg font-black text-gray-400 leading-none whitespace-nowrap">{directions.totalWalkingDistance || 0}m</span>
+                                            <span className="text-sm font-bold text-gray-500">~{getWalkingTime()} min</span>
+                                        </div>
+                                        {/* Incline info from first walk step */}
+                                        {directions.steps && directions.steps.find(s => s.type === 'walk') && (
+                                            (() => {
+                                                const walkSteps = directions.steps.filter(s => s.type === 'walk');
+                                                const totalAscent = walkSteps.reduce((acc, s) => acc + (s.ascent || 0), 0);
+                                                const totalDescent = walkSteps.reduce((acc, s) => acc + (s.descent || 0), 0);
+                                                if (totalAscent > 0 || totalDescent > 0) {
+                                                    return (
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            {totalAscent > 0 && (
+                                                                <span className="text-[10px] text-green-500 flex items-center gap-0.5">
+                                                                    <span className="material-symbols-outlined text-xs">trending_up</span>
+                                                                    +{Math.round(totalAscent)}m
+                                                                </span>
+                                                            )}
+                                                            {totalDescent > 0 && (
+                                                                <span className="text-[10px] text-red-400 flex items-center gap-0.5">
+                                                                    <span className="material-symbols-outlined text-xs">trending_down</span>
+                                                                    -{Math.round(totalDescent)}m
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                }
+                                                return null;
+                                            })()
+                                        )}
                                     </div>
 
                                     <div className="w-[1px] bg-gray-800 self-stretch my-1"></div>
 
-                                    {/* Walking Time */}
+                                    {/* Arrival Time */}
                                     <div className="flex flex-col min-w-0">
-                                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1 truncate">Walking</span>
-                                        <span className="text-xl font-black text-gray-400 leading-none whitespace-nowrap">{getWalkingTime()} min</span>
+                                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1 truncate">Arrival</span>
+                                        <span className="text-xl font-black text-blue-500 leading-none whitespace-nowrap">{getETA() || '--:--'}</span>
                                     </div>
                                 </div>
                             )}
@@ -366,6 +416,35 @@ const MobileNavigatePage = ({
                                                             </span>
                                                         )}
                                                     </div>
+                                                    {/* Walking Summary Stats - Visible before expanding */}
+                                                    {step.type === 'walk' && (
+                                                        <div className="flex items-center gap-3 mt-2 flex-wrap">
+                                                            {step.distance && (
+                                                                <span className="text-[11px] text-gray-500 flex items-center gap-1">
+                                                                    <span className="material-symbols-outlined text-xs">straighten</span>
+                                                                    {step.distance}m
+                                                                </span>
+                                                            )}
+                                                            {step.duration > 0 && (
+                                                                <span className="text-[11px] text-gray-500 flex items-center gap-1">
+                                                                    <span className="material-symbols-outlined text-xs">schedule</span>
+                                                                    ~{step.duration} min
+                                                                </span>
+                                                            )}
+                                                            {step.ascent !== undefined && step.ascent > 0 && (
+                                                                <span className="text-[11px] text-green-500 flex items-center gap-1">
+                                                                    <span className="material-symbols-outlined text-xs">trending_up</span>
+                                                                    +{Math.round(step.ascent)}m
+                                                                </span>
+                                                            )}
+                                                            {step.descent !== undefined && step.descent > 0 && (
+                                                                <span className="text-[11px] text-red-400 flex items-center gap-1">
+                                                                    <span className="material-symbols-outlined text-xs">trending_down</span>
+                                                                    -{Math.round(step.descent)}m
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    )}
                                                 </div>
                                                 {/* Show/Hide Button */}
                                                 {step.type === 'walk' && step.details && step.details.length > 0 && (

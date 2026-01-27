@@ -94,6 +94,40 @@ function MapUpdater({ bounds }) {
     return null;
 }
 
+// Helper to handle external zoom/center control events
+function MapControlHandler({ userLocation }) {
+    const map = useMap();
+
+    useEffect(() => {
+        const handleZoom = (e) => {
+            if (e.detail.direction === 'in') {
+                map.zoomIn();
+            } else if (e.detail.direction === 'out') {
+                map.zoomOut();
+            }
+        };
+
+        const handleCenterUser = () => {
+            if (userLocation) {
+                map.flyTo([userLocation.lat, userLocation.lon || userLocation.lng], 17, {
+                    animate: true,
+                    duration: 0.5
+                });
+            }
+        };
+
+        window.addEventListener('map-zoom', handleZoom);
+        window.addEventListener('map-center-user', handleCenterUser);
+
+        return () => {
+            window.removeEventListener('map-zoom', handleZoom);
+            window.removeEventListener('map-center-user', handleCenterUser);
+        };
+    }, [map, userLocation]);
+
+    return null;
+}
+
 const MapComponent = ({
     stops,
     routes = [],                // All routes data for computing which routes serve each stop
@@ -561,6 +595,9 @@ const MapComponent = ({
                 })}
 
                 {bounds && <MapUpdater bounds={bounds} />}
+
+                {/* External zoom/center control handler */}
+                <MapControlHandler userLocation={userLocation} />
 
                 {/* Map Click Handler for Pin Mode */}
                 <MapClickHandler pinMode={pinMode} onMapClick={onMapClick} />

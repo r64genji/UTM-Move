@@ -10,6 +10,20 @@ http://localhost:3000/api
 
 ## Endpoints
 
+### GET /health
+
+Health check endpoint for monitoring.
+
+**Response:**
+```json
+{
+  "status": "ok",
+  "version": "1.0.0"
+}
+```
+
+---
+
 ### GET /static-data
 
 Returns all static data needed by the frontend.

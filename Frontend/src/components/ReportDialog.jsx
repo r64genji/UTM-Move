@@ -118,18 +118,33 @@ const ReportDialog = ({ isOpen, onClose, defaultType = 'new_stop', defaultDetail
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Details</label>
+                                <div className="flex justify-between items-center">
+                                    <label className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Details</label>
+                                    <span className={`text-xs ${details.length < 10 || details.length > 2000 ? 'text-red-500' : 'text-gray-400'}`}>
+                                        {details.length}/2000
+                                    </span>
+                                </div>
                                 <textarea
                                     value={details}
-                                    onChange={(e) => setDetails(e.target.value)}
+                                    onChange={(e) => {
+                                        setDetails(e.target.value);
+                                        // Clear error if length becomes valid
+                                        if (error && e.target.value.length >= 10 && e.target.value.length <= 2000) {
+                                            setError(null);
+                                        }
+                                    }}
                                     placeholder={
                                         type === 'new_stop' ? "Where is the new stop located? (e.g. Near Faculty of Computing)" :
                                             type === 'remove_stop' ? "Which stop needs to be removed and why?" :
                                                 "What is wrong with the route? (e.g. Incorrect path near library)"
                                     }
-                                    className="w-full h-32 p-3 rounded-xl bg-gray-100 dark:bg-[#232e3a] border-2 border-transparent focus:border-blue-500 focus:bg-white dark:focus:bg-[#1a2633] outline-none text-sm text-gray-900 dark:text-white transition-all resize-none placeholder-gray-400"
+                                    className={`w-full h-32 p-3 rounded-xl bg-gray-100 dark:bg-[#232e3a] border-2 outline-none text-sm text-gray-900 dark:text-white transition-all resize-none placeholder-gray-400
+                                        ${error ? 'border-red-500 focus:border-red-500' : 'border-transparent focus:border-blue-500 focus:bg-white dark:focus:bg-[#1a2633]'}`}
                                     required
                                 />
+                                {details.length > 0 && details.length < 10 && (
+                                    <p className="text-red-500 text-xs">At least 10 characters required.</p>
+                                )}
                             </div>
 
                             {error && (
@@ -143,7 +158,7 @@ const ReportDialog = ({ isOpen, onClose, defaultType = 'new_stop', defaultDetail
                         <div className="p-5 pt-0 mt-auto">
                             <button
                                 type="submit"
-                                disabled={isSubmitting || !details.trim()}
+                                disabled={isSubmitting || details.trim().length < 10 || details.length > 2000}
                                 className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg shadow-blue-500/30 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             >
                                 {isSubmitting ? (

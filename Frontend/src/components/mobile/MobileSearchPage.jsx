@@ -177,8 +177,8 @@ const MobileSearchPage = ({ activeTab, onTabChange, onBack, locations, stops, on
                         className="w-full flex items-center gap-4 px-4 py-4 mb-5 bg-[#1a2633] rounded-xl shadow-sm border border-gray-800 hover:bg-gray-800/50 transition-colors group"
                     >
                         <div className={`flex items-center justify-center rounded-lg shrink-0 size-10 transition-colors ${searchType === 'origin'
-                                ? 'bg-blue-500/10 text-blue-500 group-hover:bg-blue-500 group-hover:text-white'
-                                : 'bg-red-500/10 text-red-500 group-hover:bg-red-500 group-hover:text-white'
+                            ? 'bg-blue-500/10 text-blue-500 group-hover:bg-blue-500 group-hover:text-white'
+                            : 'bg-red-500/10 text-red-500 group-hover:bg-red-500 group-hover:text-white'
                             }`}>
                             <span className="material-symbols-outlined">push_pin</span>
                         </div>
@@ -224,10 +224,13 @@ const MobileSearchPage = ({ activeTab, onTabChange, onBack, locations, stops, on
                         </h3>
                         <div className="bg-[#1a2633] rounded-xl shadow-sm overflow-hidden mb-6 border border-gray-800">
                             {favourites.slice(0, 5).map((location, idx) => (
-                                <button
+                                <div
                                     key={location.id}
                                     onClick={() => handleSelectLocation(location)}
-                                    className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-800/50 transition-colors ${idx < Math.min(favourites.length, 5) - 1 ? 'border-b border-gray-800' : ''}`}
+                                    role="button"
+                                    tabIndex={0}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleSelectLocation(location)}
+                                    className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-800/50 transition-colors cursor-pointer ${idx < Math.min(favourites.length, 5) - 1 ? 'border-b border-gray-800' : ''}`}
                                 >
                                     <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${getCategoryColor(location.category)}`}>
                                         <span className="material-symbols-outlined text-lg">{getCategoryIcon(location.category)}</span>
@@ -241,7 +244,7 @@ const MobileSearchPage = ({ activeTab, onTabChange, onBack, locations, stops, on
                                     >
                                         <span className="material-symbols-outlined text-lg text-red-500" style={{ fontVariationSettings: "'FILL' 1" }}>favorite</span>
                                     </button>
-                                </button>
+                                </div>
                             ))}
                         </div>
                     </>
@@ -256,10 +259,13 @@ const MobileSearchPage = ({ activeTab, onTabChange, onBack, locations, stops, on
                         </h3>
                         <div className="bg-[#1a2633] rounded-xl shadow-sm overflow-hidden mb-6 border border-gray-800">
                             {recentLocations.map((location, idx) => (
-                                <button
+                                <div
                                     key={location.id}
                                     onClick={() => handleSelectLocation(location)}
-                                    className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-800/50 transition-colors ${idx < recentLocations.length - 1 ? 'border-b border-gray-800' : ''}`}
+                                    role="button"
+                                    tabIndex={0}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleSelectLocation(location)}
+                                    className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-800/50 transition-colors cursor-pointer ${idx < recentLocations.length - 1 ? 'border-b border-gray-800' : ''}`}
                                 >
                                     <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${getCategoryColor(location.category)}`}>
                                         <span className="material-symbols-outlined text-lg">{getCategoryIcon(location.category)}</span>
@@ -275,7 +281,7 @@ const MobileSearchPage = ({ activeTab, onTabChange, onBack, locations, stops, on
                                             style={{ fontVariationSettings: isFavourite(location.id) ? "'FILL' 1" : "'FILL' 0" }}
                                         >favorite</span>
                                     </button>
-                                </button>
+                                </div>
                             ))}
                         </div>
                     </>
@@ -316,10 +322,13 @@ const MobileSearchPage = ({ activeTab, onTabChange, onBack, locations, stops, on
                             </div>
                         ) : (
                             filteredLocations.map((location, idx) => (
-                                <button
+                                <div
                                     key={location.id}
                                     onClick={() => handleSelectLocation(location)}
-                                    className={`w-full flex items-center gap-3 px-4 py-3.5 hover:bg-gray-800/50 transition-colors ${idx < filteredLocations.length - 1 ? 'border-b border-gray-800' : ''}`}
+                                    role="button"
+                                    tabIndex={0}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleSelectLocation(location)}
+                                    className={`w-full flex items-center gap-3 px-4 py-3.5 hover:bg-gray-800/50 transition-colors cursor-pointer ${idx < filteredLocations.length - 1 ? 'border-b border-gray-800' : ''}`}
                                 >
                                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${getCategoryColor(location.category)}`}>
                                         <span className="material-symbols-outlined text-xl">{getCategoryIcon(location.category)}</span>
@@ -342,7 +351,7 @@ const MobileSearchPage = ({ activeTab, onTabChange, onBack, locations, stops, on
                                             favorite
                                         </span>
                                     </button>
-                                </button>
+                                </div>
                             ))
                         )}
                     </div>

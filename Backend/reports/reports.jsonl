@@ -1,1 +1,5 @@
 {"id":"1768884441550","timestamp":"2026-01-20T04:47:21.550Z","type":"route_fix","details":"going through c","ip":"127.0.0.1"}
+{"id":"1769042850943","timestamp":"2026-01-22T00:47:30.943Z","type":"new_stop","details":"This is a scriptalert(1)/script test details string","ip":"::ffff:127.0.0.1"}
+{"id":"1769042850955","timestamp":"2026-01-22T00:47:30.955Z","type":"new_stop","details":"Valid details check'; [REDACTED_SQL] users; [REDACTED_SQL]","ip":"::ffff:127.0.0.1"}
+{"id":"1769043238579","timestamp":"2026-01-22T00:53:58.579Z","type":"new_stop","details":"This is a scriptalert(1)/script test details string","ip":"::ffff:127.0.0.1"}
+{"id":"1769043238638","timestamp":"2026-01-22T00:53:58.638Z","type":"new_stop","details":"Valid details check'; [REDACTED_SQL] users; [REDACTED_SQL]","ip":"::ffff:127.0.0.1"}

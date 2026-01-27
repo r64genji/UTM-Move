@@ -360,7 +360,26 @@ function App() {
                         const legColor = getRouteColor(legGeom.routeName);
                         const { fromStop, toStop } = legGeom;
 
-                        if (legGeom.isLoop && legGeom.first && legGeom.second) {
+                        // Handle merged legs (same route, continuous ride through headsign change)
+                        if (legGeom.isMergedLeg && legGeom.first && legGeom.second) {
+                            // Merged leg with two parts (e.g., Route F To KTR → Route F To P19A)
+                            const firstPart = legGeom.first;
+                            const secondPart = legGeom.second;
+
+                            if (firstPart?.coordinates?.length > 0) {
+                                const lastCoord = firstPart.coordinates[firstPart.coordinates.length - 1];
+                                const terminusPoint = { lat: lastCoord[1], lon: lastCoord[0] };
+                                const seg1 = extractDirectedRouteSegment(firstPart, fromStop, terminusPoint);
+                                if (seg1?.coordinates) newSegments.push({ coordinates: seg1.coordinates, color: legColor, type: 'bus' });
+                            }
+
+                            if (secondPart?.coordinates?.length > 0) {
+                                const firstCoord = secondPart.coordinates[0];
+                                const terminusPoint = { lat: firstCoord[1], lon: firstCoord[0] };
+                                const seg2 = extractDirectedRouteSegment(secondPart, terminusPoint, toStop);
+                                if (seg2?.coordinates) newSegments.push({ coordinates: seg2.coordinates, color: legColor, type: 'bus' });
+                            }
+                        } else if (legGeom.isLoop && legGeom.first && legGeom.second) {
                             // Loop route with two parts
                             const firstPart = legGeom.first;
                             const secondPart = legGeom.second;
