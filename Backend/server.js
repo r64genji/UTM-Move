@@ -15,7 +15,8 @@ const axios = require('axios');
 
 // Configuration from environment
 const GRAPHHOPPER_BASE_URL = process.env.GRAPHHOPPER_URL || 'http://localhost:8989';
-const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:3000';
+// CORS_ORIGIN can be comma-separated for multiple origins (e.g., "http://localhost:5173,https://your-app.vercel.app")
+const CORS_ORIGINS = (process.env.CORS_ORIGIN || 'http://localhost:5173,http://localhost:3000').split(',').map(o => o.trim());
 
 const app = express();
 
@@ -65,11 +66,19 @@ app.use('/api/', apiLimiter);
 app.use('/api/directions', directionsLimiter);
 app.use('/api/ors-route', directionsLimiter);
 
-// 3. CORS - Restrict to configured origin only
+// 3. CORS - Restrict to configured origins only
 app.use(cors({
-    origin: CORS_ORIGIN,
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        if (CORS_ORIGINS.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     methods: ['GET', 'POST', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Cache-Control']
+    allowedHeaders: ['Content-Type', 'Cache-Control', 'Authorization']
 }));
 
 // 4. Body parsing with size limits - Prevents large payload attacks
