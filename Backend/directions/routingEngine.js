@@ -159,7 +159,7 @@ function findOptimalPath(originLat, originLon, destLocation, startTime, dayName)
     const destIsStop = indexes.stopsById.has(destLocation.id);
     const routesServingDest = new Set();
     let nearbyDestStop = null; // The bus stop near the destination (for pinned locations)
-    const NEAR_STOP_THRESHOLD_M = 150; // Consider destination "at" a stop if within 150m
+    const NEAR_STOP_THRESHOLD_M = 300; // Consider destination "at" a stop if within 300m (increased to catch P19 for Aero Lab)
 
     if (destIsStop) {
         // Destination IS a bus stop
@@ -172,19 +172,23 @@ function findOptimalPath(originLat, originLon, destLocation, startTime, dayName)
         });
     } else {
         // Check if destination is NEAR a bus stop (for pinned locations)
+        let minDist = Infinity;
         for (const stop of indexes.stopsArray) {
             const distToStop = haversineDistance(destLocation.lat, destLocation.lon, stop.lat, stop.lon);
-            if (distToStop <= NEAR_STOP_THRESHOLD_M) {
-                // Found a nearby stop - treat this as if destination is that stop
+            if (distToStop <= NEAR_STOP_THRESHOLD_M && distToStop < minDist) {
+                // Found a closer nearby stop
+                minDist = distToStop;
                 nearbyDestStop = stop;
-                const destRoutes = indexes.routesByStop.get(stop.id) || [];
-                destRoutes.forEach(r => {
-                    if (r.stopsSequence.includes(stop.id)) {
-                        routesServingDest.add(`${r.routeName}:${r.headsign}`);
-                    }
-                });
-                break; // Use the first nearby stop found
             }
+        }
+
+        if (nearbyDestStop) {
+            const destRoutes = indexes.routesByStop.get(nearbyDestStop.id) || [];
+            destRoutes.forEach(r => {
+                if (r.stopsSequence.includes(nearbyDestStop.id)) {
+                    routesServingDest.add(`${r.routeName}:${r.headsign}`);
+                }
+            });
         }
     }
 

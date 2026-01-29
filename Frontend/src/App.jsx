@@ -68,18 +68,82 @@ function App() {
 
     useEffect(() => {
         const loadData = async () => {
+            // Cache Strategy: Stale-While-Revalidate or Cache-First
+            const CACHE_KEY = 'utm_static_data';
+            const CACHE_TS_KEY = 'utm_static_data_ts';
+            const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+
             try {
+                // 1. Try to load from cache first
+                const cachedData = localStorage.getItem(CACHE_KEY);
+                const cachedTimestamp = localStorage.getItem(CACHE_TS_KEY);
+
+                if (cachedData && cachedTimestamp) {
+                    const age = Date.now() - parseInt(cachedTimestamp, 10);
+                    if (age < CACHE_DURATION) {
+                        try {
+                            const parsed = JSON.parse(cachedData);
+                            // Verify structure minimal validity
+                            if (parsed && (parsed.stops || parsed.routes)) {
+                                setData({
+                                    stops: parsed.stops || [],
+                                    routes: parsed.routes || [],
+                                    locations: parsed.locations || [],
+                                    route_geometries: parsed.route_geometries || {}
+                                });
+                                setLoading(false);
+                                console.log('Loaded static data from cache');
+                                return; // Skip network request if cache is valid
+                            }
+                        } catch (e) {
+                            console.warn('Invalid cache, clearing...');
+                            localStorage.removeItem(CACHE_KEY);
+                            localStorage.removeItem(CACHE_TS_KEY);
+                        }
+                    }
+                }
+
+                // 2. Fetch from network if cache miss or expired
                 const result = await fetchStaticData();
-                setData({
+
+                const structuredData = {
                     stops: result?.stops || [],
                     routes: result?.routes || [],
                     locations: result?.locations || [],
                     route_geometries: result?.route_geometries || {}
-                });
+                };
+
+                setData(structuredData);
+
+                // Update cache
+                try {
+                    localStorage.setItem(CACHE_KEY, JSON.stringify(structuredData));
+                    localStorage.setItem(CACHE_TS_KEY, Date.now().toString());
+                } catch (e) {
+                    console.warn('Failed to save to localStorage (quota exceeded?)', e);
+                }
+
             } catch (err) {
                 console.error("Failed to load static data", err);
-                // Ensure state is at least valid
-                setData({ stops: [], routes: [], locations: [] });
+
+                // Fallback: If network failed, try to use expired cache if available
+                const cachedData = localStorage.getItem(CACHE_KEY);
+                if (cachedData) {
+                    try {
+                        const parsed = JSON.parse(cachedData);
+                        setData({
+                            stops: parsed.stops || [],
+                            routes: parsed.routes || [],
+                            locations: parsed.locations || [],
+                            route_geometries: parsed.route_geometries || {}
+                        });
+                        console.warn('Network failed, using expired cache');
+                    } catch (e) {
+                        setData({ stops: [], routes: [], locations: [] });
+                    }
+                } else {
+                    setData({ stops: [], routes: [], locations: [] });
+                }
             } finally {
                 setLoading(false);
             }

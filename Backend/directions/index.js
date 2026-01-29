@@ -250,6 +250,7 @@ async function getDirections(originLat, originLon, originStopId, destLocationId,
 
         const routeObj = {
             ...routeDef,
+            originStopIndex: routeDef.stopIndex, // Fix NaN stops bug
             destStopIndex: destStopIndex, // Add dynamic dest index
             isLoop: fullRoute.isLoop || routeDef.headsign.includes('Loop')
         };

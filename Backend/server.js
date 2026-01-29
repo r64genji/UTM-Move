@@ -42,12 +42,12 @@ app.use(helmet({
 // 2. Rate Limiting - DDoS protection
 const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,  // 15 minutes
-    max: 500,                   // 500 requests per window per IP (was 100)
+    max: 1000,                  // 1000 requests per window per IP
     standardHeaders: true,
     legacyHeaders: false,
     message: { error: 'Too many requests, please try again later.' },
     // Skip rate limiting for read-only data endpoints
-    skip: (req) => ['/api/health', '/api/next-bus', '/api/schedule', '/api/routes', '/api/locations'].some(
+    skip: (req) => ['/api/health', '/api/next-bus', '/api/schedule', '/api/routes', '/api/locations', '/api/static-data'].some(
         path => req.path.startsWith(path)
     )
 });

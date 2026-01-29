@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import MobileWelcomePage from './MobileWelcomePage';
+
 import MobileHomePage from './MobileHomePage';
 import MobileRoutesPage from './MobileRoutesPage';
 import MobileRouteDetailPage from './MobileRouteDetailPage';
@@ -32,7 +32,7 @@ const MobileApp = ({
     onPlanFutureTrip,
     onRestoreJourney
 }) => {
-    const [hasSeenWelcome, setHasSeenWelcome] = useState(false);
+
     const [mobileView, setMobileView] = useState('home'); // 'home', 'routes', 'route-detail', 'navigate', 'search', 'profile', 'info'
     const [selectedRoute, setSelectedRoute] = useState(null);
     const [searchType, setSearchType] = useState('destination'); // 'origin' | 'destination'
@@ -150,22 +150,7 @@ const MobileApp = ({
     };
 
     // Check localStorage for welcome screen
-    useEffect(() => {
-        const seen = localStorage.getItem('utmove_seen_welcome');
-        if (seen) {
-            setHasSeenWelcome(true);
-        }
-    }, []);
 
-    const handleGetStarted = () => {
-        localStorage.setItem('utmove_seen_welcome', 'true');
-        setHasSeenWelcome(true);
-    };
-
-    const handleSkip = () => {
-        localStorage.setItem('utmove_seen_welcome', 'true');
-        setHasSeenWelcome(true);
-    };
 
     const handleTabChange = (tab) => {
         const currentTab = mobileView;
@@ -257,14 +242,7 @@ const MobileApp = ({
     };
 
     // Show welcome screen on first visit
-    if (!hasSeenWelcome) {
-        return (
-            <MobileWelcomePage
-                onGetStarted={handleGetStarted}
-                onSkip={handleSkip}
-            />
-        );
-    }
+
 
     // Render based on current view
     switch (mobileView) {

@@ -148,8 +148,8 @@ function buildDirectResponse({
     }
 
     const stopCount = route.isLoop
-        ? route.stopsSequence.length - 1
-        : route.destStopIndex - route.originStopIndex;
+        ? (route.stopsSequence || []).length - 1
+        : Math.max(0, (route.destStopIndex || 0) - (route.originStopIndex || 0));
 
     const upcomingTimes = getUpcomingDepartures(route, route.originStopIndex, currentTime, dayName, 3);
 
@@ -296,8 +296,8 @@ function buildTransferResponse({
         const { route, departure, arrivalTime } = leg;
 
         const stopCount = route.isLoop
-            ? route.stopsSequence.length - 1
-            : route.destStopIndex - route.originStopIndex;
+            ? (route.stopsSequence || []).length - 1
+            : Math.max(0, (route.destStopIndex || 0) - (route.originStopIndex || 0));
 
         // Boarding step
         steps.push({

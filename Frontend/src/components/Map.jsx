@@ -128,6 +128,21 @@ function MapControlHandler({ userLocation }) {
     return null;
 }
 
+// Helper to handle window resize
+function MapResizeHandler() {
+    const map = useMap();
+    useEffect(() => {
+        const handleResize = () => {
+            map.invalidateSize();
+        };
+        window.addEventListener('resize', handleResize);
+        // Initial invalidate to ensure correct size on mount
+        setTimeout(() => map.invalidateSize(), 100);
+        return () => window.removeEventListener('resize', handleResize);
+    }, [map]);
+    return null;
+}
+
 const MapComponent = ({
     stops,
     routes = [],                // All routes data for computing which routes serve each stop
@@ -328,14 +343,15 @@ const MapComponent = ({
                 zoomControl={false}
                 renderer={L.svg({ padding: 1.5 })}
             >
+                <MapResizeHandler />
                 <TileLayer
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     maxNativeZoom={19}
                     maxZoom={22}
-                    keepBuffer={20}
+                    keepBuffer={4}
                     updateWhenIdle={false}
-                    updateWhenZooming={true}
+                    updateWhenZooming={false}
                 />
 
                 {/* Draw Route Polyline (route explorer mode) */}
