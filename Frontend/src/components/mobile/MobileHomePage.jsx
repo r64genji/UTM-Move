@@ -97,6 +97,38 @@ const MobileHomePage = ({
         return 'Good Evening';
     };
 
+    // PWA Install State
+    const [deferredPrompt, setDeferredPrompt] = useState(null);
+
+    useEffect(() => {
+        const handleBeforeInstallPrompt = (e) => {
+            // Prevent Chrome 67 and earlier from automatically showing the prompt
+            e.preventDefault();
+            // Stash the event so it can be triggered later.
+            setDeferredPrompt(e);
+        };
+
+        window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+        return () => {
+            window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+        };
+    }, []);
+
+    const handleInstallClick = async () => {
+        if (!deferredPrompt) return;
+
+        // Show the install prompt
+        deferredPrompt.prompt();
+
+        // Wait for the user to respond to the prompt
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`User response to the install prompt: ${outcome}`);
+
+        // We've used the prompt, and can't use it again, throw it away
+        setDeferredPrompt(null);
+    };
+
     // Fetch next arrivals for nearest stop
     const [nearestArrivals, setNearestArrivals] = useState([]);
 
@@ -153,13 +185,26 @@ const MobileHomePage = ({
         <div className="relative flex h-screen w-full flex-col group/design-root overflow-hidden max-w-md mx-auto border-x border-gray-200 dark:border-gray-800 bg-[#101922]">
             {/* Header - Stays on top */}
             <div className="px-4 pt-6 pb-4 flex flex-col gap-4 bg-[#1e2a35] z-20 shadow-md shrink-0">
-                <div>
-                    <h2 className="text-white tracking-tight text-[22px] font-bold leading-tight">
-                        {getGreeting()}, Student
-                    </h2>
-                    <p className="text-gray-400 text-sm font-normal">
-                        Where do you want to go today?
-                    </p>
+                <div className="flex justify-between items-start">
+                    <div>
+                        <h2 className="text-white tracking-tight text-[22px] font-bold leading-tight">
+                            {getGreeting()}, Student
+                        </h2>
+                        <p className="text-gray-400 text-sm font-normal">
+                            Where do you want to go today?
+                        </p>
+                    </div>
+
+                    {/* PWA Install Button */}
+                    {deferredPrompt && (
+                        <button
+                            onClick={handleInstallClick}
+                            className="flex items-center justify-center p-2 rounded-xl bg-[#2a3b4d] text-white border border-gray-700 shadow-sm active:scale-95 transition-all"
+                            aria-label="Install App"
+                        >
+                            <span className="material-symbols-outlined text-[20px]">install_mobile</span>
+                        </button>
+                    )}
                 </div>
 
                 {/* Search Bar */}

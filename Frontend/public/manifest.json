@@ -1,0 +1,23 @@
+{
+    "name": "UTM Shuttle Tracker",
+    "short_name": "UTM Move",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#101922",
+    "theme_color": "#101922",
+    "description": "Real-time tracking for UTM shuttle buses.",
+    "icons": [
+        {
+            "src": "/vite.svg",
+            "sizes": "192x192",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/vite.svg",
+            "sizes": "512x512",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ]
+}
