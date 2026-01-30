@@ -491,20 +491,6 @@
       ]
     },
     {
-      "id": "node_2670836102",
-      "osmId": 2670836102,
-      "osmType": "node",
-      "name": "Cafeteria",
-      "category": "dining",
-      "lat": 1.554584,
-      "lon": 103.644949,
-      "amenity": "restaurant",
-      "cuisine": "asian",
-      "keywords": [
-        "cafeteria"
-      ]
-    },
-    {
       "id": "node_2676747004",
       "osmId": 2676747004,
       "osmType": "node",
@@ -6351,18 +6337,6 @@
         "pejabat",
         "anjung"
       ]
-    },
-    {
-      "id": "way_261185983",
-      "osmId": 261185983,
-      "osmType": "way",
-      "name": "Unnamed dining",
-      "category": "dining",
-      "lat": 1.554391,
-      "lon": 103.633733,
-      "amenity": "cafe",
-      "building": "yes",
-      "keywords": []
     },
     {
       "id": "way_261186161",

@@ -18,7 +18,7 @@ const TIMEOUT_MINUTES = 120;        // Max search horizon
 // Reluctance & Penalties (Tuned for optimal behavior)
 const WALK_RELUCTANCE_FACTOR = 3.0;   // Penalty for walking during transfers
 const INITIAL_WALK_RELUCTANCE = 10;  // Favor closer boarding stops
-const FINAL_WALK_RELUCTANCE = 100;    // Aggressively favor speed near destination
+const FINAL_WALK_RELUCTANCE = 5;      // Aggressively favor speed near destination (reduced from 100 to 5 to avoid bus looping)
 const TRANSFER_PENALTY_MINS = 10;     // Balanced penalty for route switching
 const BUS_BOARD_PENALTY = 2;          // Minor penalty for every bus boarded
 const SAME_ROUTE_HOP_PENALTY = 0.8;   // Discourage long loops

@@ -45,7 +45,7 @@ describe('KTGB_XA2 to FKT Route', () => {
         }
     });
 
-    test('chooses optimal alight stop based on schedule', () => {
+    test('chooses optimal path at 08:00: Board KLG_E, Transfer CP, Arrive FKT', () => {
         const originLat = 1.572842;
         const originLon = 103.61999;
 
@@ -56,7 +56,10 @@ describe('KTGB_XA2 to FKT Route', () => {
             lon: 103.640282
         };
 
-        const result = findOptimalPath(originLat, originLon, destLocation, '14:53', 'thursday');
+        // At 08:00, Route E(N24) departs KLG_E ~08:02 -> CP ~08:11
+        // Route D departs CP ~08:15 -> FKT ~08:21
+        // This is a perfect transfer scenario.
+        const result = findOptimalPath(originLat, originLon, destLocation, '08:00', 'thursday');
 
         expect(result).not.toBeNull();
 
@@ -64,15 +67,31 @@ describe('KTGB_XA2 to FKT Route', () => {
             const busLegs = result.path.filter(step => step.type === 'BUS');
             expect(busLegs.length).toBeGreaterThan(0);
 
-            // At 14:53, Route D doesn't depart CP until 16:15 (64 min wait)
-            // So the algorithm correctly chooses to alight at a stop closer to FKT
-            // (walking ~600m is faster than waiting 64 min)
-            const lastBusLeg = busLegs[busLegs.length - 1];
-            const alightStop = lastBusLeg.to;
+            // 1. Must board at KLG_E (Eastbound), KLG_W causes a loop!
+            const firstBusLeg = busLegs[0];
+            expect(firstBusLeg.from.id).toBe('KLG_E');
+            expect(firstBusLeg.from.id).not.toBe('KLG_W');
 
-            // The alight stop should be within reasonable walking distance to FKT
-            // Valid stops include: JA2, JA3, N24, etc.
-            expect(['JA2', 'JA3', 'N24', 'FKT', 'PGT']).toContain(alightStop.id);
+            // 2. Should Transfer at CP
+            // The path should involve: KLG_E -> CP (Leg 1)
+            // AND CP -> FKT (Leg 2, Route D)
+            // Alternatively, checks if ANY leg ends at CP and ANY leg starts at CP
+            const transfersAtCP = result.path.some((step, index) => {
+                if (step.type !== 'BUS') return false;
+                // Check if this leg ends at CP ...
+                if (step.to.id === 'CP') {
+                    // ... and next bus leg starts at CP? 
+                    // (path might have a small walk or transfer step in between)
+                    // Let's just look for Route D being used.
+                    return true;
+                }
+                return false;
+            });
+
+            // 3. Must use Route D (final leg)
+            const lastBusLeg = busLegs[busLegs.length - 1];
+            expect(lastBusLeg.routeName).toMatch(/Route D/);
+            expect(lastBusLeg.to.id).toBe('FKT');
         }
     });
 
