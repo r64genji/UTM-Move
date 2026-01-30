@@ -443,7 +443,7 @@ const MobileRouteDetailPage = ({ activeTab, onTabChange, route, routes, stops, o
 
                             return (
                                 <button
-                                    key={`${timeStr}-${variantLabel || idx}`}
+                                    key={`${timeStr}-${variantLabel || ''}-${idx}`}
                                     onClick={() => {
                                         setSelectedTimeStr(timeStr);
                                         if (variantName) setSelectedVariant(variantName);

@@ -243,6 +243,11 @@ const MobileHomePage = ({
                                                                 >
                                                                     {routeName}
                                                                 </span>
+                                                                {arrival.headsign && (
+                                                                    <span className="px-1.5 py-0.5 rounded text-[10px] mr-1.5 leading-none shrink-0 shadow-sm border text-emerald-400 bg-emerald-500/10 border-emerald-500/20">
+                                                                        {arrival.headsign}
+                                                                    </span>
+                                                                )}
                                                                 <span>: {arrival.remaining} min</span>
                                                             </p>
                                                         );
