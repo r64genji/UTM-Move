@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import BottomNavigation from './BottomNavigation';
 import MapComponent from '../Map';
 import { getRouteColor } from '../../constants';
-import { fetchNextBus } from '../../services/api';
+
 
 const MobileHomePage = ({
     activeTab,
@@ -99,8 +99,13 @@ const MobileHomePage = ({
 
     // PWA Install State
     const [deferredPrompt, setDeferredPrompt] = useState(null);
+    const [showInstallBanner, setShowInstallBanner] = useState(true);
 
     useEffect(() => {
+        // Check if user previously dismissed the banner
+        const isHidden = localStorage.getItem('hideInstallBanner') === 'true';
+        setShowInstallBanner(!isHidden);
+
         const handleBeforeInstallPrompt = (e) => {
             // Prevent Chrome 67 and earlier from automatically showing the prompt
             e.preventDefault();
@@ -129,56 +134,40 @@ const MobileHomePage = ({
         setDeferredPrompt(null);
     };
 
-    // Fetch next arrivals for nearest stop
-    const [nearestArrivals, setNearestArrivals] = useState([]);
+    // Get bus estimates locally
 
     useEffect(() => {
-        let isMounted = true;
+        if (!nearestStop || !routesAtStop || routesAtStop.length === 0) {
+            setNearestArrivals([]);
+            return;
+        }
 
-        const getArrivals = async () => {
-            if (!nearestStop || !routesAtStop || routesAtStop.length === 0) {
-                if (isMounted) setNearestArrivals([]);
-                return;
-            }
-
+        const updateArrivals = async () => {
             const now = new Date();
-            const timeStr = now.toTimeString().slice(0, 5);
-            const routesToCheck = routesAtStop.map(r => r.name);
+            const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
 
-            try {
-                const promises = routesToCheck.map(routeName =>
-                    fetchNextBus(routeName, timeStr, nearestStop.id)
-                );
+            // Dynamic import to avoid circular dependencies if any
+            const { calculateNextBus } = await import('../../utils/scheduleUtils');
 
-                const results = await Promise.all(promises);
+            const allUpcoming = [];
 
-                let allUpcoming = [];
-                results.forEach(res => {
-                    if (res && res.upcoming && Array.isArray(res.upcoming)) {
-                        allUpcoming = [...allUpcoming, ...res.upcoming];
-                    } else if (res && res.nextBus && res.nextBus.remaining !== undefined) {
-                        allUpcoming.push(res.nextBus);
-                    }
-                });
-
-                // Sort by remaining time
-                allUpcoming.sort((a, b) => a.remaining - b.remaining);
-
-                if (isMounted) {
-                    setNearestArrivals(allUpcoming);
+            routesAtStop.forEach(route => {
+                const result = calculateNextBus(route, timeStr, nearestStop.id);
+                if (result && result.upcoming) {
+                    allUpcoming.push(...result.upcoming);
                 }
-            } catch (err) {
-                console.error("Failed to fetch nearest stop arrivals", err);
-            }
+            });
+
+            // Sort by remaining time
+            allUpcoming.sort((a, b) => a.remaining - b.remaining);
+            setNearestArrivals(allUpcoming);
         };
 
-        getArrivals();
+        updateArrivals();
 
-        const interval = setInterval(getArrivals, 60000);
-        return () => {
-            isMounted = false;
-            clearInterval(interval);
-        };
+        // Update frequently for "Real-time" feel without server cost
+        const interval = setInterval(updateArrivals, 30000); // 30s refresh
+        return () => clearInterval(interval);
     }, [nearestStop, routesAtStop]);
 
     return (
@@ -195,7 +184,7 @@ const MobileHomePage = ({
                         </p>
                     </div>
 
-                    {/* PWA Install Button */}
+                    {/* Compact Install Button (Icon Only) */}
                     {deferredPrompt && (
                         <button
                             onClick={handleInstallClick}
@@ -206,6 +195,44 @@ const MobileHomePage = ({
                         </button>
                     )}
                 </div>
+
+                {/* Proactive Install Banner */}
+                {deferredPrompt && showInstallBanner && (
+                    <div className="flex items-center justify-between bg-blue-600/10 border border-blue-500/30 rounded-xl p-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <div className="flex items-center gap-3">
+                            <div className="h-8 w-8 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400">
+                                <span className="material-symbols-outlined text-[18px]">add_to_home_screen</span>
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-blue-100 text-sm font-semibold">Install App</span>
+                                <span className="text-blue-300 text-xs">For a better experience</span>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setShowInstallBanner(false); // Hide the banner
+                                    localStorage.setItem('hideInstallBanner', 'true'); // Persist dismissal
+                                    handleInstallClick(); // Trigger the PWA install prompt
+                                }}
+                                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg transition-colors"
+                            >
+                                Install
+                            </button>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setShowInstallBanner(false);
+                                    localStorage.setItem('hideInstallBanner', 'true');
+                                }}
+                                className="p-1.5 text-blue-300 hover:text-white rounded-lg hover:bg-blue-500/20 transition-colors"
+                            >
+                                <span className="material-symbols-outlined text-[18px]">close</span>
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 {/* Search Bar */}
                 <label className="flex flex-col h-11 w-full" onClick={() => onTabChange('search')}>

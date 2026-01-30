@@ -9,29 +9,28 @@ const MobileRoutesPage = ({ activeTab, onTabChange, routes, onSelectRoute }) => 
     const [nextBusData, setNextBusData] = useState({});
     const [showReportDialog, setShowReportDialog] = useState(false);
 
+    // Use local calculation instead of API polling
     useEffect(() => {
         if (!routes || routes.length === 0) return;
 
-        const loadNextBuses = async () => {
+        // Function to update times locally
+        const updateTimes = () => {
             const now = new Date();
             const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
 
-            const newData = {};
-            for (const route of routes) {
-                try {
-                    const result = await fetchNextBus(route.name, timeStr);
-                    if (result && result.next_trip) {
-                        newData[route.name] = result;
-                    }
-                } catch (e) {
-                    console.error('Failed to fetch next bus for', route.name);
-                }
-            }
-            setNextBusData(newData);
+            // Calculate for all routes at once locally
+            // No API call needed!
+            import('../../utils/scheduleUtils').then(({ calculateAllNextBuses }) => {
+                const newData = calculateAllNextBuses(routes, timeStr);
+                setNextBusData(newData);
+            });
         };
 
-        loadNextBuses();
-        const interval = setInterval(loadNextBuses, 60000); // Update every minute
+        updateTimes();
+
+        // Update every second for "Real-Time" feel (countdown), or every minute if we just show minutes
+        // Since the UI shows "X min", updating every 10-30s is enough, but 1s is fine for local calc.
+        const interval = setInterval(updateTimes, 30000); // Update every 30s
         return () => clearInterval(interval);
     }, [routes]);
 
