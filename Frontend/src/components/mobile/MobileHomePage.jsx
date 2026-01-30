@@ -135,6 +135,7 @@ const MobileHomePage = ({
     };
 
     // Get bus estimates locally
+    const [nearestArrivals, setNearestArrivals] = useState([]);
 
     useEffect(() => {
         if (!nearestStop || !routesAtStop || routesAtStop.length === 0) {
