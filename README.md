@@ -8,13 +8,13 @@ A modern bus navigation web application for Universiti Teknologi Malaysia (UTM) 
 
 ## Features
 
-- 🗺️ **Interactive Campus Map** - View all bus stops and routes on an interactive Leaflet map
-- 🕒 **Real-time Bus Schedules** - Check when the next bus arrives at any stop
-- 🧭 **Smart Directions** - Get optimal routes combining walking and bus travel
-- 🔄 **Transfer Support** - Automatic transfer suggestions when direct routes aren't available
-- 🚶 **Walking Directions** - Turn-by-turn walking instructions powered by GraphHopper
-- 📱 **Mobile-First PWA** - Responsive UI optimized for mobile with home screen installation
-- 🌙 **Dark Mode** - Easy on the eyes dark theme
+-  **Interactive Campus Map** - View all bus stops and routes on an interactive Leaflet map
+-  **Real-time Bus Schedules** - Check when the next bus arrives at any stop
+-  **Smart Directions** - Get optimal routes combining walking and bus travel
+-  **Transfer Support** - Automatic transfer suggestions when direct routes aren't available
+-  **Walking Directions** - Turn-by-turn walking instructions powered by GraphHopper
+-  **Mobile-First PWA** - Responsive UI optimized for mobile with home screen installation
+-  **Dark Mode** - Easy on the eyes dark theme
 
 ## Tech Stack
 
@@ -301,6 +301,7 @@ Press `Ctrl+Shift+D` in the app to open the developer panel for:
 ## Acknowledgments
 
 - UTM for route and schedule data
+- Lee Zhi Xuan's Youtube Channel (halo budy) for recording the bus routes and uploading them to youtube
 - [GraphHopper](https://www.graphhopper.com/) for walking directions
 - [Leaflet](https://leafletjs.com/) and [OpenStreetMap](https://www.openstreetmap.org/) for maps
 - [React](https://react.dev/) and [Vite](https://vitejs.dev/)
