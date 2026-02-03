@@ -2,8 +2,14 @@
 
 ## Base URL
 
+**Development:**
 ```
 http://localhost:3000/api
+```
+
+**Production:**
+```
+https://your-backend-domain.com/api
 ```
 
 ---
@@ -50,6 +56,12 @@ Returns all static data needed by the frontend.
 }
 ```
 
+**Data Sizes:**
+- `stops`: ~50 bus stops
+- `routes`: 10+ routes with multiple services
+- `route_geometries`: ~237KB of GeoJSON
+- `locations`: ~500+ campus locations
+
 ---
 
 ### GET /next-bus
@@ -75,7 +87,8 @@ GET /api/next-bus?route=Route%20A&time=08:15
   "query_route": "Route A",
   "found_route": "Route A",
   "next_bus_time": "08:30",
-  "at_stop": "Centre Point"
+  "at_stop": "Centre Point",
+  "headsign": "To Arked"
 }
 ```
 
@@ -93,7 +106,7 @@ Get directions from origin to destination.
 | `originLon` | number | Yes* | Origin longitude |
 | `originStopId` | string | Yes* | Or specify origin by stop ID |
 | `destLocationId` | string | Yes | Destination location ID |
-| `time` | string | No | Time "HH:MM" (default: now) |
+| `time` | string | No | Time "HH:MM" (default: current time) |
 | `day` | string | No | Day override (monday, friday, etc.) |
 | `forceBus` | boolean | No | Skip walking optimization |
 
@@ -106,11 +119,35 @@ GET /api/directions?originLat=1.5584&originLon=103.6378&destLocationId=PSZ&time=
 
 ---
 
+### POST /reports
+
+Submit an issue report.
+
+**Request Body:**
+```json
+{
+  "type": "schedule_error",
+  "description": "Route A bus did not arrive at 08:00",
+  "location": "Centre Point",
+  "timestamp": "2025-02-03T08:15:00.000Z"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "reportId": "RPT-20250203-001"
+}
+```
+
+---
+
 ## Response Types
 
 ### WALK_ONLY
 
-Returned when walking is the optimal option.
+Returned when walking is the optimal option (destination is close).
 
 ```json
 {
@@ -124,6 +161,12 @@ Returned when walking is the optimal option.
   },
   "totalWalkingDistance": 450,
   "totalDuration": 6,
+  "summary": {
+    "distance": 450,
+    "duration": 6,
+    "ascent": 5,
+    "descent": 3
+  },
   "hasDetailedDirections": true,
   "walkingSteps": [
     {
@@ -150,7 +193,8 @@ Returned when walking is the optimal option.
   ],
   "walkingRoute": {
     "from": { "lat": 1.5584, "lon": 103.6378 },
-    "to": { "lat": 1.5591, "lon": 103.6345 }
+    "to": { "lat": 1.5591, "lon": 103.6345 },
+    "geometry": { "type": "LineString", "coordinates": [...] }
   },
   "alternativeBus": null
 }
@@ -181,7 +225,8 @@ Direct bus route without transfers.
       "from": {...},
       "to": {...},
       "distance": 50,
-      "duration": 1
+      "duration": 1,
+      "walkingSteps": [...]
     },
     {
       "type": "board",
@@ -194,7 +239,8 @@ Direct bus route without transfers.
     {
       "type": "ride",
       "instruction": "Ride 5 stops to P07",
-      "duration": 12
+      "duration": 12,
+      "stopCount": 5
     },
     {
       "type": "alight",
@@ -240,8 +286,11 @@ Route requiring a bus transfer.
   "steps": [
     { "type": "walk", ... },
     { "type": "board", "instruction": "Board Route A (To Arked)", ... },
+    { "type": "ride", ... },
     { "type": "alight", "instruction": "Alight at Centre Point", ... },
+    { "type": "wait", "instruction": "Wait for Route E", "duration": 5 },
     { "type": "board", "instruction": "Transfer to Route E (To KDOJ)", ... },
+    { "type": "ride", ... },
     { "type": "alight", ... },
     { "type": "walk", ... }
   ],
@@ -280,4 +329,28 @@ Route requiring a bus transfer.
 | `turn_right` | ↱ | Turn right |
 | `turn_slight_left` | ↖ | Slight left |
 | `turn_slight_right` | ↗ | Slight right |
-| `u_turn` | ↩ | U-turn |
+| `turn_sharp_left` | ↩ | Sharp left |
+| `turn_sharp_right` | ↪ | Sharp right |
+| `u_turn` | ⟲ | U-turn |
+| `keep_left` | ↖ | Keep left at fork |
+| `keep_right` | ↗ | Keep right at fork |
+
+---
+
+## Rate Limiting
+
+The API implements rate limiting:
+- **Limit**: 100 requests per 15 minutes per IP
+- **Headers**: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`
+
+---
+
+## Error Codes
+
+| Code | Description |
+|------|-------------|
+| 400 | Bad Request - Missing or invalid parameters |
+| 404 | Not Found - Route or location not found |
+| 429 | Too Many Requests - Rate limit exceeded |
+| 500 | Internal Server Error |
+| 503 | Service Unavailable - GraphHopper unreachable |

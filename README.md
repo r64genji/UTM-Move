@@ -1,26 +1,53 @@
 # UTM Move 🚌
 
-A modern bus navigation app for Universiti Teknologi Malaysia (UTM) campus. Get real-time bus schedules, route information, and step-by-step directions to any campus location.
+A modern bus navigation web application for Universiti Teknologi Malaysia (UTM) campus. Get real-time bus schedules, route information, and step-by-step directions to any campus location.
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Node](https://img.shields.io/badge/node-%3E%3D18.0.0-green.svg)
-![React](https://img.shields.io/badge/react-18.x-61dafb.svg)
+![React](https://img.shields.io/badge/react-19.x-61dafb.svg)
+![Express](https://img.shields.io/badge/express-5.x-000000.svg)
 
 ## Features
 
--  **Interactive Campus Map** - View all bus stops and routes on an interactive map
--  **Real-time Bus Schedules** - Check when the next bus arrives at any stop
--  **Smart Directions** - Get optimal routes combining walking and bus travel
--  **Transfer Support** - Automatic transfer suggestions when direct routes aren't available
--  **Walking Directions** - Turn-by-turn walking instructions from GraphHopper
--  **Mobile-First Design** - Responsive UI optimized for mobile devices
--  **Dark Mode** - Easy on the eyes dark theme
+- 🗺️ **Interactive Campus Map** - View all bus stops and routes on an interactive Leaflet map
+- 🕒 **Real-time Bus Schedules** - Check when the next bus arrives at any stop
+- 🧭 **Smart Directions** - Get optimal routes combining walking and bus travel
+- 🔄 **Transfer Support** - Automatic transfer suggestions when direct routes aren't available
+- 🚶 **Walking Directions** - Turn-by-turn walking instructions powered by GraphHopper
+- 📱 **Mobile-First PWA** - Responsive UI optimized for mobile with home screen installation
+- 🌙 **Dark Mode** - Easy on the eyes dark theme
+
+## Tech Stack
+
+### Frontend
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| React | 19.2.0 | UI framework |
+| Vite | 7.2.4 | Build tool & dev server |
+| Leaflet | 1.9.4 | Interactive map visualization |
+| React-Leaflet | 5.0.0 | React bindings for Leaflet |
+| Axios | 1.13.2 | HTTP client for API calls |
+
+### Backend
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| Node.js | 18+ | Runtime environment |
+| Express | 5.2.1 | REST API framework |
+| Helmet | 8.1.0 | Security headers |
+| Express Rate Limit | 8.2.1 | API rate limiting |
+| Jest | 30.2.0 | Testing framework |
+
+### External Services
+| Service | Purpose |
+|---------|---------|
+| GraphHopper | Walking directions & routing |
+| OpenStreetMap | Map tiles via Leaflet |
+| Vercel | Frontend deployment |
 
 ## Quick Start
 
 ### Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - npm or yarn
 - Local GraphHopper server at `http://localhost:8989` (for walking directions)
 
@@ -65,11 +92,11 @@ UTM Move/
 │   ├── server.js           # Main server entry point
 │   ├── data/               # JSON data files
 │   │   ├── schedule.json           # Bus schedules
-│   │   ├── campus_locations.json   # Campus locations
-│   │   ├── route_geometries.json   # Route paths
+│   │   ├── campus_locations.json   # Campus locations (243KB)
+│   │   ├── route_geometries.json   # Route paths (236KB)
 │   │   ├── route_durations.json    # Travel times
 │   │   └── geometry_manifest.json  # Geometry metadata
-│   ├── directions/         # Modular routing engine
+│   ├── directions/         # Modular routing engine (8 modules)
 │   │   ├── index.js            # Main orchestrator
 │   │   ├── dataLoader.js       # Data loading & caching
 │   │   ├── locationService.js  # Location lookups
@@ -78,7 +105,7 @@ UTM Move/
 │   │   ├── scheduler.js        # Departure times
 │   │   ├── responseBuilder.js  # Response formatting
 │   │   └── walkingService.js   # GraphHopper walking directions
-│   ├── tests/              # Jest test files (13 test suites)
+│   ├── tests/              # Jest test files (13 test suites, 65 tests)
 │   ├── scripts/            # Utility scripts (32 scripts)
 │   └── utils/              # Shared utilities
 │
@@ -86,7 +113,7 @@ UTM Move/
 │   ├── src/
 │   │   ├── App.jsx             # Main app component
 │   │   ├── components/         # UI components (10 shared)
-│   │   │   └── mobile/         # Mobile-specific pages (10)
+│   │   │   └── mobile/         # Mobile-specific pages (9)
 │   │   ├── services/api.js     # API client
 │   │   └── utils/              # Frontend utilities
 │   └── dist/               # Production build
@@ -94,7 +121,7 @@ UTM Move/
 ├── graphhopper/            # Local GraphHopper server
 │   ├── graphhopper-web-11.0.jar
 │   ├── config.yml
-│   └── malaysia-singapore-brunei-260113.osm.pbf
+│   └── malaysia-singapore-brunei-latest.osm.pbf
 │
 ├── docs/                   # Additional documentation
 │   └── API.md              # Detailed API reference
@@ -151,6 +178,8 @@ Get directions from origin to destination.
 - `BUS_ROUTE` - Bus + walking combination
 - `TRANSFER` - Requires bus transfer
 
+See [docs/API.md](docs/API.md) for full API documentation.
+
 ## Configuration
 
 ### Environment Variables
@@ -163,11 +192,10 @@ VITE_API_URL=http://localhost:3000/api
 
 ### GraphHopper Server
 
-The app uses a local GraphHopper server for walking directions. Configure via environment variable or in:
-- `Backend/directions/walkingService.js`
+The app uses a local GraphHopper server for walking directions. Configure via environment variable:
 
-```bash
-# .env
+```env
+# Backend/.env
 GRAPHHOPPER_URL=http://localhost:8989
 ```
 
@@ -235,19 +263,21 @@ cd Backend
 npm test
 ```
 
-65 tests cover:
+65 tests across 13 suites cover:
 - Direction logic
 - Schedule parsing
 - Geo calculations
 - Route finding
 - Service availability
+- Security middleware
 
 ## Development
 
 ### Adding New Routes
 
 1. Edit `Backend/data/schedule.json`
-2. Run `update_geometries.bat` to generate the routes and update it to `route_geometries.json`
+2. Run `update_geometries.bat` to generate the routes and update `route_geometries.json`
+
 ### Adding New Locations
 
 1. Add entries to `Backend/data/campus_locations.json`

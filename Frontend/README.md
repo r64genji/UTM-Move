@@ -2,15 +2,18 @@
 
 ## Overview
 
-React-based mobile-first frontend built with Vite. Features an interactive map, route explorer, and turn-by-turn navigation.
+React-based mobile-first Progressive Web App built with Vite. Features an interactive map, route explorer, and turn-by-turn navigation for UTM campus buses.
 
 ## Tech Stack
 
-- **React 18** - UI framework
-- **Vite 7** - Build tool
-- **Leaflet** - Interactive maps
-- **Axios** - API client
-- **CSS** - Custom styling (no Tailwind)
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| React | 19.2.0 | UI framework |
+| Vite | 7.2.4 | Build tool & dev server |
+| Leaflet | 1.9.4 | Interactive maps |
+| React-Leaflet | 5.0.0 | React bindings for Leaflet |
+| Axios | 1.13.2 | API client |
+| ESLint | 9.39.1 | Code linting |
 
 ## Project Structure
 
@@ -26,24 +29,23 @@ src/
 │   ├── DevPanel.jsx            # Developer tools (Ctrl+Shift+D)
 │   ├── DirectionSelector.jsx   # Headsign selector
 │   ├── DirectionsPanel.jsx     # Desktop directions
-│   ├── Map.jsx                 # Leaflet map component
+│   ├── Map.jsx                 # Leaflet map component (~31KB)
 │   ├── ReportDialog.jsx        # Issue reporting dialog
 │   ├── RouteSelector.jsx       # Route dropdown
 │   ├── ScheduleView.jsx        # Timetable display
 │   ├── SearchBar.jsx           # Location search
 │   ├── ServiceSelector.jsx     # Weekday/Weekend toggle
 │   │
-│   └── mobile/
+│   └── mobile/                 # Mobile-specific pages (9 components)
 │       ├── BottomNavigation.jsx    # Tab bar
 │       ├── MobileApp.jsx           # Mobile router
-│       ├── MobileHomePage.jsx      # Home with map
+│       ├── MobileHomePage.jsx      # Home with map & nearest stops
 │       ├── MobileInfoPage.jsx      # Info/help page
-│       ├── MobileNavigatePage.jsx  # Navigation view
+│       ├── MobileNavigatePage.jsx  # Navigation view (~41KB)
 │       ├── MobileProfilePage.jsx   # User profile/settings
-│       ├── MobileRouteDetailPage.jsx # Route details
+│       ├── MobileRouteDetailPage.jsx # Route details (~36KB)
 │       ├── MobileRoutesPage.jsx    # Route list
-│       ├── MobileSearchPage.jsx    # Location search
-│       └── MobileWelcomePage.jsx   # Onboarding
+│       └── MobileSearchPage.jsx    # Location search
 │
 ├── services/
 │   └── api.js              # Backend API client
@@ -64,27 +66,37 @@ Main orchestrator handling:
 
 ### Map.jsx
 
-Leaflet map with:
-- Bus stop markers
-- Route polylines
+Leaflet map component with:
+- Bus stop markers with interactive popups
+- Route polylines with direction arrows
 - Walking path visualization
-- User location
-- Direction markers
+- User location tracking
+- Building labels at high zoom levels
+- UTM area highlighting
 
 ### MobileNavigatePage.jsx
 
-Navigation view with:
+Full-featured navigation view with:
 - Origin/destination inputs
 - Draggable directions sheet
 - Step-by-step instructions
-- Walking direction rendering
+- Walking direction rendering with elevation data
+- Real-time ETA calculation
+
+### MobileHomePage.jsx
+
+Landing page featuring:
+- Interactive campus map
+- Nearest bus stops with upcoming arrivals
+- Quick navigation buttons
+- PWA install prompt
 
 ### DevPanel.jsx
 
 Developer tools (Ctrl+Shift+D):
 - Time override
 - Day override
-- Quick presets
+- Quick presets (Friday prayer, weekends, etc.)
 
 ## API Client
 
@@ -157,11 +169,34 @@ Custom CSS design system in `index.css`:
 }
 ```
 
+## PWA Features
+
+The app supports Progressive Web App installation:
+- Service worker for offline caching
+- Home screen installation prompt
+- Responsive mobile-first design
+- Dark mode support
+
 ## Building
 
 ```bash
-npm run build    # Production build
-npm run dev      # Development server
+npm run build    # Production build → dist/
+npm run dev      # Development server with hot reload
+npm run preview  # Preview production build locally
+npm run lint     # Run ESLint
+```
+
+## Environment Variables
+
+Create `.env` file:
+
+```env
+VITE_API_URL=http://localhost:3000/api
+```
+
+For production deployment:
+```env
+VITE_API_URL=https://your-backend-domain.com/api
 ```
 
 ## Route Colors
@@ -173,6 +208,12 @@ export const ROUTE_COLORS = {
     'A': '#FF4444',  // Red
     'B': '#44AA44',  // Green
     'C': '#4444FF',  // Blue
+    'D': '#FF8800',  // Orange
+    'E': '#AA44AA',  // Purple
+    'F': '#00AAAA',  // Cyan
+    'G': '#AAAA00',  // Yellow
+    'H': '#FF44AA',  // Pink
+    'J': '#44AAFF',  // Light Blue
     // ...
 };
 
@@ -180,3 +221,20 @@ export function getRouteColor(routeName) {
     // Extract letter and return color
 }
 ```
+
+## Deployment
+
+The frontend is deployed on Vercel. Configuration in `vercel.json`:
+
+```json
+{
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/" }
+  ]
+}
+```
+
+Build settings:
+- **Framework Preset**: Vite
+- **Build Command**: `npm run build`
+- **Output Directory**: `dist`
