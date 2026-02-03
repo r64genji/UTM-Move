@@ -2,11 +2,11 @@
 
 ## Overview
 
-The `data/` folder contains all static data files used by UTM Move.
+The `data/` folder contains all static data files used by UTM Move. Total size: ~560KB of structured JSON data.
 
 ## Files
 
-### schedule.json
+### schedule.json (54KB)
 
 Main schedule database with all routes, services, and trips.
 
@@ -46,9 +46,9 @@ Main schedule database with all routes, services, and trips.
 }
 ```
 
-### campus_locations.json
+### campus_locations.json (243KB)
 
-Points of interest on campus (libraries, faculties, etc).
+Points of interest on campus (libraries, faculties, buildings, etc).
 
 ```json
 {
@@ -67,16 +67,19 @@ Points of interest on campus (libraries, faculties, etc).
 ```
 
 **Categories:**
-- `library` - Libraries
-- `faculty` - Faculty buildings
-- `hostel` - Student hostels
-- `food` - Cafeterias
-- `admin` - Administrative buildings
-- `bus_stop` - Bus stops (auto-generated)
+| Category | Description |
+|----------|-------------|
+| `library` | Libraries |
+| `faculty` | Faculty buildings |
+| `hostel` | Student hostels (e.g., KTF, KTR, KTHO) |
+| `food` | Cafeterias and food courts |
+| `admin` | Administrative buildings |
+| `facility` | Sports, labs, and other facilities |
+| `bus_stop` | Bus stops (auto-generated from schedule.json) |
 
-### route_geometries.json
+### route_geometries.json (237KB)
 
-Pre-cached route paths (GeoJSON LineStrings).
+Pre-cached route paths as GeoJSON LineStrings for map visualization.
 
 ```json
 {
@@ -106,9 +109,9 @@ Metadata about route geometries for cache management.
 }
 ```
 
-### utm polygon.geojson
+### utm polygon.geojson (1KB)
 
-GeoJSON polygon defining UTM campus boundaries. Used for location validation.
+GeoJSON polygon defining UTM campus boundaries. Used for location validation and map highlighting.
 
 ```json
 {
@@ -120,9 +123,9 @@ GeoJSON polygon defining UTM campus boundaries. Used for location validation.
 }
 ```
 
-### route_durations.json
+### route_durations.json (23KB)
 
-Travel time estimates per route segment.
+Travel time estimates per route segment, used for ETA calculations.
 
 ```json
 {
@@ -139,7 +142,7 @@ Travel time estimates per route segment.
 
 ### route_waypoints.json
 
-Manual waypoints for accurate route visualization.
+Manual waypoints for accurate route visualization (when GraphHopper routing needs adjustment).
 
 ```json
 {
@@ -156,13 +159,30 @@ Manual waypoints for accurate route visualization.
 
 1. Add stops to `schedule.json` → `stops` array
 2. Add route to `schedule.json` → `routes` array
-3. Generate geometry and add to `route_geometries.json`
-4. Run `node importSchedule.js`
+3. Run geometry generation:
+   ```bash
+   cd Backend
+   .\update_geometries.bat
+   ```
 
 ### Add a new location
 
 1. Add to `campus_locations.json`
-2. Include `nearestStop` for routing
+2. Include `nearestStop` for optimal routing
+3. Add relevant `aliases` for search
+
+Example:
+```json
+{
+  "id": "NEW_BUILDING",
+  "name": "New Faculty Building",
+  "lat": 1.5600,
+  "lon": 103.6400,
+  "category": "faculty",
+  "nearestStop": "P07",
+  "aliases": ["NFB", "New Building"]
+}
+```
 
 ### Regenerate route geometry
 
@@ -171,9 +191,23 @@ cd Backend/scripts
 node regenerate-route.js "Route A : To Arked"
 ```
 
+Or regenerate all routes:
+```bash
+cd Backend
+.\update_geometries.bat
+```
+
 ## Validation
+
+Run validation script to check data integrity:
 
 ```bash
 cd Backend/scripts
-python validate_schedule.py
+node validate_schedule.js
 ```
+
+This checks for:
+- Stop ID consistency
+- Valid GPS coordinates
+- Schedule time format
+- Route geometry completeness

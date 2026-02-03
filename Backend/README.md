@@ -6,31 +6,52 @@ The UTM Move backend is a Node.js/Express server that provides:
 - Static data API for routes and schedules
 - Real-time bus arrival calculations
 - Intelligent direction finding with walking + bus combinations
-- Graphhopper integration for walking directions
+- GraphHopper integration for walking directions
+
+## Tech Stack
+
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| Node.js | 18+ | Runtime environment |
+| Express | 5.2.1 | REST API framework |
+| Helmet | 8.1.0 | Security headers |
+| CORS | 2.8.5 | Cross-origin requests |
+| Express Rate Limit | 8.2.1 | API rate limiting |
+| Axios | 1.13.2 | HTTP client for GraphHopper |
+| dotenv | 17.2.3 | Environment variables |
+| pdf-parse | 1.1.1 | PDF schedule parsing |
+| Jest | 30.2.0 | Testing framework |
+| Supertest | 7.2.2 | API testing |
 
 ## Architecture
 
 ```
 Backend/
-├── server.js               # Express server & API routes
+├── server.js               # Express server & API routes (~21KB)
 ├── directionLogic.js       # Re-exports from directions/
 ├── enrich_schedule_logic.js # Schedule enhancement
 │
-├── directions/             # Modular routing engine
-│   ├── index.js            # Main getDirections() orchestrator
-│   ├── dataLoader.js       # Cached data loading + indexes
-│   ├── locationService.js  # Stop/location lookups
-│   ├── routeFinder.js      # Route discovery algorithms
-│   ├── routingEngine.js    # A* pathfinding + route scoring
-│   ├── scheduler.js        # Departure time calculations
-│   ├── responseBuilder.js  # Response formatting
-│   └── walkingService.js   # GraphHopper walking directions
+├── directions/             # Modular routing engine (8 modules)
+│   ├── index.js            # Main getDirections() orchestrator (~25KB)
+│   ├── dataLoader.js       # Cached data loading + indexes (~5KB)
+│   ├── locationService.js  # Stop/location lookups (~6KB)
+│   ├── routeFinder.js      # Route discovery algorithms (~10KB)
+│   ├── routingEngine.js    # A* pathfinding + route scoring (~23KB)
+│   ├── scheduler.js        # Departure time calculations (~6KB)
+│   ├── responseBuilder.js  # Response formatting (~18KB)
+│   └── walkingService.js   # GraphHopper walking directions (~7KB)
 │
-├── data/                   # JSON data files
-├── tests/                  # Jest test files (13 suites)
+├── data/                   # JSON data files (~560KB total)
+│   ├── schedule.json           # Bus schedules (54KB)
+│   ├── campus_locations.json   # Campus locations (243KB)
+│   ├── route_geometries.json   # GeoJSON route paths (237KB)
+│   ├── route_durations.json    # Travel times (23KB)
+│   └── geometry_manifest.json  # Geometry metadata
+│
+├── tests/                  # Jest test files (13 suites, 65 tests)
 ├── scripts/                # Development utilities (32 scripts)
 └── utils/
-    ├── geo.js              # Haversine distance
+    ├── geo.js              # Haversine distance calculations
     └── validators.js       # Input validation
 ```
 
@@ -38,11 +59,18 @@ Backend/
 
 ### server.js
 
-Express server with four main endpoints:
+Express server with main endpoints:
 - `GET /api/health` - Health check
 - `GET /api/static-data` - All schedule and location data
 - `GET /api/next-bus` - Next bus for a route
 - `GET /api/directions` - Complete directions
+- `POST /api/reports` - Submit issue reports
+
+Security features:
+- Helmet for security headers
+- CORS configuration
+- Rate limiting (100 requests/15min)
+- Input validation
 
 ### directions/index.js
 
@@ -141,6 +169,12 @@ Key features:
     "message": "Walk 450m to your destination.",
     "totalWalkingDistance": 450,
     "totalDuration": 6,
+    "summary": {
+        "distance": 450,
+        "duration": 6,
+        "ascent": 5,
+        "descent": 3
+    },
     "walkingSteps": [
         { "instruction": "Head north", "distance": 50 },
         { "instruction": "Turn right", "distance": 200 }
@@ -179,14 +213,25 @@ Key features:
 }
 ```
 
+## Environment Variables
+
+Create `.env` file:
+
+```env
+PORT=3000
+GRAPHHOPPER_URL=http://localhost:8989
+NODE_ENV=development
+```
+
 ## Testing
 
 ```bash
-npm test           # Run all tests
-npm test -- --watch  # Watch mode
+npm test              # Run all tests
+npm test -- --watch   # Watch mode
+npm test -- --coverage # With coverage
 ```
 
-Test files:
+Test files (13 suites, 65 tests):
 - `astar.test.js` - A* pathfinding
 - `constants.test.js` - Constants validation
 - `directionLogic.test.js` - Direction finding
@@ -197,6 +242,7 @@ Test files:
 - `routeScorer.test.js` - Route scoring
 - `routing_edge_cases.test.js` - Edge cases
 - `security.test.js` - Security middleware
+- `validators.test.js` - Input validation
 
 ## Performance Optimizations
 
@@ -204,3 +250,13 @@ Test files:
 2. **LRU cache** - Nearest stops cached (100 entries max)
 3. **Parsed times cache** - Route times pre-parsed to minutes
 4. **Set-based lookups** - O(1) stop membership checks
+5. **Static data caching** - Schedule data loaded once at startup
+
+## Running the Server
+
+```bash
+npm start      # Production mode
+npm run dev    # Development mode with nodemon
+```
+
+The server runs on `http://localhost:3000` by default.
