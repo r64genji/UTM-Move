@@ -41,7 +41,7 @@ const MAX_WALKING_FROM_STOP_M = 800; // Max walking distance from alight stop to
  * @param {Object|null} pinnedDestination - Direct destination coords for pinned locations
  * @returns {Object} Directions response
  */
-async function getDirections(originLat, originLon, originStopId, destLocationId, currentTime, dayOverride = null, forceBus = false, pinnedDestination = null) {
+async function getDirections(originLat, originLon, originStopId, destLocationId, currentTime, dayOverride = null, forceBus = false, pinnedDestination = null, isAnytime = false) {
     const dayName = getCurrentDayName(dayOverride);
 
     // 1. Resolve destination - use pinnedDestination if provided, otherwise lookup
@@ -112,7 +112,13 @@ async function getDirections(originLat, originLon, originStopId, destLocationId,
         const walkingDetails = await getWalkingDirections(originCoords, destLocation);
         // Determine origin name: use the nearest stop name if user didn't select a specific stop
         const originName = originStopId ? primaryStop.name : (userNearestStops[0]?.name || null);
-        return buildWalkResponse(originCoords, destLocation, directDistance, alternativeBus, walkingDetails, originName);
+        const response = buildWalkResponse(originCoords, destLocation, directDistance, alternativeBus, walkingDetails, originName);
+        if (directDistance < 300) {
+            response.walkingReason = "Destination is very close.";
+        } else {
+            response.walkingReason = "Walking is faster than waiting for the next bus.";
+        }
+        return response;
     }
 
     // 4. Run A* Pathfinding (Unifies Direct, Loop, Transfer, and Walk optimizations)
@@ -128,7 +134,7 @@ async function getDirections(originLat, originLon, originStopId, destLocationId,
     }
 
     // 4. Calculate optimal path using A*
-    const bestPath = findOptimalPath(originCoords.lat, originCoords.lon, destLocation, currentTime, dayName);
+    const bestPath = findOptimalPath(originCoords.lat, originCoords.lon, destLocation, currentTime, dayName, isAnytime);
 
     if (!bestPath) {
 
@@ -218,7 +224,9 @@ async function getDirections(originLat, originLon, originStopId, destLocationId,
 
         // Fallback to pure walking if no bus route found
         const walkingDetails = await getWalkingDirections(originCoords, destLocation);
-        return buildWalkResponse(originCoords, destLocation, walkOnlyDist, alternativeBus, walkingDetails, originLocation?.name);
+        const response = buildWalkResponse(originCoords, destLocation, walkOnlyDist, alternativeBus, walkingDetails, originLocation?.name);
+        response.walkingReason = "No bus currently scheduled for this trip.";
+        return response;
     }
 
     // 5. Convert A* Path to API Response
@@ -396,7 +404,7 @@ async function getDirections(originLat, originLon, originStopId, destLocationId,
             console.warn('Walking details fetch failed:', e.message);
         }
 
-        return buildTransferResponse({
+        const response = buildTransferResponse({
             busLegs: finalBusLegs,  // Use merged bus legs
             transferWalks,  // Pass transfer walks to response builder
             originCoords,
@@ -409,6 +417,19 @@ async function getDirections(originLat, originLon, originStopId, destLocationId,
             walkingToOriginDetails: walkingToOriginDetails,
             walkingFromDestDetails: walkingFromDestDetails
         });
+
+        if (isAnytime) {
+            const nextBus = findNextAvailableBusForRoute(leg1.route, currentTime, dayName);
+            if (nextBus) {
+                response.nextAvailable = {
+                    time: nextBus.time,
+                    day: nextBus.day
+                };
+                response.summary.isAnytime = true;
+            }
+        }
+
+        return response;
     }
 }
 

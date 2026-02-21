@@ -323,7 +323,8 @@ function AppInner() {
                 destLocationId: destination.id,
                 time: devSettings.enabled ? devSettings.time : currentTime,
                 day: devSettings.enabled ? devSettings.day : currentDay,
-                forceBus: options.forceBus
+                forceBus: options.forceBus,
+                anytime: options.anytime
             };
 
             // For pinned locations, pass coordinates directly

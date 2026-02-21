@@ -132,13 +132,23 @@ function MapControlHandler({ userLocation }) {
 function MapResizeHandler() {
     const map = useMap();
     useEffect(() => {
+        let timeoutId;
         const handleResize = () => {
-            map.invalidateSize();
+            if (map && map.getContainer()) {
+                map.invalidateSize();
+            }
         };
         window.addEventListener('resize', handleResize);
         // Initial invalidate to ensure correct size on mount
-        setTimeout(() => map.invalidateSize(), 100);
-        return () => window.removeEventListener('resize', handleResize);
+        timeoutId = setTimeout(() => {
+            if (map && map.getContainer()) {
+                map.invalidateSize();
+            }
+        }, 100);
+        return () => {
+            window.removeEventListener('resize', handleResize);
+            if (timeoutId) clearTimeout(timeoutId);
+        };
     }, [map]);
     return null;
 }

@@ -291,7 +291,7 @@ app.get('/api/next-bus', (req, res) => {
 // Endpoint: Get directions from origin to destination
 app.get('/api/directions', async (req, res) => {
     try {
-        const { originLat, originLon, originStopId, destLocationId, destLat, destLon, destName, time, day, forceBus } = req.query;
+        const { originLat, originLon, originStopId, destLocationId, destLat, destLon, destName, time, day, forceBus, anytime } = req.query;
 
         // Input Validation
         if (originLat) {
@@ -351,7 +351,8 @@ app.get('/api/directions', async (req, res) => {
             currentTime,
             day || null,
             forceBus === 'true',
-            pinnedDestination  // Pass pinned destination as additional param
+            pinnedDestination,  // Pass pinned destination as additional param
+            anytime === 'true'  // Pass anytime parameter
         );
 
         res.json(result);

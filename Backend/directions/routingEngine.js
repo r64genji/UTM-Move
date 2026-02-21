@@ -12,7 +12,7 @@ const { getIndexes } = require('./dataLoader');
 // Speed & Distance
 const WALK_SPEED_M_PER_MIN = 83.33; // 5 km/h = 5000m / 60min ~= 83.33 m/min
 const BUS_SPEED_M_PER_MIN = 666;    // ~40 km/h (Conservative estimate for heuristic)
-const MAX_WALKING_DIST_M = 800;     // Revert to 800 for coverage, use reluctance to favor closer ones
+const MAX_WALKING_DIST_M = 1000;     // Revert to 800 for coverage, use reluctance to favor closer ones
 const TIMEOUT_MINUTES = 120;        // Max search horizon
 
 // Reluctance & Penalties (Tuned for optimal behavior)
@@ -154,9 +154,13 @@ function heuristic(stop, dest) {
 /**
  * Find optimal path using A*
  */
-function findOptimalPath(originLat, originLon, destLocation, startTime, dayName) {
+function findOptimalPath(originLat, originLon, destLocation, startTime, dayName, isAnytime = false) {
     const indexes = getIndexes();
     const startTimeMins = timeToMinutes(startTime);
+
+    // Route E Special Logic: Determine if we should filter weekend routes
+    const isTodayWeekend = dayName === 'saturday' || dayName === 'sunday';
+    const isRouteE = (name) => name.toLowerCase().startsWith('route e');
 
     // Check if destination is a bus stop OR near a bus stop - if so, favor routes that go directly there
     const destIsStop = indexes.stopsById.has(destLocation.id);
@@ -345,18 +349,34 @@ function findOptimalPath(originLat, originLon, destLocation, startTime, dayName)
             const penaltyAfterWalk = current.accPenalty + walkPenalty;
 
             for (const routeDef of routes) {
-                const dep = getNextDeparture(
-                    { routeName: routeDef.routeName, headsign: routeDef.headsign, serviceDays: routeDef.serviceDays, times: routeDef.times },
-                    routeDef.stopIndex,
-                    minutesToTime(Math.ceil(arrivalAfterWalk)),
-                    dayName
-                );
+                // --- Route E Special Logic Filtering ---
+                if (!isTodayWeekend && isRouteE(routeDef.routeName)) {
+                    const hasWeekday = routeDef.serviceDays.some(d => !['saturday', 'sunday'].includes(d.toLowerCase()));
+                    if (!hasWeekday) continue; // Skip weekend-only Route E variants on weekdays
+                }
+
+                let dep;
+                if (isAnytime) {
+                    // For anytime search, pick the first departure of the day to get tripStartTime
+                    dep = getNextDeparture(
+                        { routeName: routeDef.routeName, headsign: routeDef.headsign, serviceDays: routeDef.serviceDays, times: routeDef.times },
+                        routeDef.stopIndex,
+                        '00:00',
+                        routeDef.serviceDays[0]
+                    );
+                } else {
+                    dep = getNextDeparture(
+                        { routeName: routeDef.routeName, headsign: routeDef.headsign, serviceDays: routeDef.serviceDays, times: routeDef.times },
+                        routeDef.stopIndex,
+                        minutesToTime(Math.ceil(arrivalAfterWalk)),
+                        dayName
+                    );
+                }
 
                 if (dep) {
                     const depTimeMins = timeToMinutes(dep.time);
-                    // Fix Bug 2: Wait is from arrival at stop after walk, not from current.arrivalTime
-                    let waitTime = depTimeMins - arrivalAfterWalk;
-                    if (waitTime < 0) continue;
+                    let waitTime = isAnytime ? 0 : (depTimeMins - arrivalAfterWalk);
+                    if (!isAnytime && waitTime < 0) continue;
 
                     // Improve Tuning 5: Minimum transfer buffer check
                     // Only apply buffer for bus-to-bus transfers

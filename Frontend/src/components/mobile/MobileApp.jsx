@@ -322,6 +322,7 @@ const MobileApp = ({
                     loading={directionsLoading}
                     onClose={onCloseDirections}
                     onPlanFutureTrip={onPlanFutureTrip}
+                    onGetDirections={onGetDirections}
                     pinMode={pinMode}
                     pinnedLocation={pinnedLocation}
                     onMapClick={handleMapClick}

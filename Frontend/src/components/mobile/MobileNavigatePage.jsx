@@ -21,6 +21,7 @@ const MobileNavigatePage = ({
     loading,
     onClose,
     onPlanFutureTrip,
+    onGetDirections,
     // Pin mode props
     pinMode = null,             // 'origin' | 'destination' | null
     pinnedLocation = null,      // { lat, lon, type }
@@ -371,6 +372,43 @@ const MobileNavigatePage = ({
                                         <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1 truncate">Arrival</span>
                                         <span className="text-xl font-black text-blue-500 leading-none whitespace-nowrap">{getETA() || '--:--'}</span>
                                     </div>
+                                </div>
+                            )}
+
+                            <div className="flex flex-wrap gap-2">
+                                {!directions.summary?.isAnytime && (
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); onGetDirections(selectedDestination, { anytime: true }); }}
+                                        className="shrink-0 px-3 py-1.5 rounded-lg bg-blue-600/20 text-blue-400 border border-blue-400/20 text-[10px] font-bold uppercase tracking-wider hover:bg-blue-600/30 transition-colors flex items-center gap-1.5"
+                                    >
+                                        <span className="material-symbols-outlined text-xs">auto_awesome</span>
+                                        Show Best Route
+                                    </button>
+                                )}
+
+                                {directions.summary?.isAnytime && (
+                                    <div className="shrink-0 px-3 py-1.5 rounded-lg bg-green-600/20 text-green-400 border border-green-400/20 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5">
+                                        <span className="material-symbols-outlined text-xs">verified</span>
+                                        Best Route Shown
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Walking Reason / Notice */}
+                            {directions.walkingReason && (
+                                <div className="bg-amber-900/10 border border-amber-900/20 rounded-xl px-4 py-2 flex items-center gap-3">
+                                    <span className="material-symbols-outlined text-amber-500 text-sm">info</span>
+                                    <p className="text-[11px] text-amber-400/80 font-medium leading-tight">{directions.walkingReason}</p>
+                                </div>
+                            )}
+
+                            {/* Anytime Availability Notice */}
+                            {directions.nextAvailable && (
+                                <div className="bg-blue-900/10 border border-blue-900/20 rounded-xl px-4 py-2 flex items-center gap-3">
+                                    <span className="material-symbols-outlined text-blue-500 text-sm">event_repeat</span>
+                                    <p className="text-[11px] text-blue-400/90 font-medium leading-tight">
+                                        This route runs on {directions.nextAvailable.day.charAt(0).toUpperCase() + directions.nextAvailable.day.slice(1)}s at {directions.nextAvailable.time}
+                                    </p>
                                 </div>
                             )}
                         </div>
