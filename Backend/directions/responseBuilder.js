@@ -225,7 +225,7 @@ function buildDirectResponse({
             eta
         },
         steps,
-        totalWalkingDistance: Math.round(walkToOrigin + walkFromDest),
+        totalWalkingDistance: Math.round((walkingToOriginDetails?.distance || walkToOrigin) + (walkingFromDestDetails?.distance || walkFromDest)),
         directWalkDistance: Math.round(directDistance),
         routeGeometry: route.isLoop ? null : routeGeometries[geometryKey],
         routeGeometries: route.isLoop ? {
@@ -399,7 +399,7 @@ function buildTransferResponse({
             eta: addMinutesToTime(lastLeg.arrivalTime, walkFromDuration)
         },
         steps,
-        totalWalkingDistance: Math.round(walkToOrigin + walkFromDest + totalTransferWalkDistance),
+        totalWalkingDistance: Math.round((walkingToOriginDetails?.distance || walkToOrigin) + (walkingFromDestDetails?.distance || walkFromDest) + totalTransferWalkDistance),
         directWalkDistance: Math.round(directDistance),
         // backward compatibility for simple consumers
         firstLeg: firstLeg.route,

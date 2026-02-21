@@ -17,3 +17,13 @@
 {"id":"1771599501197","timestamp":"2026-02-20T14:58:21.197Z","type":"new_stop","details":"Valid details check'; [REDACTED_SQL] users; [REDACTED_SQL]","ip":"::ffff:127.0.0.1"}
 {"id":"1771599551053","timestamp":"2026-02-20T14:59:11.053Z","type":"new_stop","details":"This is a scriptalert(1)/script test details string","ip":"::ffff:127.0.0.1"}
 {"id":"1771599551058","timestamp":"2026-02-20T14:59:11.058Z","type":"new_stop","details":"Valid details check'; [REDACTED_SQL] users; [REDACTED_SQL]","ip":"::ffff:127.0.0.1"}
+{"id":"1771646385830","timestamp":"2026-02-21T03:59:45.830Z","type":"new_stop","details":"This is a scriptalert(1)/script test details string","ip":"::ffff:127.0.0.1"}
+{"id":"1771646385834","timestamp":"2026-02-21T03:59:45.834Z","type":"new_stop","details":"Valid details check'; [REDACTED_SQL] users; [REDACTED_SQL]","ip":"::ffff:127.0.0.1"}
+{"id":"1771646707363","timestamp":"2026-02-21T04:05:07.363Z","type":"new_stop","details":"This is a scriptalert(1)/script test details string","ip":"::ffff:127.0.0.1"}
+{"id":"1771646707368","timestamp":"2026-02-21T04:05:07.368Z","type":"new_stop","details":"Valid details check'; [REDACTED_SQL] users; [REDACTED_SQL]","ip":"::ffff:127.0.0.1"}
+{"id":"1771646919306","timestamp":"2026-02-21T04:08:39.306Z","type":"new_stop","details":"This is a scriptalert(1)/script test details string","ip":"::ffff:127.0.0.1"}
+{"id":"1771646919310","timestamp":"2026-02-21T04:08:39.310Z","type":"new_stop","details":"Valid details check'; [REDACTED_SQL] users; [REDACTED_SQL]","ip":"::ffff:127.0.0.1"}
+{"id":"1771646936284","timestamp":"2026-02-21T04:08:56.284Z","type":"new_stop","details":"This is a scriptalert(1)/script test details string","ip":"::ffff:127.0.0.1"}
+{"id":"1771646936288","timestamp":"2026-02-21T04:08:56.288Z","type":"new_stop","details":"Valid details check'; [REDACTED_SQL] users; [REDACTED_SQL]","ip":"::ffff:127.0.0.1"}
+{"id":"1771647170807","timestamp":"2026-02-21T04:12:50.807Z","type":"new_stop","details":"This is a scriptalert(1)/script test details string","ip":"::ffff:127.0.0.1"}
+{"id":"1771647170811","timestamp":"2026-02-21T04:12:50.811Z","type":"new_stop","details":"Valid details check'; [REDACTED_SQL] users; [REDACTED_SQL]","ip":"::ffff:127.0.0.1"}

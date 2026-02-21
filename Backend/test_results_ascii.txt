@@ -1,0 +1,5 @@
+  console.log
+    [DataLoader] Loaded: 57 stops, 801 locations, 51 stop-routes indexed
+
+      at log (directions/dataLoader.js:141:13)
+

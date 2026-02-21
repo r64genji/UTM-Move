@@ -90,36 +90,54 @@ describe('routeScorer', () => {
     });
 
     describe('isWalkingBetter', () => {
-        test('prefers walking for very short distances', () => {
-            // Direct distance 200m
+        test('prefers walking when bus wait and travel is significantly longer than walk', () => {
+            // Arrange
+            const origin = { lat: 1.55, lon: 103.63 };
+            const dest = { lat: 1.551, lon: 103.631 }; // ~150 meters away
+            const directDist = 150;
+
+            // Mock walk time for 150m @ ~83m/min = ~1.8 mins
+            haversineDistance.mockReturnValue(150);
+
+            // Mock bus wait + travel to be longer (e.g., 5 min wait + 2 min travel = 7 mins)
+            getNextDeparture.mockReturnValue({ minutesUntil: 5 });
+            getDynamicOffset.mockReturnValue(2);
+
+            // Act
             const result = isWalkingBetter(
-                {}, // route (not used for distance check)
-                { lat: 0, lon: 0 },
-                { lat: 0, lon: 0 },
-                { lat: 0, lon: 0 },
-                { lat: 0, lon: 0 },
-                200, // directDistance
-                {}
+                { routeName: 'Bus', originStopIndex: 0, destStopIndex: 1 },
+                origin, dest, origin, dest,
+                directDist,
+                { id: 'Stop', lat: 1.55, lon: 103.63 }
             );
-            // Default threshold 1000m, calculated bus time vs walk time
-            // Actually implementation calculates times.
 
-            // Mock distances
-            haversineDistance.mockReturnValue(100);
+            // Assert
+            expect(result).toBe(true);
+        });
 
-            // Bus takes time (wait + travel). Walk takes little.
-            // Walk 200m @ 1.4m/s = ~2.4 mins
-            // Bus: Wait 5 + Travel 5 = 10 mins
+        test('prefers bus for longer distances even with moderate wait', () => {
+            // Arrange
+            const origin = { lat: 1.55, lon: 103.63 };
+            const dest = { lat: 1.57, lon: 103.65 }; // ~3 kilometers away
+            const directDist = 3000;
 
-            // We need to ensure helper functions return values
-            getDynamicOffset.mockReturnValue(5); // bus travel
-            // We can't easily mock inner functions, but we mocked haversine
+            haversineDistance.mockReturnValue(3000);
 
-            // Actually isWalkingBetter calls getWalkingMinutes.
-            // We need to rely on the logic: walkTime <= busTime
+            // Bus: 5 min wait + 10 min travel = 15 mins
+            // Walk: 3000m @ 83m/min = ~36 mins
+            getNextDeparture.mockReturnValue({ minutesUntil: 5 });
+            getDynamicOffset.mockReturnValue(10);
 
-            // Let's rely on logic coverage:
-            // if walk distance is small and bus wait is long, walk should be better
+            // Act
+            const result = isWalkingBetter(
+                { routeName: 'Bus', originStopIndex: 0, destStopIndex: 1 },
+                origin, dest, origin, dest,
+                directDist,
+                { id: 'Stop', lat: 1.55, lon: 103.63 }
+            );
+
+            // Assert
+            expect(result).toBe(false);
         });
     });
 });

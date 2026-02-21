@@ -1,0 +1,273 @@
+  console.log
+    [DataLoader] Loaded: 57 stops, 801 locations, 51 stop-routes indexed
+
+      at log (directions/dataLoader.js:141:13)
+
+node.exe : FAIL tests/r
+outing_improvements.tes
+t.js
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo 
+...
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (FAIL tests/ro   
+ uting_improvements    
+.test.js:String) [    
+], RemoteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+  Routing Engine 
+Improvements
+    Bug 1: Overnight 
+Routes
+      ? Should find a 
+route departing before 
+midnight and arriving 
+after (1 ms)
+    Tuning 5: Minimum 
+Transfer Buffer
+      ? Should not 
+recommend a transfer 
+with less than 2 
+minutes wait time
+    Tuning 7: Maximum 
+Transfer Count
+      ? Should never 
+produce a path with 
+more than 2 bus legs
+    Tuning 4 & CP 
+Preference
+      ? Should prefer 
+transferring at CP 
+even if another stop 
+is slightly faster (1 
+ms)
+    Optimal Alighting 
+Stop
+      ? Should not 
+alight early if a 
+later stop on the same 
+route is closer to 
+destination (1 ms)
+    Tuning 1 & 2: 
+Boarding Stop Walk Cap
+      ? Should prefer 
+a closer stop even if 
+a farther one has the 
+same route (1 ms)
+
+  ? Routing Engine 
+Improvements ? Bug 1: 
+Overnight Routes ? 
+Should find a route 
+departing before 
+midnight and arriving 
+after
+
+    ReferenceError: 
+walkTime is not defined
+
+    [0m [90m 337 
+|[39m         }
+     [90m 338 |[39m
+    [31m[1m>[22m[39
+m[90m 339 |[39m      
+   [36mconst[39m 
+arrivalAfterWalk 
+[33m=[39m current[33
+m.[39marrivalTime 
+[33m+[39m 
+walkTime[33m;[39m
+     [90m     |[39m  
+                       
+                       
+        
+[31m[1m^[22m[39m
+     [90m 340 |[39m  
+       [36mconst[39m 
+penaltyAfterWalk 
+[33m=[39m current[33
+m.[39maccPenalty 
+[33m+[39m 
+walkPenalty[33m;[39m
+     [90m 341 |[39m
+     [90m 342 |[39m  
+       [36mfor[39m 
+([36mconst[39m 
+routeDef [36mof[39m 
+routes) {[0m
+
+      at walkTime (dire
+ctions/routingEngine.js
+:339:56)
+      at 
+Object.findOptimalPath 
+(tests/routing_improvem
+ents.test.js:24:28)
+
+  ? Routing Engine 
+Improvements ? Tuning 
+4 & CP Preference ? 
+Should prefer 
+transferring at CP 
+even if another stop 
+is slightly faster
+
+    ReferenceError: 
+walkTime is not defined
+
+    [0m [90m 337 
+|[39m         }
+     [90m 338 |[39m
+    [31m[1m>[22m[39
+m[90m 339 |[39m      
+   [36mconst[39m 
+arrivalAfterWalk 
+[33m=[39m current[33
+m.[39marrivalTime 
+[33m+[39m 
+walkTime[33m;[39m
+     [90m     |[39m  
+                       
+                       
+        
+[31m[1m^[22m[39m
+     [90m 340 |[39m  
+       [36mconst[39m 
+penaltyAfterWalk 
+[33m=[39m current[33
+m.[39maccPenalty 
+[33m+[39m 
+walkPenalty[33m;[39m
+     [90m 341 |[39m
+     [90m 342 |[39m  
+       [36mfor[39m 
+([36mconst[39m 
+routeDef [36mof[39m 
+routes) {[0m
+
+      at walkTime (dire
+ctions/routingEngine.js
+:339:56)
+      at 
+Object.findOptimalPath 
+(tests/routing_improvem
+ents.test.js:62:28)
+
+  ? Routing Engine 
+Improvements ? Optimal 
+Alighting Stop ? 
+Should not alight 
+early if a later stop 
+on the same route is 
+closer to destination
+
+    ReferenceError: 
+walkTime is not defined
+
+    [0m [90m 337 
+|[39m         }
+     [90m 338 |[39m
+    [31m[1m>[22m[39
+m[90m 339 |[39m      
+   [36mconst[39m 
+arrivalAfterWalk 
+[33m=[39m current[33
+m.[39marrivalTime 
+[33m+[39m 
+walkTime[33m;[39m
+     [90m     |[39m  
+                       
+                       
+        
+[31m[1m^[22m[39m
+     [90m 340 |[39m  
+       [36mconst[39m 
+penaltyAfterWalk 
+[33m=[39m current[33
+m.[39maccPenalty 
+[33m+[39m 
+walkPenalty[33m;[39m
+     [90m 341 |[39m
+     [90m 342 |[39m  
+       [36mfor[39m 
+([36mconst[39m 
+routeDef [36mof[39m 
+routes) {[0m
+
+      at walkTime (dire
+ctions/routingEngine.js
+:339:56)
+      at 
+Object.findOptimalPath 
+(tests/routing_improvem
+ents.test.js:87:28)
+
+  ? Routing Engine 
+Improvements ? Tuning 
+1 & 2: Boarding Stop 
+Walk Cap ? Should 
+prefer a closer stop 
+even if a farther one 
+has the same route
+
+    ReferenceError: 
+walkTime is not defined
+
+    [0m [90m 337 
+|[39m         }
+     [90m 338 |[39m
+    [31m[1m>[22m[39
+m[90m 339 |[39m      
+   [36mconst[39m 
+arrivalAfterWalk 
+[33m=[39m current[33
+m.[39marrivalTime 
+[33m+[39m 
+walkTime[33m;[39m
+     [90m     |[39m  
+                       
+                       
+        
+[31m[1m^[22m[39m
+     [90m 340 |[39m  
+       [36mconst[39m 
+penaltyAfterWalk 
+[33m=[39m current[33
+m.[39maccPenalty 
+[33m+[39m 
+walkPenalty[33m;[39m
+     [90m 341 |[39m
+     [90m 342 |[39m  
+       [36mfor[39m 
+([36mconst[39m 
+routeDef [36mof[39m 
+routes) {[0m
+
+      at walkTime (dire
+ctions/routingEngine.js
+:339:56)
+      at 
+Object.findOptimalPath 
+(tests/routing_improvem
+ents.test.js:107:28)
+
+Test Suites: 1 failed, 
+1 total
+Tests:       4 failed, 
+2 passed, 6 total
+Snapshots:   0 total
+Time:        0.326 s
+Ran all test suites 
+matching tests/routing_
+improvements.test.js.

@@ -12,19 +12,22 @@ const { getIndexes } = require('./dataLoader');
 // Speed & Distance
 const WALK_SPEED_M_PER_MIN = 83.33; // 5 km/h = 5000m / 60min ~= 83.33 m/min
 const BUS_SPEED_M_PER_MIN = 666;    // ~40 km/h (Conservative estimate for heuristic)
-const MAX_WALKING_DIST_M = 800;     // Look for stops within 800m of origin/dest
+const MAX_WALKING_DIST_M = 800;     // Revert to 800 for coverage, use reluctance to favor closer ones
 const TIMEOUT_MINUTES = 120;        // Max search horizon
 
 // Reluctance & Penalties (Tuned for optimal behavior)
 const WALK_RELUCTANCE_FACTOR = 3.0;   // Penalty for walking during transfers
-const INITIAL_WALK_RELUCTANCE = 10;  // Favor closer boarding stops
-const FINAL_WALK_RELUCTANCE = 5;      // Aggressively favor speed near destination (reduced from 100 to 5 to avoid bus looping)
-const TRANSFER_PENALTY_MINS = 10;     // Balanced penalty for route switching
+const INITIAL_WALK_RELUCTANCE = 13;   // Strongly favor closer boarding stops
+const FINAL_WALK_RELUCTANCE = 5;      // Aggressively favor speed near destination
+const TRANSFER_PENALTY_MINS = 12;     // Penalty for route switching
 const BUS_BOARD_PENALTY = 2;          // Minor penalty for every bus boarded
-const SAME_ROUTE_HOP_PENALTY = 0.8;   // Discourage long loops
-const TRANSFER_WALK_LIMIT_M = 300;    // Allow walking between nearby stops for transfers (increased to enable AM→CP transfer)
+const SAME_ROUTE_HOP_PENALTY = 1.5;   // Discourage long loops
+const TRANSFER_WALK_LIMIT_M = 300;    // Allow walking between nearby stops for transfers
 const TRANSFER_WALK_PENALTY = 2;      // Extra penalty for walking between different-ID stops during transfer
 const DIRECT_TO_DEST_BONUS = 0.35;    // Aggressively reduce walk penalty when stop has direct route to destination stop
+const CP_TRANSFER_BONUS = 3;          // Bonus for transferring at Centre Point
+const MAX_TRANSFER_COUNT = 3;         // Allow up to 2 transfers (3 legs)
+const MIN_TRANSFER_BUFFER_MINS = 1;   // Reduced to 1 to accommodate tight valid connections
 
 // Strategy Thresholds
 const WALK_ONLY_THRESHOLD_M = 500;    // Suggest walking under 500m
@@ -261,6 +264,7 @@ function findOptimalPath(originLat, originLon, destLocation, startTime, dayName)
             accPenalty: walkPenalty,
             g: gCost,
             f: gCost + h,
+            busLegCount: 0,
             path: [{
                 type: 'WALK',
                 from: { lat: originLat, lon: originLon, name: 'Origin' },
@@ -350,8 +354,16 @@ function findOptimalPath(originLat, originLon, destLocation, startTime, dayName)
 
                 if (dep) {
                     const depTimeMins = timeToMinutes(dep.time);
-                    let waitTime = depTimeMins - current.arrivalTime; // Wait is from current time, not walk arrival
+                    // Fix Bug 2: Wait is from arrival at stop after walk, not from current.arrivalTime
+                    let waitTime = depTimeMins - arrivalAfterWalk;
                     if (waitTime < 0) continue;
+
+                    // Improve Tuning 5: Minimum transfer buffer check
+                    // Only apply buffer for bus-to-bus transfers
+                    const isTransfer = current.busLegCount > 0;
+                    if (isTransfer && waitTime < MIN_TRANSFER_BUFFER_MINS) {
+                        continue;
+                    }
 
                     for (let i = routeDef.stopIndex + 1; i < routeDef.stopsSequence.length; i++) {
                         const nextStopId = routeDef.stopsSequence[i];
@@ -367,14 +379,24 @@ function findOptimalPath(originLat, originLon, destLocation, startTime, dayName)
                         const lastStep = current.path[current.path.length - 1];
 
                         // Check if we are starting a NEW leg or continuing the current one
-                        // Note: If we walked to a nearby stop, it's always a NEW leg (or same route different stop, but usually it's a transfer)
                         const isNewLeg = transferDist > 0 || !(lastStep && lastStep.type === 'BUS' && lastStep.routeName === routeDef.routeName && lastStep.headsign === routeDef.headsign);
+
+                        // Improve Tuning 4: Max transfer count guard
+                        const busLegCount = current.path.filter(p => p.type === 'BUS').length;
+                        if (isNewLeg && busLegCount >= MAX_TRANSFER_COUNT) continue;
 
                         if (isNewLeg) {
                             addedPenalty += BUS_BOARD_PENALTY;
                             // Add significant penalty if this is a transfer (switching routes)
-                            if (lastStep && lastStep.type === 'BUS' && lastStep.routeName !== routeDef.routeName) {
-                                addedPenalty += TRANSFER_PENALTY_MINS;
+                            if (lastStep && lastStep.type === 'BUS') {
+                                if (lastStep.routeName !== routeDef.routeName) {
+                                    addedPenalty += TRANSFER_PENALTY_MINS;
+
+                                    // Improve Tuning 6: CP Transfer Bonus
+                                    if (candidateStop.id === 'CP') {
+                                        addedPenalty -= CP_TRANSFER_BONUS;
+                                    }
+                                }
                             }
                         } else {
                             // Same leg expansion - minor cost to represent travel
@@ -426,6 +448,7 @@ function findOptimalPath(originLat, originLon, destLocation, startTime, dayName)
                             accPenalty: newAccPenalty,
                             g: newG,
                             f: newG + newH,
+                            busLegCount: isNewLeg ? current.busLegCount + 1 : current.busLegCount,
                             path: newPath
                         });
                     }

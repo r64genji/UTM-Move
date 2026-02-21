@@ -1,0 +1,90 @@
+  console.log
+    [DataLoader] Loaded: 57 stops, 801 locations, 51 stop-routes indexed
+
+      at log (directions/dataLoader.js:141:13)
+
+node.exe : FAIL 
+tests/ktgb_fkt_route.test.js
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
+    + CategoryInfo          
+    : NotSpecified: (FAIL   
+  tests/ktgb_fkt_route.te   
+ st.js:String) [], Remot    
+eException
+    + FullyQualifiedErrorId 
+    : NativeCommandError
+ 
+  KTGB_XA2 to FKT Route
+    ? should prefer 
+KLG_E/KLG_W over KDOJ as 
+boarding stop (24 ms)
+    ? chooses optimal path 
+at 08:00: Board KLG_E, 
+Transfer CP, Arrive FKT (18 
+ms)
+    ? would use Route D 
+transfer if schedule 
+allowed (14 ms)
+
+  ? KTGB_XA2 to FKT Route ? 
+chooses optimal path at 
+08:00: Board KLG_E, 
+Transfer CP, Arrive FKT
+
+    expect(received).toBe(ex
+pected) // Object.is 
+equality
+
+    Expected: "KLG_E"
+    Received: "KLG_W"
+
+    [0m [90m 70 |[39m    
+         [90m// 1. Must 
+board at KLG_E (Eastbound), 
+KLG_W causes a loop![39m
+     [90m 71 |[39m        
+     [36mconst[39m 
+firstBusLeg [33m=[39m busL
+egs[[35m0[39m][33m;[39m
+    
+[31m[1m>[22m[39m[90m 
+72 |[39m             expect
+(firstBusLeg[33m.[39m[36m
+from[39m[33m.[39mid)[33m
+.[39mtoBe([32m'KLG_E'[39m
+)[33m;[39m
+     [90m    |[39m        
+                            
+     [31m[1m^[22m[39m
+     [90m 73 |[39m        
+     expect(firstBusLeg[33m
+.[39m[36mfrom[39m[33m.[
+39mid)[33m.[39mnot[33m.[
+39mtoBe([32m'KLG_W'[39m)[
+33m;[39m
+     [90m 74 |[39m
+     [90m 75 |[39m        
+     [90m// 2. Should 
+Transfer at CP[39m[0m
+
+      at Object.toBe (tests/
+ktgb_fkt_route.test.js:72:41
+)
+
+Test Suites: 1 failed, 1 
+total
+Tests:       1 failed, 2 
+passed, 3 total
+Snapshots:   0 total
+Time:        0.243 s, 
+estimated 1 s
+Ran all test suites 
+matching tests/ktgb_fkt_rout
+e.test.js.
