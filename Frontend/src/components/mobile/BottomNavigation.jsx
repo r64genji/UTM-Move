@@ -4,13 +4,12 @@ const BottomNavigation = ({ activeTab, onTabChange }) => {
     const tabs = [
         { id: 'home', icon: 'home', label: 'Home' },
         { id: 'routes', icon: 'alt_route', label: 'Routes' },
-        { id: 'navigate', icon: 'navigation', label: 'Navigate' },
         { id: 'profile', icon: 'volunteer_activism', label: 'Contribute' },
     ];
 
     return (
         <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-[#101922] border-t border-gray-200 dark:border-gray-800 z-50 pb-safe">
-            <div className="grid grid-cols-4 h-16 items-center">
+            <div className="grid grid-cols-3 h-16 items-center">
                 {tabs.map((tab) => (
                     <button
                         key={tab.id}

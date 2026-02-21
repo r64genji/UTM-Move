@@ -133,8 +133,20 @@ async function getDirections(originLat, originLon, originStopId, destLocationId,
         return buildWalkResponse(originCoords, destLocation, walkOnlyDist, null, walkingDetails, originLocation?.name);
     }
 
+    // Resolve origin elevation for penalty calculation
+    let originElevation = null;
+    if (originStopId) {
+        const originStop = getStopById(originStopId);
+        originElevation = originStop?.elevation;
+    } else if (userNearestStops && userNearestStops.length > 0) {
+        // If near a stop (< 200m), use its elevation as origin reference
+        if (userNearestStops[0].dist < 200) {
+            originElevation = userNearestStops[0].elevation;
+        }
+    }
+
     // 4. Calculate optimal path using A*
-    const bestPath = findOptimalPath(originCoords.lat, originCoords.lon, destLocation, currentTime, dayName, isAnytime);
+    const bestPath = findOptimalPath(originCoords.lat, originCoords.lon, destLocation, currentTime, dayName, isAnytime, originElevation);
 
     if (!bestPath) {
 
@@ -226,6 +238,9 @@ async function getDirections(originLat, originLon, originStopId, destLocationId,
         const walkingDetails = await getWalkingDirections(originCoords, destLocation);
         const response = buildWalkResponse(originCoords, destLocation, walkOnlyDist, alternativeBus, walkingDetails, originLocation?.name);
         response.walkingReason = "No bus currently scheduled for this trip.";
+        if (isAnytime) {
+            response.summary.isAnytime = true;
+        }
         return response;
     }
 
@@ -236,7 +251,11 @@ async function getDirections(originLat, originLon, originStopId, destLocationId,
     if (busLegs.length === 0) {
         if (forceBus) { /* A* selected walk-only despite forceBus */ }
         const walkingDetails = await getWalkingDirections(originCoords, destLocation);
-        return buildWalkResponse(originCoords, destLocation, walkOnlyDist, null, walkingDetails, originLocation?.name);
+        const response = buildWalkResponse(originCoords, destLocation, walkOnlyDist, null, walkingDetails, originLocation?.name);
+        if (isAnytime) {
+            response.summary.isAnytime = true;
+        }
+        return response;
     }
 
     const indexes = getIndexes();
@@ -280,7 +299,7 @@ async function getDirections(originLat, originLon, originStopId, destLocationId,
             console.warn('Walking details fetch failed:', e.message);
         }
 
-        return buildDirectResponse({
+        const response = buildDirectResponse({
             route: routeObj,
             departure: {
                 time: leg.departureTime,
@@ -299,6 +318,23 @@ async function getDirections(originLat, originLon, originStopId, destLocationId,
             walkingFromDestDetails: walkingFromDestDetails,
             originName: originLocation?.name
         });
+
+        if (isAnytime) {
+            const nextBus = findNextAvailableBusForRoute(routeObj, currentTime, dayName);
+            if (nextBus) {
+                response.nextAvailable = {
+                    time: nextBus.time,
+                    day: nextBus.day
+                };
+                response.summary.isAnytime = true;
+            } else {
+                // Even if nextBus is not found (shouldn't happen for a found route),
+                // we should still mark it as anytime so the toggle works
+                response.summary.isAnytime = true;
+            }
+        }
+
+        return response;
     }
 
     // Case C: Transfer (2+ Legs)

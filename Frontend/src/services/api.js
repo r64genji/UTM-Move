@@ -1,81 +1,29 @@
-import axios from 'axios';
+/**
+ * api.js - Frontend-only data layer
+ * Loads static data from /public/data/ JSON files bundled with the app.
+ * No backend required.
+ */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+let _staticDataCache = null;
 
+/**
+ * Load and cache all static data from bundled JSON files
+ */
 export const fetchStaticData = async () => {
-    try {
-        const response = await axios.get(`${API_BASE_URL}/static-data`);
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching static data:', error);
-        throw error;
-    }
-};
+    if (_staticDataCache) return _staticDataCache;
 
-export const fetchNextBus = async (route, time, stop) => {
-    try {
-        const response = await axios.get(`${API_BASE_URL}/next-bus`, {
-            params: { route, time, stop }
-        });
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching next bus:', error);
-        return null; // Handle smoothly
-    }
-};
+    const [schedule, locations, geometries] = await Promise.all([
+        fetch('/data/schedule.json').then(r => r.json()),
+        fetch('/data/campus_locations.json').then(r => r.json()),
+        fetch('/data/route_geometries.json').then(r => r.json()),
+    ]);
 
-// Proxy ORS route requests via backend to avoid CORS and ORS config issues in frontend
-export const fetchRouteFromBackend = async (coordinates, profile = 'foot-walking') => {
-    try {
-        // Convert coords to string format: lon,lat;lon,lat
-        const coordStr = coordinates.map(c => `${c[0]},${c[1]}`).join(';');
+    _staticDataCache = {
+        stops: schedule.stops || [],
+        routes: schedule.routes || [],
+        locations: locations.locations || [],
+        route_geometries: geometries || {}
+    };
 
-        const response = await axios.get(`${API_BASE_URL}/ors-route`, {
-            params: {
-                profile,
-                coordinates: coordStr
-            }
-        });
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching ORS route via backend:', error);
-        return null;
-    }
-};
-
-export const fetchDirections = async (params) => {
-    try {
-        // Add cache-busting timestamp to prevent stale responses
-        const response = await axios.get(`${API_BASE_URL}/directions`, {
-            params: { ...params, _t: Date.now() },
-            headers: { 'Cache-Control': 'no-cache' }
-        });
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching directions:', error);
-        return { error: 'Failed to get directions. Please try again.' };
-    }
-};
-
-export const submitReport = async (type, details) => {
-    try {
-        const response = await axios.post(`${API_BASE_URL}/report`, {
-            type,
-            details
-        });
-        return response.data;
-    } catch (error) {
-        console.error('Error submitting report:', error);
-        throw error;
-    }
-};
-
-export const fetchReports = async () => {
-    try {
-        const response = await axios.get(`${API_BASE_URL}/reports`);
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching reports:', error);
-        return [];
-    }
+    return _staticDataCache;
 };

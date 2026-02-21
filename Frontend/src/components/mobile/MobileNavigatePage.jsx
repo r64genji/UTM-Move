@@ -376,7 +376,15 @@ const MobileNavigatePage = ({
                             )}
 
                             <div className="flex flex-wrap gap-2">
-                                {!directions.summary?.isAnytime && (
+                                {directions.summary?.isAnytime ? (
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); onGetDirections(selectedDestination, { anytime: false }); }}
+                                        className="shrink-0 px-3 py-1.5 rounded-lg bg-green-600/20 text-green-400 border border-green-400/20 text-[10px] font-bold uppercase tracking-wider hover:bg-green-600/30 transition-colors flex items-center gap-1.5"
+                                    >
+                                        <span className="material-symbols-outlined text-xs">schedule</span>
+                                        Show Current Route
+                                    </button>
+                                ) : (
                                     <button
                                         onClick={(e) => { e.stopPropagation(); onGetDirections(selectedDestination, { anytime: true }); }}
                                         className="shrink-0 px-3 py-1.5 rounded-lg bg-blue-600/20 text-blue-400 border border-blue-400/20 text-[10px] font-bold uppercase tracking-wider hover:bg-blue-600/30 transition-colors flex items-center gap-1.5"
@@ -384,13 +392,6 @@ const MobileNavigatePage = ({
                                         <span className="material-symbols-outlined text-xs">auto_awesome</span>
                                         Show Best Route
                                     </button>
-                                )}
-
-                                {directions.summary?.isAnytime && (
-                                    <div className="shrink-0 px-3 py-1.5 rounded-lg bg-green-600/20 text-green-400 border border-green-400/20 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5">
-                                        <span className="material-symbols-outlined text-xs">verified</span>
-                                        Best Route Shown
-                                    </div>
                                 )}
                             </div>
 

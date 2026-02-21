@@ -1,8 +1,3 @@
-/**
- * routingEngine.js - Unified Routing Engine for UTM Move
- * Combines A* Pathfinding (astar.js) and Strategic Route Scoring (routeScorer.js)
- */
-
 const { haversineDistance } = require('../utils/geo');
 const { timeToMinutes, minutesToTime, getNextDeparture, findNextAvailableBusForRoute, getDynamicOffset, DAYS } = require('./scheduler');
 const { getIndexes } = require('./dataLoader');
@@ -18,12 +13,13 @@ const TIMEOUT_MINUTES = 120;        // Max search horizon
 // Reluctance & Penalties (Tuned for optimal behavior)
 const WALK_RELUCTANCE_FACTOR = 3.0;   // Penalty for walking during transfers
 const INITIAL_WALK_RELUCTANCE = 13;   // Strongly favor closer boarding stops
-const FINAL_WALK_RELUCTANCE = 5;      // Aggressively favor speed near destination
+const FINAL_WALK_RELUCTANCE = 13;      // Aggressively favor speed near destination
 const TRANSFER_PENALTY_MINS = 12;     // Penalty for route switching
 const BUS_BOARD_PENALTY = 2;          // Minor penalty for every bus boarded
 const SAME_ROUTE_HOP_PENALTY = 1.5;   // Discourage long loops
-const TRANSFER_WALK_LIMIT_M = 300;    // Allow walking between nearby stops for transfers
+const TRANSFER_WALK_LIMIT_M = 400;    // Allow walking between nearby stops for transfers
 const TRANSFER_WALK_PENALTY = 2;      // Extra penalty for walking between different-ID stops during transfer
+const WALK_ASCENT_PENALTY_FACTOR = 0.5; // 1m ascent = 30s penalty
 const DIRECT_TO_DEST_BONUS = 0.35;    // Aggressively reduce walk penalty when stop has direct route to destination stop
 const CP_TRANSFER_BONUS = 3;          // Bonus for transferring at Centre Point
 const MAX_TRANSFER_COUNT = 3;         // Allow up to 2 transfers (3 legs)
@@ -67,6 +63,24 @@ function getBusTravelMinutes(route) {
         const destOffset = getDynamicOffset(route.routeName, route.headsign, route.destStopIndex) || 0;
         return Math.max(0, destOffset - originOffset);
     }
+}
+
+/**
+ * Calculate average wait time based on route frequency
+ * @param {Object} route - Route definition with times
+ * @returns {number} Average wait time in minutes
+ */
+function getAverageWaitTime(route) {
+    if (!route.times || route.times.length <= 1) return 20; // Default for low frequency
+
+    const firstTrip = timeToMinutes(route.times[0]);
+    const lastTrip = timeToMinutes(route.times[route.times.length - 1]);
+    const span = lastTrip - firstTrip;
+
+    if (span <= 0) return 20;
+
+    const avgHeadway = span / (route.times.length - 1);
+    return Math.min(30, avgHeadway / 2); // Cap average wait at 30 mins
 }
 
 // --- A* Pathfinding Implementation ---
@@ -154,7 +168,7 @@ function heuristic(stop, dest) {
 /**
  * Find optimal path using A*
  */
-function findOptimalPath(originLat, originLon, destLocation, startTime, dayName, isAnytime = false) {
+function findOptimalPath(originLat, originLon, destLocation, startTime, dayName, isAnytime = false, originElevation = null) {
     const indexes = getIndexes();
     const startTimeMins = timeToMinutes(startTime);
 
@@ -252,20 +266,28 @@ function findOptimalPath(originLat, originLon, destLocation, startTime, dayName,
             });
         }
 
+
         // Reduce walk penalty if this stop offers a direct route to the destination
         const effectiveReluctance = hasDirectRouteToDest
             ? INITIAL_WALK_RELUCTANCE * DIRECT_TO_DEST_BONUS
             : INITIAL_WALK_RELUCTANCE;
         const walkPenalty = walkTime * (effectiveReluctance - 1);
 
+        // Initial Ascent Penalty (Assume origin is same elevation if unknown)
+        let ascentPenalty = 0;
+        if (stop.elevation !== undefined && originElevation !== null) {
+            ascentPenalty = Math.max(0, stop.elevation - originElevation) * WALK_ASCENT_PENALTY_FACTOR;
+        }
+
         const arrivalTime = startTimeMins + walkTime;
-        const gCost = arrivalTime + walkPenalty;
+        const totalInitPenalty = walkPenalty + ascentPenalty;
+        const gCost = arrivalTime + totalInitPenalty;
         const h = heuristic(stop, destLocation);
 
         openSet.push({
             stopId: stop.id,
             arrivalTime: arrivalTime,
-            accPenalty: walkPenalty,
+            accPenalty: totalInitPenalty,
             g: gCost,
             f: gCost + h,
             busLegCount: 0,
@@ -275,6 +297,7 @@ function findOptimalPath(originLat, originLon, destLocation, startTime, dayName,
                 to: stop,
                 distance: dist,
                 duration: walkTime,
+                ascent: Math.max(0, (stop.elevation || 0) - (originElevation || stop.elevation || 0)),
                 endTime: arrivalTime
             }]
         });
@@ -299,16 +322,22 @@ function findOptimalPath(originLat, originLon, destLocation, startTime, dayName,
             const walkTime = distToDest / WALK_SPEED_M_PER_MIN;
 
             // When destination is near a bus stop, strongly penalize alighting at a different stop
-            // This encourages waiting for a bus that goes directly to (or very close to) the destination
             const isAtNearbyDestStop = hasNearbyDestStop && (current.stopId === nearbyDestStop.id);
-            // Use HIGH penalty (FINAL_WALK_RELUCTANCE) when NOT at the nearby dest stop, LOW (1.1) when at it
             const finalReluctance = (hasNearbyDestStop && !isAtNearbyDestStop)
-                ? FINAL_WALK_RELUCTANCE   // High penalty for walking from wrong stop when dest is near a bus stop
-                : 1.1;                     // Minimal penalty when at the correct stop or no nearby stop
+                ? FINAL_WALK_RELUCTANCE
+                : 1.1;
             const walkPenalty = walkTime * (finalReluctance - 1);
 
+            // Final Ascent Penalty
+            let ascentPenalty = 0;
+            let ascent = 0;
+            if (stopObj.elevation !== undefined && destLocation.elevation !== undefined) {
+                ascent = Math.max(0, destLocation.elevation - stopObj.elevation);
+                ascentPenalty = ascent * WALK_ASCENT_PENALTY_FACTOR;
+            }
+
             const totalEndTime = current.arrivalTime + walkTime;
-            const totalCost = totalEndTime + current.accPenalty + walkPenalty;
+            const totalCost = totalEndTime + current.accPenalty + walkPenalty + ascentPenalty;
 
             if (!bestSolution || totalCost < bestSolution.totalCost) {
                 bestSolution = {
@@ -322,6 +351,7 @@ function findOptimalPath(originLat, originLon, destLocation, startTime, dayName,
                             to: destLocation,
                             distance: distToDest,
                             duration: walkTime,
+                            ascent: ascent,
                             endTime: totalEndTime
                         }
                     ]
@@ -344,7 +374,16 @@ function findOptimalPath(originLat, originLon, destLocation, startTime, dayName,
         for (const { stop: candidateStop, dist: transferDist } of nearbyStops) {
             const routes = indexes.routesByStop.get(candidateStop.id) || [];
             const walkTime = transferDist / WALK_SPEED_M_PER_MIN;
-            const walkPenalty = walkTime * (WALK_RELUCTANCE_FACTOR - 1) + (transferDist > 0 ? TRANSFER_WALK_PENALTY : 0);
+
+            // Transfer Ascent Penalty
+            let ascentPenalty = 0;
+            let ascent = 0;
+            if (transferDist > 0 && stopObj.elevation !== undefined && candidateStop.elevation !== undefined) {
+                ascent = Math.max(0, candidateStop.elevation - stopObj.elevation);
+                ascentPenalty = ascent * WALK_ASCENT_PENALTY_FACTOR;
+            }
+
+            const walkPenalty = walkTime * (WALK_RELUCTANCE_FACTOR - 1) + (transferDist > 0 ? (TRANSFER_WALK_PENALTY + ascentPenalty) : 0);
             const arrivalAfterWalk = current.arrivalTime + walkTime;
             const penaltyAfterWalk = current.accPenalty + walkPenalty;
 
@@ -356,14 +395,18 @@ function findOptimalPath(originLat, originLon, destLocation, startTime, dayName,
                 }
 
                 let dep;
+                let waitTime = 0;
+
                 if (isAnytime) {
-                    // For anytime search, pick the first departure of the day to get tripStartTime
+                    // For anytime search, pick the first departure to extract trip offsets/sequence
                     dep = getNextDeparture(
                         { routeName: routeDef.routeName, headsign: routeDef.headsign, serviceDays: routeDef.serviceDays, times: routeDef.times },
                         routeDef.stopIndex,
                         '00:00',
                         routeDef.serviceDays[0]
                     );
+                    // Use average wait time (frequency/2) for Anytime logic
+                    waitTime = getAverageWaitTime(routeDef);
                 } else {
                     dep = getNextDeparture(
                         { routeName: routeDef.routeName, headsign: routeDef.headsign, serviceDays: routeDef.serviceDays, times: routeDef.times },
@@ -371,11 +414,13 @@ function findOptimalPath(originLat, originLon, destLocation, startTime, dayName,
                         minutesToTime(Math.ceil(arrivalAfterWalk)),
                         dayName
                     );
+                    if (dep) {
+                        waitTime = timeToMinutes(dep.time) - arrivalAfterWalk;
+                    }
                 }
 
                 if (dep) {
                     const depTimeMins = timeToMinutes(dep.time);
-                    let waitTime = isAnytime ? 0 : (depTimeMins - arrivalAfterWalk);
                     if (!isAnytime && waitTime < 0) continue;
 
                     // Improve Tuning 5: Minimum transfer buffer check
@@ -390,7 +435,10 @@ function findOptimalPath(originLat, originLon, destLocation, startTime, dayName,
                         const originOffset = getDynamicOffset(routeDef.routeName, routeDef.headsign, routeDef.stopIndex);
                         const destOffset = getDynamicOffset(routeDef.routeName, routeDef.headsign, i);
                         const travelTime = Math.max(0, destOffset - originOffset);
-                        const arrivalAtNext = depTimeMins + travelTime;
+
+                        // For Anytime, arrivalAtNext is relative to arrivalAfterWalk + average wait
+                        // For Scheduled, arrivalAtNext is relative to actual departure time
+                        const arrivalAtNext = (isAnytime ? arrivalAfterWalk : depTimeMins) + waitTime + travelTime;
 
                         const nextStop = indexes.stopsById.get(nextStopId);
                         if (!nextStop) continue;
@@ -458,7 +506,8 @@ function findOptimalPath(originLat, originLon, destLocation, startTime, dayName,
                                 departureTime: dep.time,
                                 arrivalTimeStr: minutesToTime(arrivalAtNext),
                                 duration: travelTime + waitTime,
-                                waitTime: waitTime
+                                waitTime: waitTime,
+                                isAnytime: isAnytime // Tag for UI representation
                             });
                         }
 
@@ -491,12 +540,19 @@ function scoreRoute(route, departure, destStop, destLocation) {
     const walkFromDist = haversineDistance(destStop.lat, destStop.lon, destLocation.lat, destLocation.lon);
     const walkFromMins = getWalkingMinutes(walkFromDist);
 
+    // Elevation penalty for walk from stop to destination
+    let ascentPenalty = 0;
+    if (destStop.elevation !== undefined && destLocation.elevation !== undefined) {
+        ascentPenalty = Math.max(0, destLocation.elevation - destStop.elevation) * WALK_ASCENT_PENALTY_FACTOR;
+    }
+
     return {
-        totalScore: waitMins + busMins + walkFromMins,
+        totalScore: waitMins + busMins + walkFromMins + ascentPenalty,
         waitMins,
         busMins,
         walkFromMins,
-        walkFromDist
+        walkFromDist,
+        ascentPenalty
     };
 }
 
@@ -560,6 +616,7 @@ function evaluateCandidates(candidates, destLocation, currentTime, dayName) {
  * Policy: Is walking better than the current bus option?
  */
 function isWalkingBetter(route, originCoords, originStop, destStop, destLocation, directDistance, departure) {
+    console.log('[DEBUG] isWalkingBetter entered');
     if (directDistance >= PREFER_WALK_THRESHOLD_M) return false;
 
     const walkToMins = getWalkingMinutes(haversineDistance(originCoords.lat, originCoords.lon, originStop.lat, originStop.lon));
@@ -567,12 +624,26 @@ function isWalkingBetter(route, originCoords, originStop, destStop, destLocation
     const busMins = getBusTravelMinutes(route);
     const walkFromMins = getWalkingMinutes(haversineDistance(destStop.lat, destStop.lon, destLocation.lat, destLocation.lon));
 
-    const totalBusTime = walkToMins + waitMins + busMins + walkFromMins;
-    const totalWalkTime = getWalkingMinutes(directDistance);
+    // Elevation penalties
+    let ascentToPenalty = 0;
+    if (originCoords.elevation !== undefined && originStop.elevation !== undefined) {
+        ascentToPenalty = Math.max(0, originStop.elevation - originCoords.elevation) * WALK_ASCENT_PENALTY_FACTOR;
+    }
+    let ascentFromPenalty = 0;
+    if (destStop.elevation !== undefined && destLocation.elevation !== undefined) {
+        ascentFromPenalty = Math.max(0, destLocation.elevation - destStop.elevation) * WALK_ASCENT_PENALTY_FACTOR;
+    }
 
-    const stopCount = route.isLoop ? route.stopsSequence.length - 1 : route.destStopIndex - route.originStopIndex;
+    const totalBusTime = walkToMins + waitMins + busMins + walkFromMins + ascentToPenalty + ascentFromPenalty;
 
-    return totalWalkTime <= totalBusTime || stopCount > 15;
+    // Total walk time with elevation
+    let directWalkTime = getWalkingMinutes(directDistance);
+    if (originCoords.elevation !== undefined && destLocation.elevation !== undefined) {
+        directWalkTime += Math.max(0, destLocation.elevation - originCoords.elevation) * WALK_ASCENT_PENALTY_FACTOR;
+    }
+
+    const result = directWalkTime <= totalBusTime || stopCount > 15;
+    return result;
 }
 
 // --- Exports ---
@@ -585,6 +656,7 @@ module.exports = {
     getBusTravelMinutes,
     getWalkingMinutes,
     WALK_SPEED_M_PER_MIN,
+    WALK_ASCENT_PENALTY_FACTOR,
     WALK_ONLY_THRESHOLD_M,
     PREFER_WALK_THRESHOLD_M
 };
