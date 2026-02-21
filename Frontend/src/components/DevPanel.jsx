@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 /**
  * DevPanel - Developer-only panel for testing with custom time/day
@@ -8,7 +8,7 @@ const DevPanel = ({ devSettings, onSettingsChange }) => {
     const [isOpen, setIsOpen] = useState(false);
 
     // Toggle panel with Ctrl+Shift+D
-    React.useEffect(() => {
+    useEffect(() => {
         const handleKeyDown = (e) => {
             if (e.ctrlKey && e.shiftKey && e.key === 'D') {
                 e.preventDefault();

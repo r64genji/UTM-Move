@@ -146,7 +146,6 @@ function MapResizeHandler() {
 const MapComponent = ({
     stops,
     routes = [],                // All routes data for computing which routes serve each stop
-    selectedRouteStops,
     routeGeometry,
     routeColor = '#3b82f6',     // Custom color for the explorer route
     allRouteGeometries = [],    // Array of { geometry, color, name } for all routes display
@@ -260,10 +259,12 @@ const MapComponent = ({
         return [];
     }, [routeGeometry]);
 
-    // Legacy support
-    const busRoutePositions = busRouteGeometry
-        ? busRouteGeometry.coordinates.map(coord => [coord[1], coord[0]])
-        : [];
+    // Legacy support — memoized to avoid destabilizing the bounds useMemo on every render
+    const busRoutePositions = React.useMemo(() =>
+        busRouteGeometry
+            ? busRouteGeometry.coordinates.map(coord => [coord[1], coord[0]])
+            : []
+        , [busRouteGeometry]);
 
     // Process separate segments
     const busSegments = busRouteSegments.map((seg, idx) => ({
@@ -289,7 +290,7 @@ const MapComponent = ({
                         frequency: '50px',
                         fill: true
                     });
-                } catch (e) {
+                } catch {
                     // console.warn("Failed to add arrowheads", e);
                 }
             }
@@ -456,7 +457,6 @@ const MapComponent = ({
 
                 {/* Draw Stops */}
                 {stops.map(stop => {
-                    const isSelected = selectedRouteStops && selectedRouteStops.includes(stop.id);
                     const stopRoutes = getRoutesForStop(stop.id);
 
                     return (

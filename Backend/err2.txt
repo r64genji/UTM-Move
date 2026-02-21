@@ -1,0 +1,18 @@
+﻿node : C:\Users\tabe2\OneDrive\Desktop\UTM move\Backend\directions\index.js:424
+At line:1 char:1
++ node --stack-trace-limit=5 directions/index.js 2>&1 | Out-File "err2. ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo              : NotSpecifi    ed: (C:\Users\tabe    2\...ns\index.js:4    24:String) [], Rem    oteException
+    + FullyQualifiedEr    rorId : NativeComm    andError
+ 
+
+
+
+SyntaxError: Unexpected end of input
+    at wrapSafe (node:internal/modules/cjs/loader:1692:18)
+    at Module._compile (node:internal/modules/cjs/loader:1735:20)
+    at Object..js (node:internal/modules/cjs/loader:1893:10)
+    at Module.load (node:internal/modules/cjs/loader:1481:32)
+    at Module._load (node:internal/modules/cjs/loader:1300:12)
+
+Node.js v24.12.0

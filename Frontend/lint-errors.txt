@@ -1,0 +1,7 @@
+C:\Users\tabe2\OneDrive\Desktop\UTM move\Frontend\src\components\mobile\MobileNavigatePage.jsx|115|react-hooks/set-state-in-effect
+C:\Users\tabe2\OneDrive\Desktop\UTM move\Frontend\src\components\mobile\MobileRouteDetailPage.jsx|306|react-hooks/set-state-in-effect
+C:\Users\tabe2\OneDrive\Desktop\UTM move\Frontend\src\components\mobile\MobileRouteDetailPage.jsx|324|react-hooks/set-state-in-effect
+C:\Users\tabe2\OneDrive\Desktop\UTM move\Frontend\src\components\mobile\MobileRoutesPage.jsx|4|no-unused-vars
+C:\Users\tabe2\OneDrive\Desktop\UTM move\Frontend\src\components\mobile\MobileRoutesPage.jsx|320|no-unused-vars
+C:\Users\tabe2\OneDrive\Desktop\UTM move\Frontend\src\components\mobile\MobileSearchPage.jsx|8|no-unused-vars
+C:\Users\tabe2\OneDrive\Desktop\UTM move\Frontend\src\components\mobile\MobileSearchPage.jsx|18|react-hooks/set-state-in-effect

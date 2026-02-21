@@ -59,27 +59,16 @@ function findRoutesToNearbyStops(originStopId, destLocation, maxWalkingDistanceM
     const candidates = [];
     const seenCombinations = new Set(); // Avoid duplicates
 
-    console.log('DEBUG findRoutesToNearbyStops:', {
-        originStopId,
-        destLocation,
-        maxWalkingDistanceM,
-        stopsById: stopsById ? `Map with ${stopsById.size} entries` : 'undefined',
-        originRoutesCount: originRoutes.length
-    });
 
     for (const route of originRoutes) {
         const originIdx = route.stopIndex;
 
-        console.log(`  Route: ${route.routeName} (${route.headsign}), originIdx: ${originIdx}, stops: ${route.stopsSequence.length}`);
 
         // Check all stops AFTER the origin on this route
         for (let i = originIdx + 1; i < route.stopsSequence.length; i++) {
             const stopId = route.stopsSequence[i];
             const stop = stopsById.get(stopId);
-            if (!stop) {
-                console.log(`    Stop ${stopId} not found in stopsById`);
-                continue;
-            }
+            if (!stop) continue;
 
             // Calculate walking distance from this stop to destination
             const walkDist = haversineDistance(stop.lat, stop.lon, destLocation.lat, destLocation.lon);
@@ -89,7 +78,6 @@ function findRoutesToNearbyStops(originStopId, destLocation, maxWalkingDistanceM
                 if (seenCombinations.has(key)) continue;
                 seenCombinations.add(key);
 
-                console.log(`    MATCH: ${stopId} (${stop.name}), walkDist: ${Math.round(walkDist)}m`);
 
                 candidates.push({
                     route: {
@@ -116,14 +104,12 @@ function findLoopRoutes(originStopId, destStopId) {
     const indexes = getIndexes();
     const loopRoutes = [];
 
-    console.log(`DEBUG findLoopRoutes: ${originStopId} -> ${destStopId}`);
 
     for (const [routeName, trips] of indexes.tripsByRoute) {
         // Find origin trip using pre-built Set for O(1) contains check
         const originTrip = trips.find(t => t.stopsSet.has(originStopId));
         if (!originTrip) continue;
 
-        console.log(`  Route ${routeName}: originTrip ${originTrip.headsign}`);
 
         const originIdx = originTrip.stopsSequence.indexOf(originStopId);
 
@@ -134,28 +120,18 @@ function findLoopRoutes(originStopId, destStopId) {
             const hasCommonDay = originTrip.serviceDays.some(day =>
                 destTrip.serviceDays.includes(day)
             );
-            if (!hasCommonDay) {
-                console.log(`    Skip ${destTrip.headsign}: no common day`);
-                continue;
-            }
+            if (!hasCommonDay) continue;
 
-            // Route E terminus restriction
             if (routeName.includes('Route E') &&
                 originTrip.headsign.includes('To KDOJ') &&
                 destTrip.headsign.includes('To Cluster')) {
-                console.log(`    Skip ${destTrip.headsign}: Route E terminus restriction`);
                 continue;
             }
 
-            // O(1) check if dest stop is in this trip
-            if (!destTrip.stopsSet.has(destStopId)) {
-                console.log(`    Skip ${destTrip.headsign}: dest ${destStopId} not on trip`);
-                continue;
-            }
+            if (!destTrip.stopsSet.has(destStopId)) continue;
 
             const destIdx = destTrip.stopsSequence.indexOf(destStopId);
 
-            console.log(`    MATCH ${destTrip.headsign}: destIdx ${destIdx}`);
 
             const commonDays = originTrip.serviceDays.filter(d =>
                 destTrip.serviceDays.includes(d)
@@ -219,7 +195,6 @@ function findTransferCandidates(originStopId, destLocation, maxWalkingDistanceM,
     const candidates = [];
     const seenCombinations = new Set();
 
-    console.log(`DEBUG findTransferCandidates: ${originStopId} via transfer points`);
 
     for (const transferPoint of TRANSFER_POINTS) {
         if (transferPoint === originStopId) continue;
@@ -253,7 +228,6 @@ function findTransferCandidates(originStopId, destLocation, maxWalkingDistanceM,
         }
     }
 
-    console.log(`DEBUG findTransferCandidates found ${candidates.length} options`);
     return candidates;
 }
 

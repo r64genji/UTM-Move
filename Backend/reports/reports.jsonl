@@ -9,3 +9,11 @@
 {"id":"1769738355804","timestamp":"2026-01-30T01:59:15.804Z","type":"new_stop","details":"Valid details check'; [REDACTED_SQL] users; [REDACTED_SQL]","ip":"::ffff:127.0.0.1"}
 {"id":"1769738374448","timestamp":"2026-01-30T01:59:34.448Z","type":"new_stop","details":"This is a scriptalert(1)/script test details string","ip":"::ffff:127.0.0.1"}
 {"id":"1769738374458","timestamp":"2026-01-30T01:59:34.458Z","type":"new_stop","details":"Valid details check'; [REDACTED_SQL] users; [REDACTED_SQL]","ip":"::ffff:127.0.0.1"}
+{"id":"1771598680550","timestamp":"2026-02-20T14:44:40.550Z","type":"new_stop","details":"This is a scriptalert(1)/script test details string","ip":"::ffff:127.0.0.1"}
+{"id":"1771598680557","timestamp":"2026-02-20T14:44:40.557Z","type":"new_stop","details":"Valid details check'; [REDACTED_SQL] users; [REDACTED_SQL]","ip":"::ffff:127.0.0.1"}
+{"id":"1771599142545","timestamp":"2026-02-20T14:52:22.545Z","type":"new_stop","details":"This is a scriptalert(1)/script test details string","ip":"::ffff:127.0.0.1"}
+{"id":"1771599142551","timestamp":"2026-02-20T14:52:22.551Z","type":"new_stop","details":"Valid details check'; [REDACTED_SQL] users; [REDACTED_SQL]","ip":"::ffff:127.0.0.1"}
+{"id":"1771599501191","timestamp":"2026-02-20T14:58:21.191Z","type":"new_stop","details":"This is a scriptalert(1)/script test details string","ip":"::ffff:127.0.0.1"}
+{"id":"1771599501197","timestamp":"2026-02-20T14:58:21.197Z","type":"new_stop","details":"Valid details check'; [REDACTED_SQL] users; [REDACTED_SQL]","ip":"::ffff:127.0.0.1"}
+{"id":"1771599551053","timestamp":"2026-02-20T14:59:11.053Z","type":"new_stop","details":"This is a scriptalert(1)/script test details string","ip":"::ffff:127.0.0.1"}
+{"id":"1771599551058","timestamp":"2026-02-20T14:59:11.058Z","type":"new_stop","details":"Valid details check'; [REDACTED_SQL] users; [REDACTED_SQL]","ip":"::ffff:127.0.0.1"}

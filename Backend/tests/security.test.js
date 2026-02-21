@@ -3,7 +3,11 @@ const { app, server } = require('../server');
 
 describe('Security Features', () => {
     afterAll(done => {
-        server.close(done);
+        if (server && server.listening) {
+            server.close(done);
+        } else {
+            done();
+        }
     });
 
     describe('Report Submission Security', () => {

@@ -244,9 +244,10 @@ const MobileApp = ({
     // Show welcome screen on first visit
 
 
-    // Render based on current view
     switch (mobileView) {
         case 'home':
+        // eslint-disable-next-line no-fallthrough
+        default:
             return (
                 <MobileHomePage
                     activeTab="home"
@@ -359,24 +360,6 @@ const MobileApp = ({
                 />
             );
 
-        default:
-            return (
-                <MobileHomePage
-                    activeTab="home"
-                    onTabChange={handleTabChange}
-                    stops={data?.stops || []}
-                    routes={data?.routes || []}
-                    userLocation={userLocation}
-                    mode={mode}
-                    visibleStops={visibleStops}
-                    selectedStopIds={selectedStopIds}
-                    routeGeometry={routeGeometry}
-                    walkingGeometries={walkingGeometries}
-                    busRouteGeometry={busRouteGeometry}
-                    busRouteSegments={busRouteSegments}
-                    directionsMarkers={directionsMarkers}
-                />
-            );
     }
 };
 

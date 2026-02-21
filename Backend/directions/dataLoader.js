@@ -41,10 +41,6 @@ function buildIndexes(scheduleData, campusLocations) {
                         routesByStop.set(stopId, []);
                     }
 
-                    if (stopId === 'CP') {
-                        // console.log(`[DataLoader] Adding route ${route.name} (${trip.headsign}) for CP at index ${stopIndex}`);
-                    }
-
                     routesByStop.get(stopId).push({
                         routeName: route.name,
                         headsign: trip.headsign,

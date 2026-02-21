@@ -1,0 +1,109 @@
+[0m[0m
+[0m[4mC:\Users\tabe2\OneDrive\Desktop\UTM move\Frontend\src\App.jsx[24m[0m
+[0m   [2m98:34[22m  [31merror[39m  'e' is defined but never used                                                                                          [2mno-unused-vars[22m[0m
+[0m  [2m141:30[22m  [31merror[39m  'e' is defined but never used                                                                                          [2mno-unused-vars[22m[0m
+[0m  [2m474:28[22m  [31merror[39m  This branch can never execute. Its condition is a duplicate or covered by previous conditions in the if-else-if chain  [2mno-dupe-else-if[22m[0m
+[0m[0m
+[0m[4mC:\Users\tabe2\OneDrive\Desktop\UTM move\Frontend\src\components\AdminDashboard.jsx[24m[0m
+[0m  [2m16:9[22m  [31merror[39m  Error: Calling setState synchronously within an effect can trigger cascading renders[0m
+[0m[0m
+[0mEffects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:[0m
+[0m* Update external systems with the latest state from React.[0m
+[0m* Subscribe for updates from some external system, calling setState in a callback function when external state changes.[0m
+[0m[0m
+[0mCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).[0m
+[0m[0m
+[0m  14 |[0m
+[0m  15 |     useEffect(() => {[0m
+[0m> 16 |         loadReports();[0m
+[0m     |         ^^^^^^^^^^^ Avoid calling setState() directly within an effect[0m
+[0m  17 |     }, [loadReports]);[0m
+[0m  18 |[0m
+[0m  19 |     const getTypeColor = (type) => {  [2mreact-hooks/set-state-in-effect[22m[0m
+[0m[0m
+[0m[4mC:\Users\tabe2\OneDrive\Desktop\UTM move\Frontend\src\components\Map.jsx[24m[0m
+[0m  [2m149:5[22m   [31merror[39m  'selectedRouteStops' is defined but never used  [2mno-unused-vars[22m[0m
+[0m  [2m294:26[22m  [31merror[39m  '_e' is defined but never used                  [2mno-unused-vars[22m[0m
+[0m[0m
+[0m[4mC:\Users\tabe2\OneDrive\Desktop\UTM move\Frontend\src\components\ReportDialog.jsx[24m[0m
+[0m  [2m32:18[22m  [31merror[39m  '_err' is defined but never used  [2mno-unused-vars[22m[0m
+[0m[0m
+[0m[4mC:\Users\tabe2\OneDrive\Desktop\UTM move\Frontend\src\components\ScheduleView.jsx[24m[0m
+[0m  [2m24:11[22m  [33mwarning[39m  The 'stopIds' conditional could make the dependencies of useMemo Hook (at line 75) change on every render. Move it inside the useMemo callback. Alternatively, wrap the initialization of 'stopIds' in its own useMemo() Hook  [2mreact-hooks/exhaustive-deps[22m[0m
+[0m[0m
+[0m[4mC:\Users\tabe2\OneDrive\Desktop\UTM move\Frontend\src\components\mobile\MobileNavigatePage.jsx[24m[0m
+[0m  [2m110:13[22m  [31merror[39m  Error: Calling setState synchronously within an effect can trigger cascading renders[0m
+[0m[0m
+[0mEffects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:[0m
+[0m* Update external systems with the latest state from React.[0m
+[0m* Subscribe for updates from some external system, calling setState in a callback function when external state changes.[0m
+[0m[0m
+[0mCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).[0m
+[0m[0m
+[0m  108 |     useEffect(() => {[0m
+[0m  109 |         if (directions) {[0m
+[0m> 110 |             setIsExpanded(false);[0m
+[0m      |             ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect[0m
+[0m  111 |         }[0m
+[0m  112 |     }, [directions]);[0m
+[0m  113 |  [2mreact-hooks/set-state-in-effect[22m[0m
+[0m[0m
+[0m[4mC:\Users\tabe2\OneDrive\Desktop\UTM move\Frontend\src\components\mobile\MobileRouteDetailPage.jsx[24m[0m
+[0m   [2m90:11[22m  [33mwarning[39m  The 'stopSequence' logical expression could make the dependencies of useMemo Hook (at line 108) change on every render. To fix this, wrap the initialization of 'stopSequence' in its own useMemo() Hook                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               [2mreact-hooks/exhaustive-deps[22m[0m
+[0m   [2m90:11[22m  [33mwarning[39m  The 'stopSequence' logical expression could make the dependencies of useMemo Hook (at line 300) change on every render. To fix this, wrap the initialization of 'stopSequence' in its own useMemo() Hook                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               [2mreact-hooks/exhaustive-deps[22m[0m
+[0m  [2m306:9[22m   [31merror[39m    Error: Calling setState synchronously within an effect can trigger cascading renders[0m
+[0m[0m
+[0mEffects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:[0m
+[0m* Update external systems with the latest state from React.[0m
+[0m* Subscribe for updates from some external system, calling setState in a callback function when external state changes.[0m
+[0m[0m
+[0mCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).[0m
+[0m[0m
+[0m  304 |     // Reset selection when direction changes[0m
+[0m  305 |     useEffect(() => {[0m
+[0m> 306 |         setSelectedTimeStr(null);[0m
+[0m      |         ^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect[0m
+[0m  307 |         setOpenSection(null);[0m
+[0m  308 |         // Reset variant when direction changes[0m
+[0m  309 |         if (isMergedRouteE) {                                                                                                                                                                             [2mreact-hooks/set-state-in-effect[22m[0m
+[0m  [2m324:17[22m  [31merror[39m    Error: Calling setState synchronously within an effect can trigger cascading renders[0m
+[0m[0m
+[0mEffects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:[0m
+[0m* Update external systems with the latest state from React.[0m
+[0m* Subscribe for updates from some external system, calling setState in a callback function when external state changes.[0m
+[0m[0m
+[0mCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).[0m
+[0m[0m
+[0m  322 |             const nextDeparture = currentTrip.mergedTimes.find(entry => entry.time >= currentTimeStr);[0m
+[0m  323 |             if (nextDeparture) {[0m
+[0m> 324 |                 setSelectedVariant(nextDeparture.variant);[0m
+[0m      |                 ^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect[0m
+[0m  325 |             } else if (currentTrip.mergedTimes[0]) {[0m
+[0m  326 |                 // If no upcoming, use first variant[0m
+[0m  327 |                 setSelectedVariant(currentTrip.mergedTimes[0].variant);  [2mreact-hooks/set-state-in-effect[22m[0m
+[0m[0m
+[0m[4mC:\Users\tabe2\OneDrive\Desktop\UTM move\Frontend\src\components\mobile\MobileRoutesPage.jsx[24m[0m
+[0m    [2m4:10[22m   [31merror[39m  'fetchNextBus' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  [2mno-unused-vars[22m[0m
+[0m  [2m320:125[22m  [31merror[39m  'idx' is defined but never used                                                      [2mno-unused-vars[22m[0m
+[0m[0m
+[0m[4mC:\Users\tabe2\OneDrive\Desktop\UTM move\Frontend\src\components\mobile\MobileSearchPage.jsx[24m[0m
+[0m   [2m8:72[22m  [31merror[39m    'stops' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 [2mno-unused-vars[22m[0m
+[0m  [2m18:13[22m  [31merror[39m    Error: Calling setState synchronously within an effect can trigger cascading renders[0m
+[0m[0m
+[0mEffects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:[0m
+[0m* Update external systems with the latest state from React.[0m
+[0m* Subscribe for updates from some external system, calling setState in a callback function when external state changes.[0m
+[0m[0m
+[0mCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).[0m
+[0m[0m
+[0m  16 |         const savedFavourites = localStorage.getItem(FAVOURITES_KEY);[0m
+[0m  17 |         if (savedFavourites) {[0m
+[0m> 18 |             setFavourites(JSON.parse(savedFavourites));[0m
+[0m     |             ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect[0m
+[0m  19 |         }[0m
+[0m  20 |         const savedRecent = localStorage.getItem(RECENT_KEY);[0m
+[0m  21 |         if (savedRecent) {  [2mreact-hooks/set-state-in-effect[22m[0m
+[0m  [2m84:8[22m   [33mwarning[39m  React Hook useMemo has a missing dependency: 'categories'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       [2mreact-hooks/exhaustive-deps[22m[0m
+[0m[0m
+[0m[31m[1m✖ 18 problems (14 errors, 4 warnings)[22m[39m[0m
+[0m[31m[1m[22m[39m[0m

@@ -4,10 +4,9 @@
  */
 
 const { haversineDistance } = require('../utils/geo');
-const { getScheduleData, getRouteGeometries } = require('./dataLoader');
+const { getScheduleData, getRouteGeometries, getIndexes } = require('./dataLoader');
 const { getStopById, getLocationById, findNearestStops, findNearestStopsSync } = require('./locationService');
 const { getRoutesForStop, findDirectRoutes, findRoutesToNearbyStops, findTransferRoutes, findTransferCandidates, TRANSFER_POINTS } = require('./routeFinder');
-const { getIndexes } = require('./dataLoader');
 const {
     getCurrentDayName,
     getNextDeparture,
@@ -64,6 +63,7 @@ async function getDirections(originLat, originLon, originStopId, destLocationId,
     // 3. Resolve origin
     let originCoords;
     let originLocation; // To hold name for response builder
+    let userNearestStops = []; // Populated when origin is GPS coordinates
 
     if (originStopId) {
         const originStop = getStopById(originStopId);
@@ -116,7 +116,6 @@ async function getDirections(originLat, originLon, originStopId, destLocationId,
     }
 
     // 4. Run A* Pathfinding (Unifies Direct, Loop, Transfer, and Walk optimizations)
-    console.log(`DEBUG: Running A* search from ${originCoords.lat},${originCoords.lon} to ${destLocation.name}`);
 
 
     // Check for walk-only preference or very short distance
@@ -124,7 +123,6 @@ async function getDirections(originLat, originLon, originStopId, destLocationId,
 
     // Optimization: If extremely close < 300m, just walk (unless forceBus)
     if (!forceBus && walkOnlyDist < 300) {
-        console.log('DEBUG: Destination is very close, suggesting walking.');
         const walkingDetails = await getWalkingDirections(originCoords, destLocation);
         return buildWalkResponse(originCoords, destLocation, walkOnlyDist, null, walkingDetails, originLocation?.name);
     }
@@ -133,7 +131,6 @@ async function getDirections(originLat, originLon, originStopId, destLocationId,
     const bestPath = findOptimalPath(originCoords.lat, originCoords.lon, destLocation, currentTime, dayName);
 
     if (!bestPath) {
-        console.log('DEBUG: No transit path found via A*. Checking for future buses...');
 
         let alternativeBus = null;
         const primaryOriginStop = originStopId ? getStopById(originStopId) : userNearestStops[0];
@@ -229,7 +226,7 @@ async function getDirections(originLat, originLon, originStopId, destLocationId,
 
     // Case A: Walk Only (A* decided walking is best)
     if (busLegs.length === 0) {
-        if (forceBus) console.log('DEBUG: A* selected walk-only despite forceBus.');
+        if (forceBus) { /* A* selected walk-only despite forceBus */ }
         const walkingDetails = await getWalkingDirections(originCoords, destLocation);
         return buildWalkResponse(originCoords, destLocation, walkOnlyDist, null, walkingDetails, originLocation?.name);
     }
@@ -413,156 +410,6 @@ async function getDirections(originLat, originLon, originStopId, destLocationId,
             walkingFromDestDetails: walkingFromDestDetails
         });
     }
-}
-
-/**
- * Handle transfer route building
- */
-/**
- * Evaluate transfer candidates to find the best one and build the response
- */
-async function selectAndBuildBestTransfer(candidates, originCoords, destLocation, directDistance, currentTime, dayName) {
-    const { getStopById } = require('./locationService');
-
-    let bestOption = null;
-    let minTotalDuration = Infinity;
-
-    for (const cand of candidates) {
-        const { transferPoint, firstLegs, secondLeg, destStop, originStop } = cand;
-        const transferStop = getStopById(transferPoint);
-
-        // 1. First Leg Optimization
-        let bestLeg1 = null;
-        let leg1Departure = null;
-        let leg1ArrivalMins = Infinity;
-
-        // Iterate all potential routes for the first leg calculate earliest arrival
-        for (const leg1 of firstLegs) {
-            let dep = getNextDeparture(leg1, leg1.originStopIndex, currentTime, dayName);
-
-            if (!dep) {
-                const nextBus = findNextAvailableBusForRoute(leg1, currentTime, dayName);
-                if (nextBus) {
-                    // Approximate minutes until next day (not perfect but functional for ranking)
-                    const nowMins = timeToMinutes(currentTime);
-                    const nextMins = timeToMinutes(nextBus.time);
-                    let diff = nextMins - nowMins;
-                    if (diff < 0) diff += 24 * 60;
-
-                    dep = {
-                        time: nextBus.time,
-                        minutesUntil: diff,
-                        tripStartTime: nextBus.tripStartTime,
-                        day: nextBus.day
-                    };
-                }
-            }
-
-            if (dep) {
-                const originOffset = getDynamicOffset(leg1.routeName, leg1.headsign, leg1.originStopIndex) || 0;
-                const destOffset = getDynamicOffset(leg1.routeName, leg1.headsign, leg1.destStopIndex) || 0;
-                const travelMins = Math.max(0, destOffset - originOffset);
-                const totalMinsUntilArrival = (dep.minutesUntil || 0) + travelMins;
-
-                if (totalMinsUntilArrival < leg1ArrivalMins) {
-                    leg1ArrivalMins = totalMinsUntilArrival;
-                    bestLeg1 = leg1;
-                    leg1Departure = dep;
-                }
-            }
-        }
-
-        if (!bestLeg1) continue;
-
-        // 2. Second Leg Optimization
-        const arrivalTimeAtTransfer = addMinutesToTime(currentTime, leg1ArrivalMins);
-        // 5 minute buffer for transfer
-        const transferReadyTime = addMinutesToTime(arrivalTimeAtTransfer, 5);
-
-        // Find departure for second leg 
-        // Note: dayName handling for next day transfers is complex, simplified here to assume same day or immediate next
-        let leg2Departure = getNextDeparture(secondLeg, secondLeg.originStopIndex, transferReadyTime, dayName);
-
-        if (!leg2Departure) {
-            const nextBus2 = findNextAvailableBusForRoute(secondLeg, transferReadyTime, dayName);
-            if (nextBus2) {
-                const nowMins = timeToMinutes(transferReadyTime);
-                const nextMins = timeToMinutes(nextBus2.time);
-                let diff = nextMins - nowMins;
-                if (diff < 0) diff += 24 * 60;
-
-                leg2Departure = {
-                    time: nextBus2.time,
-                    minutesUntil: diff,
-                    tripStartTime: nextBus2.tripStartTime
-                };
-            }
-        }
-
-        if (!leg2Departure) continue;
-
-        // 3. Score Total Journey
-        const walkFromDest = haversineDistance(destStop.lat, destStop.lon, destLocation.lat, destLocation.lon);
-        const walkFromMins = getWalkingMinutes(walkFromDest);
-
-        const leg2OriginOffset = getDynamicOffset(secondLeg.routeName, secondLeg.headsign, secondLeg.originStopIndex) || 0;
-        const leg2DestOffset = getDynamicOffset(secondLeg.routeName, secondLeg.headsign, secondLeg.destStopIndex) || 0;
-        const leg2TravelMins = Math.max(0, leg2DestOffset - leg2OriginOffset);
-
-        // Total minutes from NOW
-        const totalDuration = leg1ArrivalMins + 5 + (leg2Departure.minutesUntil || 0) + leg2TravelMins + walkFromMins;
-
-        if (totalDuration < minTotalDuration) {
-            minTotalDuration = totalDuration;
-            bestOption = {
-                candidate: cand,
-                leg1: bestLeg1,
-                leg1Departure,
-                leg2: secondLeg,
-                leg2Departure,
-                transferStop,
-                walkFromDest,
-                totalDuration
-            };
-        }
-    }
-
-    if (!bestOption) return null;
-
-    // 4. Build Response for Best Option
-    const { candidate, leg1, leg1Departure, leg2, leg2Departure, transferStop } = bestOption;
-
-    let walkingToOriginDetails = null;
-    let walkingFromDestDetails = null;
-
-    try {
-        const originStop = candidate.originStop;
-        [walkingToOriginDetails, walkingFromDestDetails] = await Promise.all([
-            getWalkingDirections(originCoords, { lat: originStop.lat, lon: originStop.lon }),
-            getWalkingDirections({ lat: candidate.destStop.lat, lon: candidate.destStop.lon }, destLocation)
-        ]);
-    } catch (err) {
-        console.error('Error fetching walking details for transfer:', err.message);
-    }
-
-    return buildTransferResponse({
-        firstLeg: leg1,
-        secondLeg: leg2,
-        transferStop,
-        transferPointId: candidate.transferPoint,
-        firstDeparture: leg1Departure,
-        secondDeparture: leg2Departure,
-        originCoords,
-        originStop: candidate.originStop,
-        destStop: candidate.destStop,
-        destLocation,
-        directDistance,
-        currentTime,
-        departureDay: leg1Departure.day || null,
-        walkingToOriginDetails: walkingToOriginDetails,
-        walkingFromDestDetails: walkingFromDestDetails,
-        originName: originLocation?.name
-    });
 }
 
 // Re-export for backward compatibility

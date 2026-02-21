@@ -468,6 +468,8 @@ function evaluateCandidates(candidates, destLocation, currentTime, dayName) {
 
     let bestNonLoopRoute = null;
     let bestNonLoopScore = Infinity;
+    let bestNonLoopStop = null;
+    let bestNonLoopDeparture = null;
 
     for (const { route, destStop } of candidates) {
         let departure = getNextDeparture(route, route.originStopIndex, currentTime, dayName);

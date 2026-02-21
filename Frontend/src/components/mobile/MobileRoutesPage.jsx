@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import BottomNavigation from './BottomNavigation';
 import ReportDialog from '../ReportDialog';
-import { fetchNextBus } from '../../services/api';
 import { getRouteColor } from '../../constants';
 
 const MobileRoutesPage = ({ activeTab, onTabChange, routes, onSelectRoute }) => {
@@ -317,7 +316,7 @@ const MobileRoutesPage = ({ activeTab, onTabChange, routes, onSelectRoute }) => 
                             })
                     ) : (
                         // Placeholder routes
-                        ['Route A', 'Route B', 'Route C', 'Route D', 'Route E', 'Route F', 'Route G', 'Route L'].map((name, idx) => {
+                        ['Route A', 'Route B', 'Route C', 'Route D', 'Route E', 'Route F', 'Route G', 'Route L'].map((name) => {
                             const color = getRouteColor(name);
                             return (
                                 <div

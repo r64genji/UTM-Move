@@ -5,26 +5,23 @@ import React, { useMemo } from 'react';
 const BUS_SPEED_MPS = 8.33;
 const STOP_DWELL_TIME_SEC = 30; // 30 seconds per stop
 
+// Helper: Haversine Distance (pure function, no need to be inside the component)
+const getDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371000;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+};
+
 const ScheduleView = ({ service, stops = [], currentHeadsign }) => {
-    if (!service) return (
-        <div style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-            No schedule available
-        </div>
-    );
-
-    const displayTrip = service.trips.find(t => t.headsign === currentHeadsign) || service.trips[0];
+    // Derive display trip and stop list unconditionally (before any hooks)
+    const displayTrip = service
+        ? (service.trips.find(t => t.headsign === currentHeadsign) || service.trips[0])
+        : null;
     const stopIds = displayTrip ? displayTrip.stops_sequence : [];
-
-    // Helper: Haversine Distance
-    const getDistance = (lat1, lon1, lat2, lon2) => {
-        const R = 6371000;
-        const dLat = (lat2 - lat1) * Math.PI / 180;
-        const dLon = (lon2 - lon1) * Math.PI / 180;
-        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-            Math.sin(dLon / 2) * Math.sin(dLon / 2);
-        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    };
 
     // Calculate Arrival Times based on the first departure time
     const scheduleItems = useMemo(() => {
@@ -75,7 +72,14 @@ const ScheduleView = ({ service, stops = [], currentHeadsign }) => {
                 calculatedTime: arrivalTimeStr
             };
         });
-    }, [displayTrip, stops]);
+    }, [displayTrip, stopIds, stops]);
+
+    // Early return after all hooks have been called
+    if (!service) return (
+        <div style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+            No schedule available
+        </div>
+    );
 
     return (
         <div className="schedule-view">

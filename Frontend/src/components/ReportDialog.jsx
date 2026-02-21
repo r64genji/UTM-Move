@@ -29,7 +29,7 @@ const ReportDialog = ({ isOpen, onClose, defaultType = 'new_stop', defaultDetail
                 setDetails('');
                 onClose();
             }, 2000);
-        } catch (err) {
+        } catch {
             setError('Failed to submit report. Please try again.');
         } finally {
             setIsSubmitting(false);

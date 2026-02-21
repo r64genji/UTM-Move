@@ -20,8 +20,12 @@ function validateCoord(val, name) {
         return { valid: false, error: `Invalid ${name}: must be a number` };
     }
 
-    if (num < -180 || num > 180) {
-        return { valid: false, error: `Invalid ${name}: must be between -180 and 180` };
+    // Latitude range: -90 to 90; Longitude range: -180 to 180
+    const isLat = name.toLowerCase().includes('lat');
+    const min = isLat ? -90 : -180;
+    const max = isLat ? 90 : 180;
+    if (num < min || num > max) {
+        return { valid: false, error: `Invalid ${name}: must be between ${min} and ${max}` };
     }
 
     return { valid: true, value: num };

@@ -303,9 +303,9 @@ const MobileRouteDetailPage = ({ activeTab, onTabChange, route, routes, stops, o
 
     // Reset selection when direction changes
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- legitimate: resetting selection in effect when currentTrip/isMergedRouteE changes.
         setSelectedTimeStr(null);
         setOpenSection(null);
-        // Reset variant when direction changes
         if (isMergedRouteE) {
             setSelectedVariant(null);
         }
@@ -314,16 +314,14 @@ const MobileRouteDetailPage = ({ activeTab, onTabChange, route, routes, stops, o
     // For merged Route E: Set default variant on initial load
     useEffect(() => {
         if (isMergedRouteE && !selectedVariant && currentTrip?.mergedTimes?.length > 0) {
-            // Find the next upcoming departure's variant
             const now = new Date();
             const currentTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-
-            // Find next upcoming time
             const nextDeparture = currentTrip.mergedTimes.find(entry => entry.time >= currentTimeStr);
             if (nextDeparture) {
+                // eslint-disable-next-line react-hooks/set-state-in-effect -- legitimate: setting default variant based on dep change.
                 setSelectedVariant(nextDeparture.variant);
             } else if (currentTrip.mergedTimes[0]) {
-                // If no upcoming, use first variant
+                // eslint-disable-next-line react-hooks/set-state-in-effect -- legitimate: fallback to first variant.
                 setSelectedVariant(currentTrip.mergedTimes[0].variant);
             }
         }

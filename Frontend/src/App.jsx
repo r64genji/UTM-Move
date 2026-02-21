@@ -20,11 +20,11 @@ const findRoute = (data, name) => {
     return data.routes.find(r => r.name === name);
 };
 
-function App() {
-    // Check for admin dashboard
-    if (new URLSearchParams(window.location.search).has('admin')) {
-        return <AdminDashboard />;
-    }
+// AppInner contains all hooks and the real app UI.
+// App is just a thin shell that short-circuits to AdminDashboard when needed.
+// This split is required by the Rules of Hooks: hooks must never be called
+// conditionally (i.e. after an early return).
+function AppInner() {
 
     const [data, setData] = useState({ stops: [], routes: [], locations: [], route_geometries: {} });
     const [selectedRouteName, setSelectedRouteName] = useState(null);
@@ -95,7 +95,7 @@ function App() {
                                 console.log('Loaded static data from cache');
                                 return; // Skip network request if cache is valid
                             }
-                        } catch (e) {
+                        } catch {
                             console.warn('Invalid cache, clearing...');
                             localStorage.removeItem(CACHE_KEY);
                             localStorage.removeItem(CACHE_TS_KEY);
@@ -138,7 +138,7 @@ function App() {
                             route_geometries: parsed.route_geometries || {}
                         });
                         console.warn('Network failed, using expired cache');
-                    } catch (e) {
+                    } catch {
                         setData({ stops: [], routes: [], locations: [] });
                     }
                 } else {
@@ -193,7 +193,6 @@ function App() {
         return () => navigator.geolocation.clearWatch(watchId);
     }, []);
 
-    // When route changes, pick default headsign
     // When route changes, pick default headsign
     const handleRouteSelect = async (routeName, serviceId = 'WEEKDAY', showLoop = false) => {
         // Clear geometry if no route selected
@@ -472,19 +471,6 @@ function App() {
                             }
                         }
                     });
-                } else if (result.routeGeometry && result.originStop && result.destStop) {
-                    // Legacy Fallback for single leg
-                    const color = getRouteColor(routeParts[0]);
-                    const segment = extractDirectedRouteSegment(
-                        result.routeGeometry,
-                        { lat: result.originStop.lat, lon: result.originStop.lon },
-                        { lat: result.destStop.lat, lon: result.destStop.lon }
-                    );
-                    newSegments.push({
-                        coordinates: segment ? segment.coordinates : result.routeGeometry.coordinates,
-                        color: color,
-                        type: 'bus'
-                    });
                 }
                 setBusRouteSegments(newSegments);
 
@@ -582,19 +568,6 @@ function App() {
         activeService = selectedRouteData.services[selectedServiceIndex];
         if (activeService && activeService.trips) {
             availableHeadsigns = [...new Set(activeService.trips.map(t => t.headsign))];
-
-            if (!selectedHeadsign && availableHeadsigns.length > 0 && mode !== 'explore') {
-                // Only auto-select if NOT in explore mode (or if we want to enforce it, but we want to allow null for "All" view)
-                // Actually, if we are in "All headsigns" mode (routeGeometry is MultiLineString), we want selectedHeadsign to be null.
-                // The issue is this effect runs on every render.
-                // If we explicitly set it to null in handleRouteSelect(showLoop=true), this might override it back.
-                // Let's rely on explicit user action or handleRouteSelect to set it. We shouldn't auto-set it here unless it's undefined/null AND we want a default.
-                // But for "Show Loop" feature, we intentionally want it null.
-
-                // For now, let's DISABLE this auto-selection here, as handleRouteSelect handles the default case.
-
-
-            }
 
             if (selectedHeadsign) {
                 const trip = activeService.trips.find(t => t.headsign === selectedHeadsign);
@@ -777,13 +750,25 @@ function App() {
             <main className="map-area">
                 {/* Floating Controls */}
                 <div className="floating-tools">
-                    <button className="tool-btn" onClick={() => { /* Zoom In placeholder */ }}>
+                    <button
+                        className="tool-btn"
+                        title="Zoom in"
+                        onClick={() => window.dispatchEvent(new CustomEvent('map-zoom', { detail: { direction: 'in' } }))}
+                    >
                         <span className="material-icons-round">add</span>
                     </button>
-                    <button className="tool-btn" onClick={() => { /* Zoom Out placeholder */ }}>
+                    <button
+                        className="tool-btn"
+                        title="Zoom out"
+                        onClick={() => window.dispatchEvent(new CustomEvent('map-zoom', { detail: { direction: 'out' } }))}
+                    >
                         <span className="material-icons-round">remove</span>
                     </button>
-                    <button className="tool-btn">
+                    <button
+                        className="tool-btn"
+                        title="Centre on my location"
+                        onClick={() => window.dispatchEvent(new Event('map-center-user'))}
+                    >
                         <span className="material-icons-round">my_location</span>
                     </button>
                 </div>
@@ -821,6 +806,13 @@ function App() {
             </main>
         </div>
     );
+}
+
+function App() {
+    if (new URLSearchParams(window.location.search).has('admin')) {
+        return <AdminDashboard />;
+    }
+    return <AppInner />;
 }
 
 export default App;

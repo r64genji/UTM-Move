@@ -5,7 +5,7 @@ import BottomNavigation from './BottomNavigation';
 const FAVOURITES_KEY = 'utmove_favourites';
 const RECENT_KEY = 'utmove_recent';
 
-const MobileSearchPage = ({ activeTab, onTabChange, onBack, locations, stops, onSelectLocation, searchType, onPinOnMap }) => {
+const MobileSearchPage = ({ activeTab, onTabChange, onBack, locations, onSelectLocation, searchType, onPinOnMap }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [activeCategory, setActiveCategory] = useState(null); // null = show default, or 'food', 'faculty', 'residential', 'favourites'
     const [favourites, setFavourites] = useState([]);
@@ -15,10 +15,12 @@ const MobileSearchPage = ({ activeTab, onTabChange, onBack, locations, stops, on
     useEffect(() => {
         const savedFavourites = localStorage.getItem(FAVOURITES_KEY);
         if (savedFavourites) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- legitimate: one-time init from localStorage on mount.
             setFavourites(JSON.parse(savedFavourites));
         }
         const savedRecent = localStorage.getItem(RECENT_KEY);
         if (savedRecent) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- legitimate: one-time init from localStorage on mount.
             setRecentLocations(JSON.parse(savedRecent));
         }
     }, []);

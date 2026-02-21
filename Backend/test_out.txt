@@ -1,0 +1,444 @@
+﻿  console.log
+    [dotenv@17.2.3] injecting env (3) from .env -- tip: ⚙️  suppress all logs with { quiet: true }
+
+      at _log (node_modules/dotenv/lib/main.js:142:11)
+
+node.exe : FAIL 
+tests/security.test.js
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo 
+...
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (FAIL tests/se   
+ curity.test.js:Str    
+ing) [], RemoteExc    
+eption
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+  ● Test suite failed 
+to run
+
+    Jest encountered 
+an unexpected token
+
+    Jest failed to 
+parse a file. This 
+happens e.g. when your 
+code or its 
+dependencies use 
+non-standard 
+JavaScript syntax, or 
+when Jest is not 
+configured to support 
+such syntax.
+
+    Out of the box 
+Jest supports Babel, 
+which will be used to 
+transform your files 
+into valid JS based on 
+your Babel 
+configuration.
+
+    By default 
+"node_modules" folder 
+is ignored by 
+transformers.
+
+    Here's what you 
+can do:
+     • If you are 
+trying to use 
+ECMAScript Modules, 
+see https://jestjs.io/d
+ocs/ecmascript-modules 
+for how to enable it.
+     • If you are 
+trying to use 
+TypeScript, see https:/
+/jestjs.io/docs/getting
+-started#using-typescri
+pt
+     • To have some of 
+your "node_modules" 
+files transformed, you 
+can specify a custom "t
+ransformIgnorePatterns"
+ in your config.
+     • If you need a 
+custom transformation, 
+specify a "transform" 
+option in your config.
+     • If you simply 
+want to mock your 
+non-JS modules (e.g. 
+binary assets) you can 
+stub them out with the 
+"moduleNameMapper" 
+config option.
+
+    You'll find more 
+details and examples 
+of these config 
+options in the docs:
+    https://jestjs.io/d
+ocs/configuration
+    For information 
+about custom 
+transformations, see:
+    https://jestjs.io/d
+ocs/code-transformation
+
+    Details:
+
+    SyntaxError: C:\Use
+rs\tabe2\OneDrive\Deskt
+op\UTM move\Backend\dir
+ections\index.js: 
+Unexpected token 
+(424:0)
+
+    [0m [90m 422 
+|[39m         
+haversineDistance
+     [90m 423 |[39m  
+   }[33m;[39m
+    [31m[1m>[22m[39
+m[90m 424 |[39m
+     [90m     |[39m 
+[31m[1m^[22m[39m[0m
+
+    [0m [90m  6 
+|[39m [36mconst[39m 
+helmet [33m=[39m requ
+ire([32m'helmet'[39m)
+[33m;[39m
+     [90m  7 |[39m 
+[36mconst[39m 
+rateLimit [33m=[39m r
+equire([32m'express-ra
+te-limit'[39m)[33m;[
+39m
+    [31m[1m>[22m[39
+m[90m  8 |[39m 
+[36mconst[39m { 
+getDirections } 
+[33m=[39m require([3
+2m'./directions/index'
+[39m)[33m;[39m
+     [90m    |[39m   
+                       
+ [31m[1m^[22m[39m
+     [90m  9 |[39m 
+[36mconst[39m { getSc
+heduleData[33m,[39m g
+etCampusLocations[33m,
+[39m 
+getRouteGeometries } 
+[33m=[39m require([3
+2m'./directions/dataLoa
+der'[39m)[33m;[39m
+     [90m 10 |[39m 
+[36mconst[39m { valid
+ateCoord[33m,[39m val
+idateTime[33m,[39m 
+validateDay[33m,[39m 
+sanitizeString[33m,[3
+9m validateReportInput 
+} [33m=[39m require(
+[32m'./utils/validators
+'[39m)[33m;[39m
+     [90m 11 
+|[39m[0m
+
+      at constructor (n
+ode_modules/@babel/pars
+er/src/parse-error.ts:9
+5:45)
+      at 
+Parser.toParseError 
+[as raise] (node_module
+s/@babel/parser/src/tok
+enizer/index.ts:1507:19
+)
+      at Parser.raise 
+[as unexpected] (node_m
+odules/@babel/parser/sr
+c/tokenizer/index.ts:15
+47:16)
+      at 
+Parser.unexpected [as 
+parseExprAtom] (node_mo
+dules/@babel/parser/src
+/parser/expression.ts:1
+355:22)
+      at 
+Parser.parseExprAtom 
+[as 
+parseExprSubscripts] (n
+ode_modules/@babel/pars
+er/src/parser/expressio
+n.ts:742:23)
+      at Parser.parseEx
+prSubscripts [as 
+parseUpdate] (node_modu
+les/@babel/parser/src/p
+arser/expression.ts:721
+:21)
+      at 
+Parser.parseUpdate [as 
+parseMaybeUnary] (node_
+modules/@babel/parser/s
+rc/parser/expression.ts
+:683:23)
+      at 
+Parser.parseMaybeUnary 
+[as parseMaybeUnaryOrPr
+ivate] (node_modules/@b
+abel/parser/src/parser/
+expression.ts:417:14)
+      at Parser.parseMa
+ybeUnaryOrPrivate [as 
+parseExprOps] (node_mod
+ules/@babel/parser/src/
+parser/expression.ts:42
+9:23)
+      at 
+Parser.parseExprOps 
+[as 
+parseMaybeConditional] 
+(node_modules/@babel/pa
+rser/src/parser/express
+ion.ts:384:23)
+      at Parser.parseMa
+ybeConditional [as 
+parseMaybeAssign] (node
+_modules/@babel/parser/
+src/parser/expression.t
+s:301:21)
+      at Parser.parseMa
+ybeAssign [as 
+parseExpressionBase] (n
+ode_modules/@babel/pars
+er/src/parser/expressio
+n.ts:226:23)
+      at 
+parseExpressionBase (no
+de_modules/@babel/parse
+r/src/parser/expression
+.ts:217:39)
+      at 
+Parser.callback [as 
+allowInAnd] (node_modul
+es/@babel/parser/src/pa
+rser/expression.ts:3197
+:16)
+      at 
+Parser.allowInAnd [as 
+parseExpression] (node_
+modules/@babel/parser/s
+rc/parser/expression.ts
+:217:17)
+      at 
+Parser.parseExpression 
+[as 
+parseStatementContent] 
+(node_modules/@babel/pa
+rser/src/parser/stateme
+nt.ts:688:23)
+      at Parser.parseSt
+atementContent [as 
+parseStatementLike] (no
+de_modules/@babel/parse
+r/src/parser/statement.
+ts:482:17)
+      at Parser.parseSt
+atementLike [as parseSt
+atementListItem] (node_
+modules/@babel/parser/s
+rc/parser/statement.ts:
+431:17)
+      at Parser.parseSt
+atementListItem [as par
+seBlockOrModuleBlockBod
+y] (node_modules/@babel
+/parser/src/parser/stat
+ement.ts:1444:16)
+      at Parser.parseBl
+ockOrModuleBlockBody 
+[as parseBlockBody] (no
+de_modules/@babel/parse
+r/src/parser/statement.
+ts:1417:10)
+      at 
+Parser.parseBlockBody 
+[as parseBlock] (node_m
+odules/@babel/parser/sr
+c/parser/statement.ts:1
+385:10)
+      at 
+Parser.parseBlock [as 
+parseFunctionBody] (nod
+e_modules/@babel/parser
+/src/parser/expression.
+ts:2626:24)
+      at Parser.parseFu
+nctionBody [as parseFun
+ctionBodyAndFinish] (no
+de_modules/@babel/parse
+r/src/parser/expression
+.ts:2595:10)
+      at parseFunctionB
+odyAndFinish (node_modu
+les/@babel/parser/src/p
+arser/statement.ts:1695
+:12)
+      at 
+Parser.callback [as wit
+hSmartMixTopicForbiddin
+gContext] (node_modules
+/@babel/parser/src/pars
+er/expression.ts:3176:1
+4)
+      at Parser.withSma
+rtMixTopicForbiddingCon
+text [as 
+parseFunction] (node_mo
+dules/@babel/parser/src
+/parser/statement.ts:16
+93:10)
+      at 
+Parser.parseFunction 
+[as parseFunctionStatem
+ent] (node_modules/@bab
+el/parser/src/parser/st
+atement.ts:1080:17)
+      at Parser.parseFu
+nctionStatement [as 
+parseStatementContent] 
+(node_modules/@babel/pa
+rser/src/parser/stateme
+nt.ts:673:23)
+      at Parser.parseSt
+atementContent [as 
+parseStatementLike] (no
+de_modules/@babel/parse
+r/src/parser/statement.
+ts:482:17)
+      at Parser.parseSt
+atementLike [as 
+parseModuleItem] (node_
+modules/@babel/parser/s
+rc/parser/statement.ts:
+419:17)
+      at 
+Parser.parseModuleItem 
+[as parseBlockOrModuleB
+lockBody] (node_modules
+/@babel/parser/src/pars
+er/statement.ts:1443:16
+)
+      at Parser.parseBl
+ockOrModuleBlockBody 
+[as parseBlockBody] (no
+de_modules/@babel/parse
+r/src/parser/statement.
+ts:1417:10)
+      at 
+Parser.parseBlockBody 
+[as parseProgram] (node
+_modules/@babel/parser/
+src/parser/statement.ts
+:229:10)
+      at 
+Parser.parseProgram 
+[as parseTopLevel] (nod
+e_modules/@babel/parser
+/src/parser/statement.t
+s:203:25)
+      at 
+Parser.parseTopLevel 
+[as parse] (node_module
+s/@babel/parser/src/par
+ser/index.ts:88:25)
+      at parse (node_mo
+dules/@babel/parser/src
+/index.ts:86:38)
+      at parser (node_m
+odules/@babel/core/src/
+parser/index.ts:29:19)
+          at 
+parser.next 
+(<anonymous>)
+      at normalizeFile 
+(node_modules/@babel/co
+re/src/transformation/n
+ormalize-file.ts:50:24)
+          at 
+normalizeFile.next 
+(<anonymous>)
+      at run (node_modu
+les/@babel/core/src/tra
+nsformation/index.ts:41
+:36)
+          at run.next 
+(<anonymous>)
+      at transform (nod
+e_modules/@babel/core/s
+rc/transform.ts:29:20)
+          at 
+transform.next 
+(<anonymous>)
+      at evaluateSync (
+node_modules/gensync/in
+dex.js:251:28)
+      at sync (node_mod
+ules/gensync/index.js:8
+9:14)
+      at fn (node_modul
+es/@babel/core/src/erro
+rs/rewrite-stack-trace.
+ts:99:14)
+      at transformSync 
+(node_modules/@babel/co
+re/src/transform.ts:66:
+52)
+      at ScriptTransfor
+mer.transformSource (no
+de_modules/@jest/transf
+orm/build/index.js:422:
+31)
+      at ScriptTransfor
+mer._transformAndBuildS
+cript (node_modules/@je
+st/transform/build/inde
+x.js:519:40)
+      at ScriptTransfor
+mer.transform (node_mod
+ules/@jest/transform/bu
+ild/index.js:558:19)
+      at 
+Object.require 
+(server.js:8:27)
+      at 
+Object.require (tests/s
+ecurity.test.js:2:25)
+
+Test Suites: 1 failed, 
+1 total
+Tests:       0 total
+Snapshots:   0 total
+Time:        0.421 s
+Ran all test suites 
+matching 
+tests/security.test.js.

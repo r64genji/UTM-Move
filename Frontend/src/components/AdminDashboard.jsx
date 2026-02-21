@@ -1,20 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { fetchReports } from '../services/api';
 
 const AdminDashboard = () => {
     const [reports, setReports] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        loadReports();
-    }, []);
-
-    const loadReports = async () => {
+    const loadReports = useCallback(async () => {
         setLoading(true);
         const data = await fetchReports();
         setReports(data || []);
         setLoading(false);
-    };
+    }, []);
+
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- loadReports is async; setState fires after the Promise resolves, not synchronously.
+        loadReports();
+    }, [loadReports]);
 
     const getTypeColor = (type) => {
         switch (type) {

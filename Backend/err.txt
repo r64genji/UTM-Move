@@ -1,0 +1,24 @@
+﻿[dotenv@17.2.3] injecting env (3) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+node : C:\Users\tabe2\OneDrive\Desktop\UTM move\Backend\directions\index.js:424
+At line:1 char:1
++ node -e "require('./server.js')" 2>&1 | Out-File "err.txt" -Encoding  ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo              : NotSpecifi    ed: (C:\Users\tabe    2\...ns\index.js:4    24:String) [], Rem    oteException
+    + FullyQualifiedEr    rorId : NativeComm    andError
+ 
+
+
+
+SyntaxError: Unexpected end of input
+    at wrapSafe (node:internal/modules/cjs/loader:1692:18)
+    at Module._compile (node:internal/modules/cjs/loader:1735:20)
+    at Object..js (node:internal/modules/cjs/loader:1893:10)
+    at Module.load (node:internal/modules/cjs/loader:1481:32)
+    at Module._load (node:internal/modules/cjs/loader:1300:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:245:24)
+    at Module.require (node:internal/modules/cjs/loader:1504:12)
+    at require (node:internal/modules/helpers:152:16)
+    at Object.<anonymous> (C:\Users\tabe2\OneDrive\Desktop\UTM move\Backend\server.js:8:27)
+
+Node.js v24.12.0

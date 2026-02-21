@@ -9,3 +9,4 @@ coverage/
 .idea/
 .DS_Store
 graphhopper/
+.agent/

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+// No React imports needed — this is a pure functional component with no hooks
 
 const BottomNavigation = ({ activeTab, onTabChange }) => {
     const tabs = [

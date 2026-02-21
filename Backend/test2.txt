@@ -1,0 +1,27 @@
+﻿  console.log
+    [dotenv@17.2.3] injecting env (3) from .env -- tip: ⚙️  enable debug logging with { debug: true }
+
+      at _log (node_modules/dotenv/lib/main.js:142:11)
+
+node.exe : FAIL tests/security.test.js
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo              : NotSpecifi    ed: (FAIL tests/se    curity.test.js:Str    ing) [], RemoteExc    eption
+    + FullyQualifiedEr    rorId : NativeComm    andError
+ 
+
+
+  ● Test suite failed to run
+
+    Server is not running.
+
+
+Test Suites: 1 failed, 1 total
+Tests:       8 passed, 8 total
+Snapshots:   0 total
+Time:        0.476 s, estimated 1 s
+Ran all test suites matching tests/security.test.js|tests/validators.test.js.
+Jest did not exit one second after the test run has completed.
+
+'This usually means that there are asynchronous operations that weren't stopped in your tests. Consider running Jest with `--detectOpenHandles` to troubleshoot this issue.

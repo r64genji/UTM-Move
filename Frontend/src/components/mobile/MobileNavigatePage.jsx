@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import BottomNavigation from './BottomNavigation';
 import MapComponent from '../Map';
 
@@ -104,12 +104,19 @@ const MobileNavigatePage = ({
         return Math.round(walkDuration);
     };
 
-    // Auto-minimize (collapse) if directions change
+    // Auto-minimize (collapse) when new directions arrive.
+    // prevDirectionsRef tracks the previous value; reading/writing .current is only done
+    // inside the effect (safe zone), never during the render phase.
+    const prevDirectionsRef = useRef(directions);
     useEffect(() => {
-        if (directions) {
-            setIsExpanded(false);
+        if (prevDirectionsRef.current !== directions) {
+            prevDirectionsRef.current = directions;
+            if (directions) {
+                // eslint-disable-next-line react-hooks/set-state-in-effect -- legitimate: state update responds to external prop identity change, not a synchronous setter.
+                setIsExpanded(false);
+            }
         }
-    }, [directions]);
+    });
 
     return (
         <div className="relative h-screen w-full flex flex-col group/design-root overflow-hidden max-w-md mx-auto bg-[#101922]">

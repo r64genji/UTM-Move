@@ -1,0 +1,1736 @@
+﻿
+> backend@1.0.0 test
+> jest --verbose tests/
+
+  console.log
+    [dotenv@17.2.3] injecting env (3) from .env -- tip: ⚙️  enable debug logging with { debug: true }
+
+      at _log (node_modules/dotenv/lib/main.js:142:11)
+
+node.exe : FAIL 
+tests/security.test.js
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo 
+...
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (FAIL tests/se   
+ curity.test.js:Str    
+ing) [], RemoteExc    
+eption
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+
+
+  ● Test suite failed 
+to run
+
+    Server is not 
+running.
+
+
+  console.log
+    [DataLoader] Loaded: 57 stops, 801 locations, 51 stop-routes indexed
+
+      at log (directions/dataLoader.js:141:13)
+
+PASS tests/routing_edge
+_cases.test.js
+  A* Routing - 
+Boarding Stop Selection
+    √ KTGB_XA2 to FKT: 
+prefers KLG_E (128m) 
+over KDOJ_XB2 (328m) 
+(29 ms)
+    √ U5 to FKT: 
+prefers KP1 (33m) over 
+farther stops like P19 
+(28 ms)
+  A* Routing - Alight 
+Stop Selection
+    √ Route D should 
+alight at FKT (47m) 
+over PGT (628m) when 
+destination is FKT (32 
+ms)
+    √ Continuous ride 
+on same route should 
+be single leg (CP to 
+FKT, not CP→PGT→FKT) 
+(41 ms)
+  A* Routing - 
+Transfer Time 
+Consistency
+    √ G01 to FKT: 
+alight time should be 
+before transfer 
+departure time (46 ms)
+  A* Routing - 
+Unnecessary Transfer 
+Avoidance
+    √ Should prefer 
+2-leg path over 3-leg 
+path when arrival time 
+is similar (30 ms)
+    √ Should not take 
+Route E just to save a 
+few minutes if Route D 
+is available (26 ms)
+    √ U5 to FKT at 
+16:30 should produce a 
+3-leg path with 
+correct geometries (24 
+ms)
+
+  console.log
+    [DataLoader] Loaded: 57 stops, 801 locations, 51 stop-routes indexed
+
+      at log (directions/dataLoader.js:141:13)
+
+  console.log
+    [ReproTest Debug] CP Routes Count before call: 19
+
+      at Object.log (tests/repro_G17_FKT.test.js:42:17)
+
+  console.warn
+    GraphHopper Matrix fetch failed, using Haversine: Error
+
+    [0m [90m 119 |[39m         }
+     [90m 120 |[39m     } [36mcatch[39m (error) {
+    [31m[1m>[22m[39m[90m 121 |[39m         console[33m.[39mwarn([32m'GraphHopper Matrix fetch failed, using Haversine:'[39m[33m,[39m error[33m.[39mresponse[33m?[39m[33m.[39mdata[33m?[39m[33m.[39mmessage [33m||[39m error[33m.[39mmessage)[33m;[39m
+     [90m     |[39m                 [31m[1m^[22m[39m
+     [90m 122 |[39m     }
+     [90m 123 |[39m
+     [90m 124 |[39m     [36mreturn[39m [36mnull[39m[33m;[39m[0m
+
+      at warn (directions/locationService.js:121:17)
+      at findNearestStops (directions/locationService.js:155:25)
+      at Object.getDirections (directions/index.js:77:28)
+      at Object.<anonymous> (tests/repro_G17_FKT.test.js:44:24)
+
+  console.log
+    Result Type: TRANSFER
+
+      at Object.log (tests/repro_G17_FKT.test.js:55:21)
+
+  console.log
+    Full Result: {
+      "type": "TRANSFER",
+      "origin": {
+        "name": "Kolej Tun Fatimah K4",
+        "lat": 1.558355,
+        "lon": 103.630752
+      },
+      "destination": {
+        "id": "FKT",
+        "name": "Fakulti Kejuruteraan Tenaga/Kimia",
+        "lat": 1.56652,
+        "lon": 103.640282,
+        "nearestStop": "FKT",
+        "category": "bus_stop"
+      },
+      "originStop": {
+        "id": "KTF",
+        "name": "Kolej Tun Fatimah K4",
+        "lat": 1.558832,
+        "lon": 103.630772
+      },
+      "summary": {
+        "route": "Route E(N24) → Route D",
+        "headsign": "To Cluster (T02) → To FKT(n29)",
+        "departure": "08:08",
+        "departureDay": "monday",
+        "totalDuration": 22,
+        "busArrivalTime": "08:21",
+        "eta": "08:22"
+      },
+      "steps": [
+        {
+          "type": "walk",
+          "instruction": "Walk to Kolej Tun Fatimah K4",
+          "from": {
+            "lat": 1.558355,
+            "lon": 103.630752
+          },
+          "to": {
+            "lat": 1.558832,
+            "lon": 103.630772
+          },
+          "distance": 400,
+          "duration": 5,
+          "ascent": 0,
+          "descent": 0,
+          "details": [],
+          "expanded": false
+        },
+        {
+          "type": "board",
+          "instruction": "Board Route E(N24) (To Cluster (T02))",
+          "stopName": "Kolej Tun Fatimah K4",
+          "stopId": "KTF",
+          "time": "08:08",
+          "routeGeometryKey": "Route E(N24) : To Cluster (T02)"
+        },
+        {
+          "type": "ride",
+          "instruction": "Ride 3 stops to Pusat Geokejuruteraan Tropika",
+          "duration": 4
+        },
+        {
+          "type": "alight",
+          "instruction": "Alight at Pusat Geokejuruteraan Tropika",
+          "stopName": "Pusat Geokejuruteraan Tropika",
+          "stopId": "PGT",
+          "time": "08:12"
+        },
+        {
+          "type": "transfer",
+          "instruction": "Transfer to Route D (To FKT(n29))",
+          "stopName": "Pusat Geokejuruteraan Tropika",
+          "stopId": "PGT",
+          "time": "08:16",
+          "routeGeometryKey": "Route D : To FKT(n29)"
+        },
+        {
+          "type": "ride",
+          "instruction": "Ride 2 stops to Fakulti Kejuruteraan Tenaga/Kimia",
+          "duration": 5
+        },
+        {
+          "type": "alight",
+          "instruction": "Alight at Fakulti Kejuruteraan Tenaga/Kimia",
+          "stopName": "Fakulti Kejuruteraan Tenaga/Kimia",
+          "stopId": "FKT",
+          "time": "08:21"
+        },
+        {
+          "type": "walk",
+          "instruction": "Walk to Fakulti Kejuruteraan Tenaga/Kimia",
+          "from": {
+            "lat": 1.56652,
+            "lon": 103.640282
+          },
+          "to": {
+            "id": "FKT",
+            "name": "Fakulti Kejuruteraan Tenaga/Kimia",
+            "lat": 1.56652,
+            "lon": 103.640282,
+            "nearestStop": "FKT",
+            "category": "bus_stop"
+          },
+          "distance": 100,
+          "duration": 1,
+          "ascent": 0,
+          "descent": 0,
+          "details": [],
+          "expanded": false
+        }
+      ],
+      "totalWalkingDistance": 53,
+      "directWalkDistance": 1395,
+      "firstLeg": {
+        "routeName": "Route E(N24)",
+        "headsign": "To Cluster (T02)",
+        "stopIndex": 6,
+        "stopsSequence": [
+          "KDOJ_XB2",
+          "KDOJ",
+          "KLG_E",
+          "KDSE_E",
+          "PKU_E",
+          "K6",
+          "KTF",
+          "H01",
+          "CP",
+          "PGT",
+          "N24",
+          "P19",
+          "P19A2",
+          "UI",
+          "KTC_B1E",
+          "T02"
+        ],
+        "times": [
+          "07:00",
+          "07:30",
+          "08:00",
+          "08:30",
+          "09:00",
+          "09:30",
+          "10:00",
+          "11:00",
+          "11:30",
+          "12:00",
+          "12:30",
+          "13:00",
+          "13:30",
+          "14:00",
+          "14:30",
+          "15:15",
+          "16:15",
+          "16:30",
+          "17:00",
+          "17:30",
+          "18:00"
+        ],
+        "serviceDays": [
+          "monday",
+          "tuesday",
+          "wednesday",
+          "thursday",
+          "friday"
+        ],
+        "originStopIndex": 6,
+        "destStopIndex": 9,
+        "fromStopName": "Kolej Tun Fatimah K4",
+        "toStopName": "Pusat Geokejuruteraan Tropika",
+        "fromStopId": "KTF",
+        "toStopId": "PGT",
+        "fromStopLat": 1.558832,
+        "fromStopLon": 103.630772,
+        "toStopLat": 1.562768,
+        "toStopLon": 103.636461
+      },
+      "secondLeg": {
+        "routeName": "Route D",
+        "headsign": "To FKT(n29)",
+        "stopIndex": 1,
+        "stopsSequence": [
+          "CP",
+          "PGT",
+          "N24",
+          "FKT"
+        ],
+        "times": [
+          "07:15",
+          "07:45",
+          "08:15",
+          "08:45",
+          "09:15",
+          "09:45",
+          "11:45",
+          "12:15",
+          "12:45",
+          "13:45",
+          "14:15",
+          "16:15",
+          "16:45",
+          "17:15",
+          "17:45"
+        ],
+        "serviceDays": [
+          "monday",
+          "tuesday",
+          "wednesday",
+          "thursday",
+          "friday"
+        ],
+        "originStopIndex": 1,
+        "destStopIndex": 3,
+        "fromStopName": "Pusat Geokejuruteraan Tropika",
+        "toStopName": "Fakulti Kejuruteraan Tenaga/Kimia",
+        "fromStopId": "PGT",
+        "toStopId": "FKT",
+        "fromStopLat": 1.562768,
+        "fromStopLon": 103.636461,
+        "toStopLat": 1.56652,
+        "toStopLon": 103.640282
+      },
+      "routeGeometries": [
+        {
+          "routeName": "Route E(N24)",
+          "headsign": "To Cluster (T02)",
+          "isLoop": false,
+          "isMergedLeg": false,
+          "fromStop": {
+            "lat": 1.558832,
+            "lon": 103.630772
+          },
+          "toStop": {
+            "lat": 1.562768,
+            "lon": 103.636461
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                103.61819058646364,
+                1.575056086265647
+              ],
+              [
+                103.61894609414736,
+                1.5755453612830337
+              ],
+              [
+                103.61932051566902,
+                1.5756647924189764
+              ],
+              [
+                103.61955860598096,
+                1.5756686060775564
+              ],
+              [
+                103.6196737846796,
+                1.5756239971512827
+              ],
+              [
+                103.61985475566189,
+                1.5754718253264315
+              ],
+              [
+                103.61999246584173,
+                1.5752624852503914
+              ],
+              [
+                103.6200358675265,
+                1.5751193850979064
+              ],
+              [
+                103.62006159635513,
+                1.5748720027541623
+              ],
+              [
+                103.62009589079935,
+                1.5744317408541946
+              ],
+              [
+                103.62012141315677,
+                1.5743256647373016
+              ],
+              [
+                103.62019155181974,
+                1.5741934834475586
+              ],
+              [
+                103.62031153761376,
+                1.5740804861101054
+              ],
+              [
+                103.62034058234775,
+                1.5739356024833313
+              ],
+              [
+                103.62029751738692,
+                1.5738604125132554
+              ],
+              [
+                103.62034967214595,
+                1.573701544333602
+              ],
+              [
+                103.62043210741996,
+                1.5733969661480387
+              ],
+              [
+                103.62060048095157,
+                1.5730271515438403
+              ],
+              [
+                103.62071730254763,
+                1.5728172000364111
+              ],
+              [
+                103.62084442300142,
+                1.572661197235064
+              ],
+              [
+                103.62112431402767,
+                1.5725354172027153
+              ],
+              [
+                103.62132317255248,
+                1.5724929925733022
+              ],
+              [
+                103.62155882369387,
+                1.5725047539487917
+              ],
+              [
+                103.62175228407574,
+                1.572596898955851
+              ],
+              [
+                103.62234766287662,
+                1.573025602084087
+              ],
+              [
+                103.62242305276504,
+                1.5731220532891257
+              ],
+              [
+                103.62266141627305,
+                1.5728894685822468
+              ],
+              [
+                103.62299070272974,
+                1.5725640503344778
+              ],
+              [
+                103.62318971121874,
+                1.5722495217258938
+              ],
+              [
+                103.62326006883393,
+                1.5718959583346788
+              ],
+              [
+                103.62329645591672,
+                1.5713894576649494
+              ],
+              [
+                103.62333433274102,
+                1.5708634192290987
+              ],
+              [
+                103.62338030611505,
+                1.5701572414301381
+              ],
+              [
+                103.62341327024484,
+                1.5695726390381282
+              ],
+              [
+                103.6234630215701,
+                1.5692700575726946
+              ],
+              [
+                103.62374952344715,
+                1.5686978030289822
+              ],
+              [
+                103.62418343434496,
+                1.5682965651834309
+              ],
+              [
+                103.62450534624884,
+                1.5681751798091739
+              ],
+              [
+                103.62503286048383,
+                1.5680840978892832
+              ],
+              [
+                103.6254386823448,
+                1.5680174433502714
+              ],
+              [
+                103.62593915229132,
+                1.5678405069418062
+              ],
+              [
+                103.62630593328282,
+                1.5676661356187225
+              ],
+              [
+                103.62677136946343,
+                1.5673632988198705
+              ],
+              [
+                103.62698446775494,
+                1.5671858052873233
+              ],
+              [
+                103.62706593927686,
+                1.5669723121255288
+              ],
+              [
+                103.62712099607529,
+                1.5666104705661752
+              ],
+              [
+                103.62702925192372,
+                1.5662218585539733
+              ],
+              [
+                103.62685659393702,
+                1.565898292888221
+              ],
+              [
+                103.62610726428989,
+                1.5652857007217733
+              ],
+              [
+                103.6257107811831,
+                1.5649077315720348
+              ],
+              [
+                103.62551099906284,
+                1.5644482423004575
+              ],
+              [
+                103.62538156778464,
+                1.5639992023283469
+              ],
+              [
+                103.62522873304988,
+                1.5635109815588066
+              ],
+              [
+                103.62519130390717,
+                1.563238553085796
+              ],
+              [
+                103.62516874884426,
+                1.562718906489934
+              ],
+              [
+                103.62517774932547,
+                1.5624028567107473
+              ],
+              [
+                103.62530761100192,
+                1.5620232500927358
+              ],
+              [
+                103.62603288908781,
+                1.5600320378292736
+              ],
+              [
+                103.62641879104058,
+                1.5594079693589293
+              ],
+              [
+                103.6267293323441,
+                1.5591232181804315
+              ],
+              [
+                103.62742771220599,
+                1.5588542340467626
+              ],
+              [
+                103.62765048931197,
+                1.558648124002616
+              ],
+              [
+                103.62839884794954,
+                1.557669389854297
+              ],
+              [
+                103.62873270446823,
+                1.5572405101915336
+              ],
+              [
+                103.63072357221864,
+                1.5586978750765752
+              ],
+              [
+                103.63155823284086,
+                1.5592416150184505
+              ],
+              [
+                103.63196224609277,
+                1.5593930187811225
+              ],
+              [
+                103.63264079237473,
+                1.5594325040991919
+              ],
+              [
+                103.63323591178539,
+                1.5594228299605106
+              ],
+              [
+                103.63402069459062,
+                1.5592550799410105
+              ],
+              [
+                103.6343651470574,
+                1.5591737247547286
+              ],
+              [
+                103.6349224678288,
+                1.5592637305652346
+              ],
+              [
+                103.63487058541313,
+                1.5597618453242035
+              ],
+              [
+                103.63486429112288,
+                1.5604692484320708
+              ],
+              [
+                103.63522916892424,
+                1.5613001254807415
+              ],
+              [
+                103.63548656419579,
+                1.5617490679504158
+              ],
+              [
+                103.63576828859601,
+                1.5620922501055787
+              ],
+              [
+                103.636075881431,
+                1.562410375573748
+              ],
+              [
+                103.63625780795616,
+                1.562558726025614
+              ],
+              [
+                103.63668830169865,
+                1.5627699145416187
+              ],
+              [
+                103.6370960788393,
+                1.5629258972371076
+              ],
+              [
+                103.63758733556347,
+                1.5629718367752758
+              ],
+              [
+                103.63806057851593,
+                1.562928290393458
+              ],
+              [
+                103.6384934662712,
+                1.5628265899895837
+              ],
+              [
+                103.63885068573927,
+                1.5627303801736048
+              ],
+              [
+                103.63934449864917,
+                1.5625777978210635
+              ],
+              [
+                103.63969543764557,
+                1.5624976268386064
+              ],
+              [
+                103.64001911420064,
+                1.5623558110273166
+              ],
+              [
+                103.64036598854278,
+                1.5621740007344869
+              ],
+              [
+                103.64085556629902,
+                1.5618779480241898
+              ],
+              [
+                103.64114279438246,
+                1.561621746331582
+              ],
+              [
+                103.64137186349473,
+                1.561274134353809
+              ],
+              [
+                103.64148648109602,
+                1.5608588806241954
+              ],
+              [
+                103.64152258648659,
+                1.5604211097028866
+              ],
+              [
+                103.64147740411386,
+                1.5600305959398781
+              ],
+              [
+                103.64111332884914,
+                1.559436483060125
+              ],
+              [
+                103.64078615442082,
+                1.5590116992141816
+              ],
+              [
+                103.64045886330769,
+                1.5585318109190212
+              ],
+              [
+                103.64032552391132,
+                1.5582842487361717
+              ],
+              [
+                103.64062861126183,
+                1.5581659441909608
+              ],
+              [
+                103.64150442734791,
+                1.5577900817785917
+              ],
+              [
+                103.64186538789727,
+                1.5576028272176217
+              ],
+              [
+                103.642136405121,
+                1.5574596855511658
+              ],
+              [
+                103.64231290458702,
+                1.5573103511717363
+              ],
+              [
+                103.64247525404346,
+                1.556994296701646
+              ],
+              [
+                103.64259956062966,
+                1.5566497828471313
+              ],
+              [
+                103.64279041045319,
+                1.5558887418960552
+              ],
+              [
+                103.64311400411475,
+                1.5545433414516765
+              ],
+              [
+                103.6431881225493,
+                1.5543653760111482
+              ],
+              [
+                103.64360166530315,
+                1.5544781748897805
+              ],
+              [
+                103.64396251771069,
+                1.5547302315239335
+              ],
+              [
+                103.64426255470676,
+                1.5549173919518182
+              ],
+              [
+                103.6447180696037,
+                1.555192577400632
+              ],
+              [
+                103.64494522913878,
+                1.5553761250322395
+              ],
+              [
+                103.645170406695,
+                1.5555316363211347
+              ],
+              [
+                103.64545325522994,
+                1.5556316688779361
+              ],
+              [
+                103.64581272194266,
+                1.5555905651041826
+              ],
+              [
+                103.64601843259334,
+                1.5555185738123924
+              ],
+              [
+                103.64625227587061,
+                1.5554695992380374
+              ],
+              [
+                103.64646055004312,
+                1.5553919734968673
+              ],
+              [
+                103.64808463764939,
+                1.5548320327906993
+              ],
+              [
+                103.64883770222832,
+                1.5546860758089878
+              ],
+              [
+                103.64887790659452,
+                1.5546810389634942
+              ],
+              [
+                103.64911200340953,
+                1.5553342943296542
+              ],
+              [
+                103.64901929358172,
+                1.5560156708371267
+              ],
+              [
+                103.64900229933994,
+                1.556560290955062
+              ],
+              [
+                103.64964724738661,
+                1.5565129020464639
+              ],
+              [
+                103.65130936545324,
+                1.556525982580851
+              ],
+              [
+                103.65172196847539,
+                1.556570191108193
+              ],
+              [
+                103.65196738486026,
+                1.556618493873117
+              ],
+              [
+                103.65250412349832,
+                1.556877560714554
+              ],
+              [
+                103.65300739669857,
+                1.5573633365035846
+              ],
+              [
+                103.65343275364864,
+                1.558213913574619
+              ],
+              [
+                103.65364737955161,
+                1.5588548897417667
+              ],
+              [
+                103.65396281021549,
+                1.5598757862007773
+              ],
+              [
+                103.65418977215239,
+                1.5605154996329134
+              ],
+              [
+                103.65459498922053,
+                1.5618091088105643
+              ],
+              [
+                103.65460933141003,
+                1.5618879870475126
+              ],
+              [
+                103.65429534491551,
+                1.56204233249305
+              ],
+              [
+                103.65384776853807,
+                1.5625815340566334
+              ],
+              [
+                103.65356542086306,
+                1.5631878681380869
+              ],
+              [
+                103.65331100150985,
+                1.5634806863957778
+              ],
+              [
+                103.65313919619274,
+                1.563452339562133
+              ],
+              [
+                103.6527405178386,
+                1.5635699770245566
+              ],
+              [
+                103.65235539157777,
+                1.563810019678158
+              ],
+              [
+                103.65225709950181,
+                1.5639757267745722
+              ],
+              [
+                103.65228340518036,
+                1.56428690585318
+              ],
+              [
+                103.6524233899163,
+                1.564469830025132
+              ],
+              [
+                103.65265051330448,
+                1.5645879349420682
+              ],
+              [
+                103.65292969765352,
+                1.5646260829967673
+              ],
+              [
+                103.6531320803021,
+                1.5645680696780033
+              ],
+              [
+                103.6533011296691,
+                1.564456304223171
+              ],
+              [
+                103.6533827088175,
+                1.5643979910717718
+              ]
+            ]
+          }
+        },
+        {
+          "routeName": "Route D",
+          "headsign": "To FKT(n29)",
+          "isLoop": false,
+          "isMergedLeg": false,
+          "fromStop": {
+            "lat": 1.562768,
+            "lon": 103.636461
+          },
+          "toStop": {
+            "lat": 1.56652,
+            "lon": 103.640282
+          },
+          "geometry": {
+            "coordinates": [
+              [
+                103.634847,
+                1.55973
+              ],
+              [
+                103.634827,
+                1.559995
+              ],
+              [
+                103.634861,
+                1.559984
+              ],
+              [
+                103.634882,
+                1.560418
+              ],
+              [
+                103.634884,
+                1.560477
+              ],
+              [
+                103.63499,
+                1.56078
+              ],
+              [
+                103.635107,
+                1.561048
+              ],
+              [
+                103.635226,
+                1.561308
+              ],
+              [
+                103.635292,
+                1.561422
+              ],
+              [
+                103.635695,
+                1.562013
+              ],
+              [
+                103.636141,
+                1.562472
+              ],
+              [
+                103.63624,
+                1.562553
+              ],
+              [
+                103.636312,
+                1.562589
+              ],
+              [
+                103.636432,
+                1.562651
+              ],
+              [
+                103.636503,
+                1.562687
+              ],
+              [
+                103.636547,
+                1.56271
+              ],
+              [
+                103.636995,
+                1.562917
+              ],
+              [
+                103.637202,
+                1.562952
+              ],
+              [
+                103.637323,
+                1.562966
+              ],
+              [
+                103.637312,
+                1.562938
+              ],
+              [
+                103.637453,
+                1.56295
+              ],
+              [
+                103.637678,
+                1.562957
+              ],
+              [
+                103.637899,
+                1.562945
+              ],
+              [
+                103.638031,
+                1.56292
+              ],
+              [
+                103.638168,
+                1.562894
+              ],
+              [
+                103.638314,
+                1.562859
+              ],
+              [
+                103.638584,
+                1.562792
+              ],
+              [
+                103.638631,
+                1.562779
+              ],
+              [
+                103.638627,
+                1.562824
+              ],
+              [
+                103.638996,
+                1.562734
+              ],
+              [
+                103.63914,
+                1.562688
+              ],
+              [
+                103.639716,
+                1.562502
+              ],
+              [
+                103.639888,
+                1.562448
+              ],
+              [
+                103.640641,
+                1.562068
+              ],
+              [
+                103.640666,
+                1.562089
+              ],
+              [
+                103.640773,
+                1.562202
+              ],
+              [
+                103.640823,
+                1.562269
+              ],
+              [
+                103.640838,
+                1.562317
+              ],
+              [
+                103.640844,
+                1.562519
+              ],
+              [
+                103.640767,
+                1.562673
+              ],
+              [
+                103.640682,
+                1.562756
+              ],
+              [
+                103.640518,
+                1.562892
+              ],
+              [
+                103.64039,
+                1.562987
+              ],
+              [
+                103.640279,
+                1.563073
+              ],
+              [
+                103.640162,
+                1.563201
+              ],
+              [
+                103.640093,
+                1.563322
+              ],
+              [
+                103.640009,
+                1.563464
+              ],
+              [
+                103.639894,
+                1.563547
+              ],
+              [
+                103.63976,
+                1.563593
+              ],
+              [
+                103.639618,
+                1.563652
+              ],
+              [
+                103.639521,
+                1.56373
+              ],
+              [
+                103.639393,
+                1.563787
+              ],
+              [
+                103.639206,
+                1.563909
+              ],
+              [
+                103.638774,
+                1.564202
+              ],
+              [
+                103.638523,
+                1.564413
+              ],
+              [
+                103.638452,
+                1.564539
+              ],
+              [
+                103.638425,
+                1.564595
+              ],
+              [
+                103.638314,
+                1.564848
+              ],
+              [
+                103.638269,
+                1.565065
+              ],
+              [
+                103.638244,
+                1.565191
+              ],
+              [
+                103.638228,
+                1.565287
+              ],
+              [
+                103.638227,
+                1.565559
+              ],
+              [
+                103.638232,
+                1.565644
+              ],
+              [
+                103.63826,
+                1.566073
+              ],
+              [
+                103.638278,
+                1.566218
+              ],
+              [
+                103.638341,
+                1.566324
+              ],
+              [
+                103.63845,
+                1.566387
+              ],
+              [
+                103.638722,
+                1.566487
+              ],
+              [
+                103.639577,
+                1.566862
+              ],
+              [
+                103.639626,
+                1.566883
+              ],
+              [
+                103.639748,
+                1.566922
+              ],
+              [
+                103.639879,
+                1.566904
+              ],
+              [
+                103.640002,
+                1.566886
+              ],
+              [
+                103.640078,
+                1.566854
+              ],
+              [
+                103.640212,
+                1.566686
+              ],
+              [
+                103.640256,
+                1.566582
+              ],
+              [
+                103.640289,
+                1.566524
+              ]
+            ],
+            "type": "LineString"
+          }
+        }
+      ],
+      "destStop": {
+        "id": "FKT",
+        "name": "Fakulti Kejuruteraan Tenaga/Kimia",
+        "lat": 1.56652,
+        "lon": 103.640282
+      }
+    }
+
+      at Object.log (tests/repro_G17_FKT.test.js:56:21)
+
+  console.log
+    Boarding At: Kolej Tun Fatimah K4
+
+      at Object.log (tests/repro_G17_FKT.test.js:61:25)
+
+  console.log
+    Alighting At: Fakulti Kejuruteraan Tenaga/Kimia
+
+      at Object.log (tests/repro_G17_FKT.test.js:64:25)
+
+PASS tests/repro_G17_FK
+T.test.js
+  G17 to FKT Debug
+    √ should prefer 
+Walk->CP->Bus D over 
+Bus E->JA1->Walk (99 
+ms)
+
+  console.log
+    [DataLoader] Loaded: 57 stops, 801 locations, 51 stop-routes indexed
+
+      at log (directions/dataLoader.js:141:13)
+
+PASS tests/ktgb_fkt_rou
+te.test.js
+  KTGB_XA2 to FKT Route
+    √ should prefer 
+KLG_E/KLG_W over KDOJ 
+as boarding stop (26 
+ms)
+    √ chooses optimal 
+path at 08:00: Board 
+KLG_E, Transfer CP, 
+Arrive FKT (29 ms)
+    √ would use Route 
+D transfer if schedule 
+allowed (23 ms)
+
+  console.log
+    [DataLoader] Loaded: 57 stops, 801 locations, 51 stop-routes indexed
+
+      at log (directions/dataLoader.js:141:13)
+
+  console.log
+    --- Path Summary ---
+
+      at Object.log (tests/t02_fkt_route.test.js:24:17)
+
+  console.log
+    WALK: Origin -> T02 (0m)
+
+      at log (tests/t02_fkt_route.test.js:27:44)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    BUS: Route E(N24) (T02 -> AM)
+
+      at log (tests/t02_fkt_route.test.js:26:43)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    WALK: AM -> CP (226m)
+
+      at log (tests/t02_fkt_route.test.js:27:44)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    BUS: Route D (CP -> FKT)
+
+      at log (tests/t02_fkt_route.test.js:26:43)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    WALK: FKT -> FKT (0m)
+
+      at log (tests/t02_fkt_route.test.js:27:44)
+          at Array.forEach (<anonymous>)
+
+PASS tests/t02_fkt_rout
+e.test.js
+  T02 to FKT Routing 
+Strategy
+    √ Should prefer 
+transfer (T02->AM->Walk
+->CP->D->FKT) over 
+Loop 
+(T02->KDOJ->N24->Walk) 
+(30 ms)
+
+PASS tests/routeFinder.
+test.js
+  routeFinder
+    
+findRoutesToNearbyStops
+      √ finds 
+downstream stops 
+within walking 
+distance (1 ms)
+      √ returns empty 
+if no stops within 
+range
+    
+findTransferCandidates
+      √ finds valid 
+transfer via CP to 
+nearby stop (1 ms)
+
+  console.log
+    [DataLoader] Loaded: 57 stops, 801 locations, 51 stop-routes indexed
+
+      at log (directions/dataLoader.js:141:13)
+
+PASS tests/directionLog
+ic.test.js
+  getStopById
+    √ returns stop 
+object for valid ID (4 
+ms)
+    √ returns 
+undefined for invalid 
+ID (1 ms)
+    √ returns 
+undefined for 
+null/empty input
+  getLocationById
+    √ finds location 
+by exact ID from bus 
+stops
+    √ finds bus stop 
+as location fallback
+    √ returns null for 
+invalid location
+    √ supports 
+case-insensitive 
+matching
+  getRoutesForStop
+    √ returns routes 
+for major hub (CP) (2 
+ms)
+    √ returns empty 
+array for non-existent 
+stop
+  findDirectRoutes
+    √ finds route from 
+origin to destination 
+on same line
+    √ ensures origin 
+comes before 
+destination in sequence
+    √ returns empty 
+for invalid stops
+    √ handles same 
+origin and destination 
+(may return loop 
+routes)
+  findTransferRoutes
+    √ finds transfer 
+route via CP (1 ms)
+    √ returns null 
+when no transfer route 
+possible
+  haversineDistance 
+(re-exported)
+    √ is accessible 
+from directionLogic 
+exports
+    √ calculates 
+reasonable distance
+
+  console.log
+    [DataLoader] Loaded: 57 stops, 801 locations, 51 stop-routes indexed
+
+      at log (directions/dataLoader.js:141:13)
+
+  console.log
+    [Jest Debug] CP Routes Count: 19
+
+      at Object.log (tests/debug_loader.test.js:7:17)
+
+  console.log
+    [Jest Debug] - Route A (To Centre Point (CP)) Index: 3
+
+      at log (tests/debug_loader.test.js:10:25)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [Jest Debug] - Route A (To KP) Index: 0
+
+      at log (tests/debug_loader.test.js:10:25)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [Jest Debug] - Route C (To Centre Point (CP)) Index: 6
+
+      at log (tests/debug_loader.test.js:10:25)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [Jest Debug] - Route C (To Kolej 9/10) Index: 0
+
+      at log (tests/debug_loader.test.js:10:25)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [Jest Debug] - Route D (To FKT(n29)) Index: 0
+
+      at log (tests/debug_loader.test.js:10:25)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [Jest Debug] - Route D (To CP) Index: 3
+
+      at log (tests/debug_loader.test.js:10:25)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [Jest Debug] - Route E(JA) (To Cluster (T02)) Index: 8
+
+      at log (tests/debug_loader.test.js:10:25)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [Jest Debug] - Route E(CP) (To Centre Point (CP)) Index: 8
+
+      at log (tests/debug_loader.test.js:10:25)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [Jest Debug] - Route E(CP) (To KDOJ) Index: 0
+
+      at log (tests/debug_loader.test.js:10:25)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [Jest Debug] - Route E(N24) (To Cluster (T02)) Index: 8
+
+      at log (tests/debug_loader.test.js:10:25)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [Jest Debug] - Route E(N24) (To K9/10) Index: 8
+
+      at log (tests/debug_loader.test.js:10:25)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [Jest Debug] - Route F (To KTR(K01)) Index: 1
+
+      at log (tests/debug_loader.test.js:10:25)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [Jest Debug] - Route G (To KTR(K01)) Index: 3
+
+      at log (tests/debug_loader.test.js:10:25)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [Jest Debug] - Route H (To V01) Index: 0
+
+      at log (tests/debug_loader.test.js:10:25)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [Jest Debug] - Route H (To Centre Point (CP)) Index: 1
+
+      at log (tests/debug_loader.test.js:10:25)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [Jest Debug] - Route J (To Stadium) Index: 0
+
+      at log (tests/debug_loader.test.js:10:25)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [Jest Debug] - Route J (To Centre Point (CP)) Index: 4
+
+      at log (tests/debug_loader.test.js:10:25)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [Jest Debug] - Route J (To Stadium) Index: 0
+
+      at log (tests/debug_loader.test.js:10:25)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [Jest Debug] - Route J (To Centre Point (CP)) Index: 4
+
+      at log (tests/debug_loader.test.js:10:25)
+          at Array.forEach (<anonymous>)
+
+PASS tests/debug_loader
+.test.js
+  Debug Loader
+    √ should load all 
+routes for CP (11 ms)
+
+PASS tests/enrich_sched
+ule_logic.test.js
+  enrichSchedule
+    √ returns enriched 
+schedule data with 
+same structure (1 ms)
+    √ adds 
+arrival_offsets to 
+trips
+    √ arrival_offsets 
+has correct length 
+(one per stop)
+    √ first stop 
+always has offset 0
+    √ offsets are 
+non-decreasing
+    √ adds 
+calculated_duration to 
+trips (1 ms)
+    √ handles missing 
+geometry gracefully
+    √ preserves 
+original stops data
+    √ preserves trip 
+times
+
+PASS 
+tests/constants.test.js
+  ROUTE_COLORS
+    √ has colors for 
+all main routes A-G 
+and L
+    √ all colors are 
+valid hex codes (1 ms)
+    √ each route has a 
+unique color
+  getRouteColor
+    √ returns correct 
+color for "Route A"
+    √ returns correct 
+color for "Route E(JA)"
+    √ handles just the 
+letter
+    √ handles 
+lowercase input (1 ms)
+    √ returns fallback 
+gray for null/undefined
+    √ returns fallback 
+for unknown route 
+letter
+
+PASS 
+tests/astar.test.js
+  A*
+    √ finds path Walk 
+-> Bus -> Walk (1 ms)
+    √ returns null if 
+no path found
+
+PASS tests/routeScorer.
+test.js
+  routeScorer
+    evaluateCandidates
+      √ selects route 
+with lowest total 
+score (1 ms)
+      √ handles next 
+day departure
+    isWalkingBetter
+      √ prefers 
+walking for very short 
+distances
+
+PASS tests/geo.test.js
+  haversineDistance
+    √ returns 0 for 
+same coordinates (1 ms)
+    √ calculates 
+correct distance 
+between two known 
+points (1 ms)
+    √ is symmetric (A 
+to B equals B to A)
+    √ handles negative 
+coordinates
+  getPathDistance
+    √ returns 0 for 
+single point path
+    √ returns 0 for 
+empty path
+    √ calculates 
+correct total distance 
+for multi-point path 
+(1 ms)
+    √ path distance is 
+>= direct distance 
+(triangle inequality)
+
+PASS tests/directionsIn
+tegration.test.js
+  getDirections 
+Integration
+    √ returns direct 
+bus route from A* 
+result
+    √ falls back to 
+transfer route from A* 
+result
+    √ returns walk 
+only if A* returns no 
+bus legs
+
+Test Suites: 1 failed, 
+13 passed, 14 total
+Tests:       76 
+passed, 76 total
+Snapshots:   0 total
+Time:        1.451 s
+Ran all test suites 
+matching tests/.

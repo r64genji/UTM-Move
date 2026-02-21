@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 
 const SearchBar = ({
     locations,
@@ -8,21 +8,17 @@ const SearchBar = ({
     onUseCurrentLocation,
     disabled
 }) => {
+    const [useGPS, setUseGPS] = useState(true);
+    const [selectedDestination, setSelectedDestination] = useState(null);
     const [originQuery, setOriginQuery] = useState('');
     const [destQuery, setDestQuery] = useState('');
-    const [originResults, setOriginResults] = useState([]);
-    const [destResults, setDestResults] = useState([]);
-    const [showOriginDropdown, setShowOriginDropdown] = useState(false);
-    const [showDestDropdown, setShowDestDropdown] = useState(false);
-    const [selectedOrigin, setSelectedOrigin] = useState(null);
-    const [selectedDestination, setSelectedDestination] = useState(null);
-    const [useGPS, setUseGPS] = useState(true);
 
     const originRef = useRef(null);
     const destRef = useRef(null);
 
-    // Combined search pool: locations + stops
-    const searchPool = [
+    // Combined search pool: locations + stops — memoized so it only rebuilds
+    // when the underlying data changes, not on every render.
+    const searchPool = useMemo(() => [
         ...locations.map(loc => ({ ...loc, type: 'location' })),
         ...stops.map(stop => ({
             id: stop.id,
@@ -32,39 +28,39 @@ const SearchBar = ({
             type: 'stop',
             nearestStop: stop.id
         }))
-    ];
+    ], [locations, stops]);
 
-    // Search function
-    const search = (query) => {
+    // Search function — memoized so derived deps are stable.
+    const search = useCallback((query) => {
         if (!query || query.length < 2) return [];
         const q = query.toLowerCase();
         return searchPool.filter(item =>
             item.name.toLowerCase().includes(q) ||
             item.id.toLowerCase().includes(q)
         ).slice(0, 8);
-    };
+    }, [searchPool]);
 
-    // Handle origin search
-    useEffect(() => {
-        if (!useGPS && originQuery.length >= 2) {
-            setOriginResults(search(originQuery));
-            setShowOriginDropdown(true);
-        } else {
-            setOriginResults([]);
-            setShowOriginDropdown(false);
-        }
-    }, [originQuery, useGPS]);
+    // Derive search results directly — avoids the setState-in-effect anti-pattern.
+    const originResults = useMemo(() =>
+        (!useGPS && originQuery.length >= 2) ? search(originQuery) : []
+        , [useGPS, originQuery, search]);
 
-    // Handle destination search
+    const destResults = useMemo(() =>
+        destQuery.length >= 2 ? search(destQuery) : []
+        , [destQuery, search]);
+
+    // Show/hide dropdowns derived from results
+    const [showOriginDropdown, setShowOriginDropdown] = useState(false);
+    const [showDestDropdown, setShowDestDropdown] = useState(false);
+
+    // Sync dropdown visibility when results change
     useEffect(() => {
-        if (destQuery.length >= 2) {
-            setDestResults(search(destQuery));
-            setShowDestDropdown(true);
-        } else {
-            setDestResults([]);
-            setShowDestDropdown(false);
-        }
-    }, [destQuery]);
+        setShowOriginDropdown(originResults.length > 0);
+    }, [originResults]);
+
+    useEffect(() => {
+        setShowDestDropdown(destResults.length > 0);
+    }, [destResults]);
 
     // Close dropdowns on outside click
     useEffect(() => {
@@ -81,7 +77,6 @@ const SearchBar = ({
     }, []);
 
     const handleOriginSelect = (item) => {
-        setSelectedOrigin(item);
         setOriginQuery(item.name);
         setShowOriginDropdown(false);
         onSelectOrigin(item);
@@ -98,7 +93,6 @@ const SearchBar = ({
         setUseGPS(!useGPS);
         if (!useGPS) {
             // Switching to GPS mode
-            setSelectedOrigin(null);
             setOriginQuery('');
             onUseCurrentLocation();
         }

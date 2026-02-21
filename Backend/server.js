@@ -85,22 +85,39 @@ app.use(cors({
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
-// 5. Suspicious IP tracking - Additional DDoS layer
-const suspiciousIPs = new Map();
-app.use((req, res, next) => {
-    const ip = req.ip || req.connection?.remoteAddress || 'unknown';
-    const count = suspiciousIPs.get(ip) || 0;
+// 5. Suspicious IP tracking - Sliding window DDoS protection
+// Tracks requests per IP in a 15-minute window; resets per-IP after window expires
+const SUSPICIOUS_IP_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+const SUSPICIOUS_IP_MAX_REQUESTS = 500;
+const suspiciousIPs = new Map(); // ip -> { count, windowStart }
 
-    if (count > 500) {
-        return res.status(429).json({ error: 'Temporarily blocked due to excessive requests' });
+app.use((req, res, next) => {
+    const ip = req.ip || req.socket?.remoteAddress || 'unknown';
+    const now = Date.now();
+    const entry = suspiciousIPs.get(ip);
+
+    if (!entry || (now - entry.windowStart) > SUSPICIOUS_IP_WINDOW_MS) {
+        // New window for this IP
+        suspiciousIPs.set(ip, { count: 1, windowStart: now });
+    } else {
+        entry.count++;
+        if (entry.count > SUSPICIOUS_IP_MAX_REQUESTS) {
+            return res.status(429).json({ error: 'Temporarily blocked due to excessive requests' });
+        }
     }
 
-    suspiciousIPs.set(ip, count + 1);
     next();
 });
 
-// Clear IP counters every hour
-setInterval(() => suspiciousIPs.clear(), 60 * 60 * 1000);
+// Purge stale IP entries every 30 minutes to prevent memory growth
+setInterval(() => {
+    const now = Date.now();
+    for (const [ip, entry] of suspiciousIPs) {
+        if ((now - entry.windowStart) > SUSPICIOUS_IP_WINDOW_MS) {
+            suspiciousIPs.delete(ip);
+        }
+    }
+}, 30 * 60 * 1000).unref();
 
 
 // Helper to decode OSRM/Google encoded polyline
@@ -418,7 +435,7 @@ app.get('/api/ors-route', async (req, res) => {
 });
 
 // Endpoint: Submit Community Report
-app.post('/api/report', apiLimiter, async (req, res) => {
+app.post('/api/report', async (req, res) => {
     try {
         const { type, details } = req.body;
 
@@ -483,7 +500,7 @@ const basicAuth = (req, res, next) => {
 };
 
 // Endpoint: Get All Reports (Protected Admin Area)
-app.get('/api/reports', apiLimiter, basicAuth, (req, res) => {
+app.get('/api/reports', basicAuth, (req, res) => {
     const reportsDir = path.join(__dirname, 'reports');
     const reportsFile = path.join(reportsDir, 'reports.jsonl');
 

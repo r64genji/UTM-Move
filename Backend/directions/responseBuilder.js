@@ -178,7 +178,9 @@ function buildDirectResponse({
         {
             type: 'ride',
             instruction: `Ride ${stopCount} stops to ${destStop.name}`,
-            duration: Math.round((timeToMinutes(busArrivalTime) - timeToMinutes(departure.time) + 1440) % 1440)
+            duration: busArrivalTime
+                ? Math.round((timeToMinutes(busArrivalTime) - timeToMinutes(departure.time) + 1440) % 1440)
+                : 0
         },
         {
             type: 'alight',
@@ -237,11 +239,6 @@ function buildDirectResponse({
     };
 }
 
-/**
- * Build a transfer route response
- * @param {Object} params - Transfer parameters
- * @returns {Object} TRANSFER response
- */
 /**
  * Build a multi-leg transfer response
  * @param {Object} params - Transfer parameters
