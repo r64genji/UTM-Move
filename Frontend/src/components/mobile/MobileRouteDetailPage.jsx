@@ -25,6 +25,7 @@ const MobileRouteDetailPage = ({ activeTab, onTabChange, route, routes, stops, o
 
     // 2. Derived Values
     const routeName = route?.displayName || route?.name || 'Route A';
+    const actualRouteName = route?.name || routeName;
     const color = getRouteColor(routeName);
     const isMergedRouteE = route?.isMerged && route?.name === 'Route E';
     const serviceIdx = (selectedServiceIndex !== undefined && selectedServiceIndex >= 0) ? selectedServiceIndex : 0;
@@ -382,7 +383,7 @@ const MobileRouteDetailPage = ({ activeTab, onTabChange, route, routes, stops, o
         setSelectedDirection(idx);
         setSelectedVariant(null); // Reset variant when direction changes
         if (onDirectionSelect && trips[idx]) {
-            onDirectionSelect(routeName, trips[idx].headsign);
+            onDirectionSelect(actualRouteName, trips[idx].headsign);
         }
     };
 
@@ -511,7 +512,7 @@ const MobileRouteDetailPage = ({ activeTab, onTabChange, route, routes, stops, o
                         routeColor={color}
                         userLocation={userLocation}
                         showArrivalInfo={true}
-                        selectedRouteName={routeName}
+                        selectedRouteName={actualRouteName}
                         selectedHeadsign={currentTrip?.headsign}
                     />
 
