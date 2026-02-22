@@ -34,7 +34,23 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,json,jpg}'],
-        maximumFileSizeToCacheInBytes: 5000000 // Allow up to 5MB for campus_locations.json and such
+        maximumFileSizeToCacheInBytes: 5000000, // Allow up to 5MB for campus_locations.json and such
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/.*\.tile\.openstreetmap\.org\/.*\.png$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'map-tiles-cache',
+              expiration: {
+                maxEntries: 1000,
+                maxAgeSeconds: 60 * 60 * 24 * 30 // <== 30 days
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          }
+        ]
       }
     })
   ],

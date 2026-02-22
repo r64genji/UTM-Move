@@ -1,6 +1,7 @@
 import React, { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import './index.css';
 import { fetchCoreData, fetchRouteGeometries } from './services/api';
+import { precacheMapTiles } from './utils/precacheTiles';
 import { getRouteColor } from './constants';
 import ServiceSelector from './components/ServiceSelector';
 import ScheduleView from './components/ScheduleView';
@@ -117,6 +118,8 @@ function App() {
                 }
             } finally {
                 setLoading(false);
+                // After essential data loads, pre-fetch map tiles silently
+                precacheMapTiles();
             }
         };
 
