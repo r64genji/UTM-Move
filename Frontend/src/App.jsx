@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import './index.css';
-import { fetchStaticData } from './services/api';
+import { fetchCoreData, fetchRouteGeometries } from './services/api';
 import { getRouteColor } from './constants';
-import MapComponent from './components/Map';
-import RouteSelector from './components/RouteSelector';
 import ServiceSelector from './components/ServiceSelector';
 import ScheduleView from './components/ScheduleView';
 import DirectionSelector from './components/DirectionSelector';
-import MobileApp from './components/mobile/MobileApp';
+
+const MapComponent = lazy(() => import('./components/Map'));
+const MobileApp = lazy(() => import('./components/mobile/MobileApp'));
 
 // Helper to safely get route from data
 const findRoute = (data, name) => {
@@ -16,6 +16,13 @@ const findRoute = (data, name) => {
 };
 
 function App() {
+    const CORE_CACHE_KEY = 'utm_core_data_v2';
+    const CORE_CACHE_TS_KEY = 'utm_core_data_ts_v2';
+    const CORE_CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+
+    const GEOM_CACHE_KEY = 'utm_route_geometries_v2';
+    const GEOM_CACHE_TS_KEY = 'utm_route_geometries_ts_v2';
+    const GEOM_CACHE_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days
 
     const [data, setData] = useState({ stops: [], routes: [], locations: [], route_geometries: {} });
     const [selectedRouteName, setSelectedRouteName] = useState(null);
@@ -43,18 +50,14 @@ function App() {
 
     useEffect(() => {
         const loadData = async () => {
-            const CACHE_KEY = 'utm_static_data';
-            const CACHE_TS_KEY = 'utm_static_data_ts';
-            const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
-
             try {
-                // 1. Try cache first
-                const cachedData = localStorage.getItem(CACHE_KEY);
-                const cachedTimestamp = localStorage.getItem(CACHE_TS_KEY);
+                // 1. Try cache first (core data only)
+                const cachedData = localStorage.getItem(CORE_CACHE_KEY);
+                const cachedTimestamp = localStorage.getItem(CORE_CACHE_TS_KEY);
 
                 if (cachedData && cachedTimestamp) {
                     const age = Date.now() - parseInt(cachedTimestamp, 10);
-                    if (age < CACHE_DURATION) {
+                    if (age < CORE_CACHE_DURATION) {
                         try {
                             const parsed = JSON.parse(cachedData);
                             if (parsed && (parsed.stops || parsed.routes)) {
@@ -62,42 +65,41 @@ function App() {
                                     stops: parsed.stops || [],
                                     routes: parsed.routes || [],
                                     locations: parsed.locations || [],
-                                    route_geometries: parsed.route_geometries || {}
+                                    route_geometries: {}
                                 });
                                 setLoading(false);
                                 return;
                             }
                         } catch {
-                            localStorage.removeItem(CACHE_KEY);
-                            localStorage.removeItem(CACHE_TS_KEY);
+                            localStorage.removeItem(CORE_CACHE_KEY);
+                            localStorage.removeItem(CORE_CACHE_TS_KEY);
                         }
                     }
                 }
 
-                // 2. Load from bundled JSON files
-                const result = await fetchStaticData();
+                // 2. Load bundled core JSON files
+                const result = await fetchCoreData();
 
                 const structuredData = {
                     stops: result?.stops || [],
                     routes: result?.routes || [],
                     locations: result?.locations || [],
-                    route_geometries: result?.route_geometries || {}
+                    route_geometries: {}
                 };
 
                 setData(structuredData);
 
                 try {
-                    localStorage.setItem(CACHE_KEY, JSON.stringify(structuredData));
-                    localStorage.setItem(CACHE_TS_KEY, Date.now().toString());
+                    localStorage.setItem(CORE_CACHE_KEY, JSON.stringify(structuredData));
+                    localStorage.setItem(CORE_CACHE_TS_KEY, Date.now().toString());
                 } catch (e) {
                     console.warn('Failed to save to localStorage (quota exceeded?)', e);
                 }
-
             } catch (err) {
-                console.error("Failed to load static data", err);
+                console.error('Failed to load static data', err);
 
                 // Fallback: use expired cache if available
-                const cachedData = localStorage.getItem(CACHE_KEY);
+                const cachedData = localStorage.getItem(CORE_CACHE_KEY);
                 if (cachedData) {
                     try {
                         const parsed = JSON.parse(cachedData);
@@ -105,20 +107,64 @@ function App() {
                             stops: parsed.stops || [],
                             routes: parsed.routes || [],
                             locations: parsed.locations || [],
-                            route_geometries: parsed.route_geometries || {}
+                            route_geometries: {}
                         });
                     } catch {
-                        setData({ stops: [], routes: [], locations: [] });
+                        setData({ stops: [], routes: [], locations: [], route_geometries: {} });
                     }
                 } else {
-                    setData({ stops: [], routes: [], locations: [] });
+                    setData({ stops: [], routes: [], locations: [], route_geometries: {} });
                 }
             } finally {
                 setLoading(false);
             }
         };
+
         loadData();
     }, []);
+
+    const ensureRouteGeometriesLoaded = useCallback(async () => {
+        if (Object.keys(data.route_geometries || {}).length > 0) {
+            return data.route_geometries;
+        }
+
+        let geometries = null;
+
+        try {
+            const cachedGeometries = localStorage.getItem(GEOM_CACHE_KEY);
+            const cachedTimestamp = localStorage.getItem(GEOM_CACHE_TS_KEY);
+
+            if (cachedGeometries && cachedTimestamp) {
+                const age = Date.now() - parseInt(cachedTimestamp, 10);
+                if (age < GEOM_CACHE_DURATION) {
+                    geometries = JSON.parse(cachedGeometries);
+                }
+            }
+        } catch {
+            localStorage.removeItem(GEOM_CACHE_KEY);
+            localStorage.removeItem(GEOM_CACHE_TS_KEY);
+        }
+
+        if (!geometries) {
+            geometries = await fetchRouteGeometries();
+            try {
+                localStorage.setItem(GEOM_CACHE_KEY, JSON.stringify(geometries));
+                localStorage.setItem(GEOM_CACHE_TS_KEY, Date.now().toString());
+            } catch {
+                // Ignore localStorage quota errors; app can still use in-memory data.
+            }
+        }
+
+        setData(prev => ({ ...prev, route_geometries: geometries || {} }));
+        return geometries || {};
+    }, [data.route_geometries]);
+
+    useEffect(() => {
+        // Mobile home can show all route overlays immediately; prefetch once.
+        if (isMobile) {
+            void ensureRouteGeometriesLoaded();
+        }
+    }, [ensureRouteGeometriesLoaded, isMobile]);
 
     // Get user's GPS location
     useEffect(() => {
@@ -165,26 +211,26 @@ function App() {
             const service = route.services[serviceIndex];
             if (!service) return;
 
+            const routeGeometries = await ensureRouteGeometriesLoaded();
             const headsigns = [...new Set(service.trips.map(t => t.headsign))];
             const geometries = headsigns.map(headsign => {
                 const specificKey = `${routeName} : ${headsign}`;
-                return data.route_geometries?.[specificKey] || null;
+                return routeGeometries?.[specificKey] || null;
             }).filter(Boolean);
 
             setRouteGeometry({
                 type: 'MultiLineString',
                 coordinates: geometries.map(g => g.coordinates)
             });
-
         } else {
-            updateHeadsignsForService(route, serviceIndex);
+            await updateHeadsignsForService(route, serviceIndex);
         }
     };
 
-    const updateHeadsignsForService = (route, serviceIdx) => {
+    const updateHeadsignsForService = async (route, serviceIdx) => {
         const service = route.services[serviceIdx];
         if (!service) {
-            handleDirectionSelect(route.name, null);
+            await handleDirectionSelect(route.name, null);
             return;
         }
 
@@ -192,24 +238,27 @@ function App() {
         service.trips.forEach(trip => headsigns.add(trip.headsign));
         const headsignArray = Array.from(headsigns);
         const defaultHeadsign = headsignArray.length > 0 ? headsignArray[0] : null;
-        handleDirectionSelect(route.name, defaultHeadsign);
+        await handleDirectionSelect(route.name, defaultHeadsign);
     };
 
-    const handleServiceSelect = (index) => {
+    const handleServiceSelect = async (index) => {
         setSelectedServiceIndex(index);
         const route = data.routes.find(r => r.name === selectedRouteName);
         if (route) {
-            updateHeadsignsForService(route, index);
+            await updateHeadsignsForService(route, index);
         }
     };
 
-    const handleDirectionSelect = (routeName, headsign) => {
+    const handleDirectionSelect = async (routeName, headsign) => {
         setSelectedHeadsign(headsign);
         setRouteGeometry(null);
 
+        if (!routeName || !headsign) return;
+
+        const routeGeometries = await ensureRouteGeometriesLoaded();
         const specificKey = `${routeName} : ${headsign}`;
-        if (data.route_geometries?.[specificKey]) {
-            setRouteGeometry(data.route_geometries[specificKey]);
+        if (routeGeometries?.[specificKey]) {
+            setRouteGeometry(routeGeometries[specificKey]);
         }
     };
 
@@ -251,16 +300,18 @@ function App() {
     // Render mobile app for small screens
     if (isMobile) {
         return (
-            <MobileApp
-                data={data}
-                userLocation={userLocation}
-                onSelectRoute={handleRouteSelect}
-                onDirectionSelect={handleDirectionSelect}
-                visibleStops={visibleStops}
-                selectedStopIds={selectedStopIds}
-                routeGeometry={routeGeometry}
-                selectedServiceIndex={selectedServiceIndex}
-            />
+            <Suspense fallback={<div className="loading-container">Loading mobile experience...</div>}>
+                <MobileApp
+                    data={data}
+                    userLocation={userLocation}
+                    onSelectRoute={handleRouteSelect}
+                    onDirectionSelect={handleDirectionSelect}
+                    visibleStops={visibleStops}
+                    selectedStopIds={selectedStopIds}
+                    routeGeometry={routeGeometry}
+                    selectedServiceIndex={selectedServiceIndex}
+                />
+            </Suspense>
         );
     }
 
@@ -283,7 +334,7 @@ function App() {
                     >
                         <span style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                             <span className="material-icons-round" style={{ color: showAllStops ? 'var(--color-primary)' : 'var(--text-muted)' }}>visibility</span>
-                            {showAllStops ? "Hide All Stops" : "Show All Stops"}
+                            {showAllStops ? 'Hide All Stops' : 'Show All Stops'}
                         </span>
                         <span className="material-icons-round" style={{ fontSize: '16px' }}>chevron_right</span>
                     </button>
@@ -307,7 +358,7 @@ function App() {
                                     <div className="status-dot" style={{ backgroundColor: getRouteColor(route.name), boxShadow: `0 0 8px ${getRouteColor(route.name)}` }}></div>
                                 </div>
                                 <span className="route-desc">
-                                    {route.services[0]?.trips[0]?.headsign || "View Schedule"}
+                                    {route.services[0]?.trips[0]?.headsign || 'View Schedule'}
                                 </span>
                             </div>
                         ))}
@@ -324,7 +375,9 @@ function App() {
                             <DirectionSelector
                                 headsigns={availableHeadsigns}
                                 selectedHeadsign={selectedHeadsign}
-                                onSelectHeadsign={(h) => handleDirectionSelect(selectedRouteName, h)}
+                                onSelectHeadsign={(h) => {
+                                    void handleDirectionSelect(selectedRouteName, h);
+                                }}
                             />
                             <ScheduleView service={activeService} stops={data?.stops || []} currentHeadsign={selectedHeadsign} />
                         </div>
@@ -375,17 +428,19 @@ function App() {
 
                 {/* Map */}
                 <div style={{ height: '100%', width: '100%' }}>
-                    <MapComponent
-                        stops={visibleStops}
-                        selectedRouteStops={selectedStopIds}
-                        routeGeometry={routeGeometry}
-                        routeColor={getRouteColor(selectedRouteName)}
-                        walkingGeometries={[]}
-                        busRouteGeometry={null}
-                        busRouteSegments={[]}
-                        userLocation={userLocation}
-                        directionsMarkers={null}
-                    />
+                    <Suspense fallback={<div className="loading-container">Loading map...</div>}>
+                        <MapComponent
+                            stops={visibleStops}
+                            selectedRouteStops={selectedStopIds}
+                            routeGeometry={routeGeometry}
+                            routeColor={getRouteColor(selectedRouteName)}
+                            walkingGeometries={[]}
+                            busRouteGeometry={null}
+                            busRouteSegments={[]}
+                            userLocation={userLocation}
+                            directionsMarkers={null}
+                        />
+                    </Suspense>
                 </div>
 
                 {/* Legend */}

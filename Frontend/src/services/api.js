@@ -4,7 +4,42 @@
  * No backend required.
  */
 
+let _coreDataCache = null;
+let _routeGeometriesCache = null;
 let _staticDataCache = null;
+
+const fetchJson = async (url) => {
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(`Failed to fetch ${url}: ${response.status}`);
+    }
+    return response.json();
+};
+
+export const fetchCoreData = async () => {
+    if (_coreDataCache) return _coreDataCache;
+
+    const [schedule, locations] = await Promise.all([
+        fetchJson('/data/schedule.json'),
+        fetchJson('/data/campus_locations.json')
+    ]);
+
+    _coreDataCache = {
+        stops: schedule.stops || [],
+        routes: schedule.routes || [],
+        locations: locations.locations || []
+    };
+
+    return _coreDataCache;
+};
+
+export const fetchRouteGeometries = async () => {
+    if (_routeGeometriesCache) return _routeGeometriesCache;
+
+    const geometries = await fetchJson('/data/route_geometries.json');
+    _routeGeometriesCache = geometries || {};
+    return _routeGeometriesCache;
+};
 
 /**
  * Load and cache all static data from bundled JSON files
@@ -12,16 +47,15 @@ let _staticDataCache = null;
 export const fetchStaticData = async () => {
     if (_staticDataCache) return _staticDataCache;
 
-    const [schedule, locations, geometries] = await Promise.all([
-        fetch('/data/schedule.json').then(r => r.json()),
-        fetch('/data/campus_locations.json').then(r => r.json()),
-        fetch('/data/route_geometries.json').then(r => r.json()),
+    const [coreData, geometries] = await Promise.all([
+        fetchCoreData(),
+        fetchRouteGeometries()
     ]);
 
     _staticDataCache = {
-        stops: schedule.stops || [],
-        routes: schedule.routes || [],
-        locations: locations.locations || [],
+        stops: coreData.stops || [],
+        routes: coreData.routes || [],
+        locations: coreData.locations || [],
         route_geometries: geometries || {}
     };
 

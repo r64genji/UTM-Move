@@ -21,7 +21,6 @@ const MobileHomePage = ({
     directionsMarkers,
     onSelectRoute,
     selectedRoute,
-    onGetDirections,
     showAllStops,
     onToggleShowAllStops,
     onNavigateToRoute
@@ -333,24 +332,6 @@ const MobileHomePage = ({
                                         </div>
                                     </div>
                                 </div>
-                                <button
-                                    className="flex items-center justify-center h-9 w-9 bg-primary rounded-full active:scale-90 active:opacity-80 shadow-md"
-                                    onClick={() => {
-                                        if (onGetDirections && nearestStop) {
-                                            const stopToNavigate = {
-                                                ...nearestStop,
-                                                id: nearestStop.id,
-                                                name: nearestStop.name,
-                                                lat: nearestStop.lat,
-                                                lon: nearestStop.lon || nearestStop.lng
-                                            };
-                                            onGetDirections(stopToNavigate);
-                                            onTabChange('navigate');
-                                        }
-                                    }}
-                                >
-                                    <span className="material-symbols-outlined text-[18px] text-white">near_me</span>
-                                </button>
                             </div>
                         </div>
                     </div>
