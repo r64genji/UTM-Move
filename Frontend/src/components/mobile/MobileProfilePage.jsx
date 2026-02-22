@@ -123,7 +123,7 @@ const MobileContributePage = ({ activeTab, onTabChange }) => {
 
                     {/* Footer */}
                     <div className="mt-2 mb-6 flex flex-col items-center gap-2">
-                        <p className="text-xs text-[#617589] dark:text-gray-500">Made by Abraham Tan, with ❤️, for UTM students</p>
+                        <p className="text-xs text-[#617589] dark:text-gray-500">Made with ❤️, for UTM students</p>
                         <p className="text-xs text-[#617589] dark:text-gray-500">App Version 1.0.1</p>
                     </div>
                 </main>
