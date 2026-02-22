@@ -234,19 +234,6 @@ const MobileHomePage = ({
                     </div>
                 )}
 
-                {/* Search Bar */}
-                <label className="flex flex-col h-11 w-full" onClick={() => onTabChange('search')}>
-                    <div className="flex w-full flex-1 items-stretch rounded-xl h-full shadow-sm cursor-pointer active:scale-[0.98] active:opacity-80 bg-[#2a3b4d] border border-gray-700 active:border-primary/50">
-                        <div className="text-gray-400 flex border-none items-center justify-center pl-4 rounded-l-xl border-r-0">
-                            <span className="material-symbols-outlined text-[20px]">search</span>
-                        </div>
-                        <input
-                            className="flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-white focus:outline-0 focus:ring-0 border-none bg-transparent focus:border-none h-full placeholder:text-gray-400 px-4 rounded-l-none border-l-0 pl-2 text-base font-normal leading-normal pointer-events-none"
-                            placeholder="Find stop or location..."
-                            readOnly
-                        />
-                    </div>
-                </label>
             </div>
 
             {/* Main Content Area - Relative Wrapper for Map and Overlay */}
