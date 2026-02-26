@@ -1,0 +1,49 @@
+# Vercel Web Analytics Implementation
+
+Successfully implemented Vercel Web Analytics for the UTM Move project as requested.
+
+## Changes Made
+
+### 1. Installed Dependencies
+- Added `@vercel/analytics` package to the project
+- Updated package.json with the new dependency
+- Updated package-lock.json with the resolved dependencies
+
+### 2. Modified Files
+
+#### src/App.jsx
+- **Added import**: Imported the `Analytics` component from `@vercel/analytics/react`
+- **Added Analytics component**: Integrated the `<Analytics />` component in all three render paths:
+  1. Loading state - Added Analytics component to the loading screen
+  2. Mobile view - Added Analytics component to the mobile app render
+  3. Desktop view - Added Analytics component to the main desktop layout
+
+## Implementation Details
+
+The implementation follows the Vercel Web Analytics guidelines for React applications (similar to create-react-app). The Analytics component was strategically placed in all return paths to ensure tracking works across all user experiences:
+
+- In the loading state (while app initializes)
+- In the mobile responsive view (for small screens)
+- In the desktop view (for larger screens)
+
+Each Analytics component is placed at the end of its respective render tree, wrapped in a React Fragment (`<>`) where needed to maintain proper JSX structure.
+
+## Testing & Verification
+
+✅ Build completed successfully with no errors
+✅ Linter ran with no new warnings or errors (only pre-existing warnings)
+✅ All files properly staged with git
+
+## Next Steps
+
+After deployment to Vercel:
+1. Enable Web Analytics in the Vercel dashboard under the Analytics tab
+2. Deploy the application
+3. Verify tracking by checking for `/_vercel/insights/view` requests in the browser's Network tab
+4. View analytics data in the Vercel dashboard
+
+## Notes
+
+- The Analytics component will automatically track page views and visitor data
+- Route support is included with the React implementation
+- No additional configuration is required - analytics will activate once deployed to Vercel and enabled in the dashboard

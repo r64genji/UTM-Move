@@ -6,6 +6,7 @@ import { getRouteColor } from './constants';
 import ServiceSelector from './components/ServiceSelector';
 import ScheduleView from './components/ScheduleView';
 import DirectionSelector from './components/DirectionSelector';
+import { Analytics } from '@vercel/analytics/react';
 
 const MapComponent = lazy(() => import('./components/Map'));
 const MobileApp = lazy(() => import('./components/mobile/MobileApp'));
@@ -293,28 +294,34 @@ function App() {
 
     if (loading) {
         return (
-            <div className="loading-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--bg-dark)', color: 'white' }}>
-                <div className="loading-spinner" style={{ width: '40px', height: '40px', border: '4px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--color-primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
-                <p style={{ marginTop: '16px', fontWeight: '500' }}>Loading UTM Move...</p>
-            </div>
+            <>
+                <div className="loading-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--bg-dark)', color: 'white' }}>
+                    <div className="loading-spinner" style={{ width: '40px', height: '40px', border: '4px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--color-primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+                    <p style={{ marginTop: '16px', fontWeight: '500' }}>Loading UTM Move...</p>
+                </div>
+                <Analytics />
+            </>
         );
     }
 
     // Render mobile app for small screens
     if (isMobile) {
         return (
-            <Suspense fallback={<div className="loading-container">Loading mobile experience...</div>}>
-                <MobileApp
-                    data={data}
-                    userLocation={userLocation}
-                    onSelectRoute={handleRouteSelect}
-                    onDirectionSelect={handleDirectionSelect}
-                    visibleStops={visibleStops}
-                    selectedStopIds={selectedStopIds}
-                    routeGeometry={routeGeometry}
-                    selectedServiceIndex={selectedServiceIndex}
-                />
-            </Suspense>
+            <>
+                <Suspense fallback={<div className="loading-container">Loading mobile experience...</div>}>
+                    <MobileApp
+                        data={data}
+                        userLocation={userLocation}
+                        onSelectRoute={handleRouteSelect}
+                        onDirectionSelect={handleDirectionSelect}
+                        visibleStops={visibleStops}
+                        selectedStopIds={selectedStopIds}
+                        routeGeometry={routeGeometry}
+                        selectedServiceIndex={selectedServiceIndex}
+                    />
+                </Suspense>
+                <Analytics />
+            </>
         );
     }
 
@@ -462,6 +469,7 @@ function App() {
                     </div>
                 </div>
             </main>
+            <Analytics />
         </div>
     );
 }
