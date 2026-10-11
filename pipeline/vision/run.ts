@@ -8,6 +8,7 @@ import sharp from 'sharp'
 import { z } from 'zod'
 import { ShortcutKind, type LatLon } from '../../src/domain/schemas.ts'
 import { addCandidate, appendEvidence } from '../shortcuts/store.ts'
+import { dropReason } from './filter.ts'
 import { lonLatToTile, pixelToLatLon, quadkey, TILE } from './geo.ts'
 
 const Z = 19
@@ -79,13 +80,17 @@ async function pool<T>(items: T[], n: number, fn: (t: T) => Promise<void>) {
   await Promise.all(Array.from({ length: n }, async () => { while (i < items.length) await fn(items[i++]) }))
 }
 
-// ---------- OSM overlay (optional) ----------
-function osmLines(): number[][][] {
-  const p = 'data/raw/osm/walkable.geojson'
-  if (!existsSync(p)) return []
-  return JSON.parse(readFileSync(p, 'utf8')).features.filter((f: { geometry: { type: string } }) => f.geometry.type === 'LineString').map((f: { geometry: { coordinates: number[][] } }) => f.geometry.coordinates)
-}
+// ---------- OSM overlay: every mapped way (roads + footways), drawn faintly ----------
+const geoLines = (path: string): number[][][] =>
+  existsSync(path) ? JSON.parse(readFileSync(path, 'utf8')).features.filter((f: { geometry: { type: string } }) => f.geometry.type === 'LineString').map((f: { geometry: { coordinates: number[][] } }) => f.geometry.coordinates) : []
+const latlon = (l: number[][]): LatLon[] => l.map(([lon, lat]) => ({ lat, lon }))
+const osmLines = () => geoLines('data/osm/walk-ways.geojson')
+const BUILDINGS: LatLon[][] | undefined = existsSync('data/raw/osm/buildings.geojson')
+  ? JSON.parse(readFileSync('data/raw/osm/buildings.geojson', 'utf8')).features.map((f: { geometry: { coordinates: number[][][] } }) => latlon(f.geometry.coordinates[0]))
+  : undefined
 const OSM = osmLines()
+const WAYS = OSM.map(latlon)
+if (!BUILDINGS) console.warn('no data/raw/osm/buildings.geojson: building-interior filter skipped')
 const toPx = (c: number[], x0: number, y0: number) => {
   const t = lonLatToTile({ lat: c[1], lon: c[0] }, Z)
   return [(t.x - x0) * TILE, (t.y - y0) * TILE]
@@ -170,6 +175,7 @@ console.log(`${list.length} mosaics x ${sources.join('+')} (${list.length * N * 
 
 const report: { s: Source; x0: number; y0: number; file: string; n: number }[] = []
 let lines = 0
+const dropped: Record<string, number> = {}
 for (const s of sources) {
   await pool(list, 4, async ({ x0, y0 }) => {
     const img = await mosaicImage(s, x0, y0, true)
@@ -178,6 +184,8 @@ for (const s of sources) {
     const svg: string[] = []
     for (const p of kept) {
       const geometry: LatLon[] = p.points.map(([x, y]) => pixelToLatLon(px(x), px(y), x0, y0, Z))
+      const why = dropReason(p.type, geometry, WAYS, BUILDINGS)
+      if (why) { dropped[why] = (dropped[why] ?? 0) + 1; continue }
       const { id } = addCandidate({ kind: p.type, geometry }, root)
       appendEvidence({
         shortcutId: id, source: 'satellite', imagery: s, confidence: p.confidence,
@@ -203,4 +211,5 @@ if (trial) {
 ${report.map((r) => `<figure><figcaption>${r.s} ${Z}/${r.x0}/${r.y0} - ${r.n} lines</figcaption><img src="${r.file}"></figure>`).join('\n')}`
   writeFileSync('data/raw/reports/vision-trial.html', html)
 }
+console.log('dropped by post-filter:', dropped)
 console.log(`${lines} lines with confidence >= 0.5 written to ${root}`)
