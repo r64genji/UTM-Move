@@ -53,6 +53,8 @@ export const Place = z.object({
   buildingId: Id.optional(),
   blockCode: z.string().optional(),
   openingHours: OpeningHours.optional(),
+  /** Where you walk in: OSM entrances, else the building edge nearest a walkable way. */
+  entrances: z.array(LatLon).optional(),
 })
 
 export const Building = z.object({
