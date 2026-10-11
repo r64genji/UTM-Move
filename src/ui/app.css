@@ -497,3 +497,122 @@ a {
     url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 40'><path d='M15 39C15 39 2 25 2 14a13 13 0 0 1 26 0c0 11-13 25-13 25z' fill='%23701a2c' stroke='white' stroke-width='2.5'/><circle cx='15' cy='14' r='5' fill='white'/></svg>");
   filter: drop-shadow(0 2px 3px oklch(25% 0.03 30 / 0.4));
 }
+
+/* ── Bus stops and routes ─────────────────────────────── */
+
+.note {
+  font-size: var(--text-sm);
+  color: var(--ink-2);
+}
+
+.section-title {
+  margin-bottom: 6px;
+  font-size: var(--text-md);
+  font-weight: 700;
+}
+
+.route-chip {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 6px;
+  border-radius: 8px;
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+  text-shadow: 0 1px 2px oklch(0% 0 0 / 0.45);
+}
+
+.dep-group h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+  font-size: var(--text-md);
+}
+
+.deps,
+.list,
+.stop-times {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.deps li,
+.stop-times li {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.dep-to {
+  flex: 1;
+  min-width: 0;
+}
+
+.dep-time,
+.stop-times time {
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+}
+
+.dep-in {
+  min-width: 64px;
+  text-align: right;
+  font-weight: 700;
+  color: var(--maroon);
+  font-variant-numeric: tabular-nums;
+}
+
+.list a,
+.stop-times a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 0;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.list li,
+.stop-times li {
+  border-bottom: 1px solid var(--line);
+}
+
+.stop-times li {
+  padding: 0;
+}
+
+.stop-times a {
+  flex: 1;
+}
+
+.list-code {
+  margin-left: auto;
+  color: var(--ink-3);
+  font-size: var(--text-sm);
+}
+
+.no-service {
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  background: var(--maroon-wash);
+}
+
+.no-service p {
+  margin: 4px 0 8px;
+}
+
+.pick {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--ink-2);
+}
