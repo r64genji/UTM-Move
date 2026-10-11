@@ -32,7 +32,7 @@ export function FitTo({ points, maxZoom = 17 }: { points: LatLon[]; maxZoom?: nu
       const lats = points.map((p) => p.lat)
       const sw = toLngLat({ lat: Math.min(...lats), lon: Math.min(...lons) })
       const ne = toLngLat({ lat: Math.max(...lats), lon: Math.max(...lons) })
-      map.fitBounds([sw, ne], { padding: 48, maxZoom, duration: 400 })
+      map.fitBounds([sw, ne], { padding: { top: 80, right: 64, bottom: 48, left: 48 }, maxZoom, duration: 400 })
     }, 350)
     return () => clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps

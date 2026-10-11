@@ -375,31 +375,6 @@ a {
   color: var(--maroon-ink);
 }
 
-.trip-ends {
-  border: 1.5px solid var(--line);
-  border-radius: var(--radius);
-}
-
-.trip-ends > div {
-  display: grid;
-  grid-template-columns: 56px 1fr;
-  align-items: baseline;
-  padding: 14px 16px;
-}
-
-.trip-ends > div + div {
-  border-top: 1.5px solid var(--line);
-}
-
-.trip-ends dt {
-  font-size: var(--text-sm);
-  color: var(--ink-3);
-}
-
-.trip-ends dd {
-  font-weight: 700;
-}
-
 .segmented {
   display: flex;
   padding: 4px;
@@ -615,4 +590,195 @@ a {
   font-size: var(--text-sm);
   font-weight: 700;
   color: var(--ink-2);
+}
+
+/* ── Trip planner ─────────────────────────────────────── */
+
+.trip-form {
+  position: relative;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.trip-pickers > .picker + .picker {
+  border-top: 1.5px solid var(--line);
+}
+
+.picker-value {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  align-items: baseline;
+  width: 100%;
+  min-height: 56px;
+  padding: 12px 64px 12px 16px;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.picker-label {
+  font-size: var(--text-sm);
+  color: var(--ink-3);
+}
+
+.picker-name {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.picker-empty {
+  font-weight: 400;
+  color: var(--ink-3);
+}
+
+.picker-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 12px 12px;
+}
+
+.picker-list button {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.picker-list button:disabled {
+  color: var(--ink-3);
+}
+
+.picker-none {
+  padding: 10px 0;
+  color: var(--ink-3);
+}
+
+.swap {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  translate: 0 -50%;
+  background: var(--paper);
+  border: 1.5px solid var(--line);
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.option {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  padding: 14px 16px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.option[aria-checked='true'] {
+  border-color: var(--maroon);
+  background: var(--maroon-wash);
+}
+
+.option-main {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.option-time {
+  font-size: var(--text-lg);
+  font-weight: 700;
+}
+
+.option-arrive {
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.option-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--text-sm);
+  color: var(--ink-2);
+}
+
+.option-labels {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-sm);
+  color: var(--ink-2);
+}
+
+.legs,
+.steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.leg {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.leg p {
+  font-size: var(--text-sm);
+  color: var(--ink-2);
+}
+
+.leg .leg-label {
+  color: var(--maroon);
+  font-weight: 700;
+}
+
+.leg-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.leg-head time {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+}
+
+.steps {
+  margin-top: 6px;
+}
+
+.steps li {
+  display: flex;
+  gap: 12px;
+  padding: 6px 0;
+  font-size: var(--text-sm);
+}
+
+.steps li .list-code {
+  margin-left: auto;
+  white-space: nowrap;
 }
