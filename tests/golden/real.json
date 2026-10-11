@@ -1,0 +1,167 @@
+{
+ "ktdi-n28": {
+  "duration_s": null,
+  "source": null,
+  "mode": null
+ },
+ "ktho-p05": {
+  "duration_s": null,
+  "source": null,
+  "mode": null
+ },
+ "ktr-psz": {
+  "duration_s": null,
+  "source": null,
+  "mode": null
+ },
+ "ktdi-psz": {
+  "duration_s": null,
+  "source": null,
+  "mode": null
+ },
+ "krp-fab": {
+  "duration_s": null,
+  "source": null,
+  "mode": null
+ },
+ "ktc-msi": {
+  "duration_s": null,
+  "source": null,
+  "mode": null
+ },
+ "fkm-fkt": {
+  "duration_s": null,
+  "source": null,
+  "mode": null
+ },
+ "fab-fkm": {
+  "duration_s": 1739,
+  "source": "page-11.gpx",
+  "mode": "walk"
+ },
+ "p05-n28": {
+  "duration_s": null,
+  "source": null,
+  "mode": null
+ },
+ "fkt-psz": {
+  "duration_s": null,
+  "source": null,
+  "mode": null
+ },
+ "psz-msi": {
+  "duration_s": 30,
+  "source": "page-0.gpx",
+  "mode": "vehicle"
+ },
+ "psz-cans": {
+  "duration_s": 42,
+  "source": "page-0.gpx",
+  "mode": "vehicle"
+ },
+ "els-fkt": {
+  "duration_s": null,
+  "source": null,
+  "mode": null
+ },
+ "ja1-ja4": {
+  "duration_s": 67,
+  "source": "page-11.gpx",
+  "mode": "vehicle"
+ },
+ "pgt-cp": {
+  "duration_s": 123,
+  "source": "page-0.gpx",
+  "mode": "vehicle"
+ },
+ "b04-c05": {
+  "duration_s": 174,
+  "source": "page-0.gpx",
+  "mode": "walk"
+ },
+ "b12-c02": {
+  "duration_s": 94,
+  "source": "page-0.gpx",
+  "mode": "vehicle"
+ },
+ "fab-dsi": {
+  "duration_s": null,
+  "source": null,
+  "mode": null
+ },
+ "rain-ktdi-psz": {
+  "duration_s": null,
+  "source": null,
+  "mode": null
+ },
+ "rain-ktho-n28": {
+  "duration_s": null,
+  "source": null,
+  "mode": null
+ },
+ "rain-b12-c05": {
+  "duration_s": 247,
+  "source": "page-0.gpx",
+  "mode": "walk"
+ },
+ "bus-k9-cp": {
+  "duration_s": 292,
+  "source": "page-13.gpx",
+  "mode": "vehicle"
+ },
+ "bus-k10-cp": {
+  "duration_s": 261,
+  "source": "page-13.gpx",
+  "mode": "vehicle"
+ },
+ "bus-ktgb-fkt": {
+  "duration_s": null,
+  "source": null,
+  "mode": null
+ },
+ "bus-xa2-fkt": {
+  "duration_s": null,
+  "source": null,
+  "mode": null
+ },
+ "bus-u5-fkt": {
+  "duration_s": null,
+  "source": null,
+  "mode": null
+ },
+ "bus-g17-fkt": {
+  "duration_s": null,
+  "source": null,
+  "mode": null
+ },
+ "bus-ktf-fkt": {
+  "duration_s": null,
+  "source": null,
+  "mode": null
+ },
+ "bus-t02-fkt": {
+  "duration_s": null,
+  "source": null,
+  "mode": null
+ },
+ "bus-kdoj-psz": {
+  "duration_s": null,
+  "source": null,
+  "mode": null
+ },
+ "bus-kdse-psz": {
+  "duration_s": null,
+  "source": null,
+  "mode": null
+ },
+ "bus-przs-ahibs": {
+  "duration_s": 277,
+  "source": "page-11.gpx",
+  "mode": "vehicle"
+ },
+ "bus-ktc-fkt": {
+  "duration_s": null,
+  "source": null,
+  "mode": null
+ }
+}

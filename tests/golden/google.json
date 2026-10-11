@@ -1,0 +1,134 @@
+{
+ "ktdi-n28": {
+  "duration_s": 660,
+  "distance_m": 800
+ },
+ "ktho-p05": {
+  "duration_s": 1500,
+  "distance_m": 1800
+ },
+ "ktr-psz": {
+  "duration_s": 1500,
+  "distance_m": 1700
+ },
+ "ktdi-psz": {
+  "duration_s": 1020,
+  "distance_m": 1200
+ },
+ "krp-fab": {
+  "duration_s": 480,
+  "distance_m": 550
+ },
+ "ktc-msi": {
+  "duration_s": 1020,
+  "distance_m": 1100
+ },
+ "fkm-fkt": {
+  "duration_s": 1140,
+  "distance_m": 1200
+ },
+ "fab-fkm": {
+  "duration_s": 780,
+  "distance_m": 1000
+ },
+ "p05-n28": {
+  "duration_s": 960,
+  "distance_m": 1100
+ },
+ "fkt-psz": {
+  "duration_s": 1500,
+  "distance_m": 1700
+ },
+ "psz-msi": {
+  "duration_s": 60,
+  "distance_m": 71
+ },
+ "psz-cans": {
+  "duration_s": 180,
+  "distance_m": 220
+ },
+ "els-fkt": {
+  "duration_s": 840,
+  "distance_m": 900
+ },
+ "ja1-ja4": {
+  "duration_s": 360,
+  "distance_m": 500
+ },
+ "pgt-cp": {
+  "duration_s": 360,
+  "distance_m": 400
+ },
+ "b04-c05": {
+  "duration_s": 360,
+  "distance_m": 400
+ },
+ "b12-c02": {
+  "duration_s": 360,
+  "distance_m": 400
+ },
+ "fab-dsi": {
+  "duration_s": 480,
+  "distance_m": 500
+ },
+ "rain-ktdi-psz": {
+  "duration_s": 1020,
+  "distance_m": 1200
+ },
+ "rain-ktho-n28": {
+  "duration_s": 780,
+  "distance_m": 900
+ },
+ "rain-b12-c05": {
+  "duration_s": 420,
+  "distance_m": 450
+ },
+ "bus-k9-cp": {
+  "duration_s": 1740,
+  "distance_m": 2100
+ },
+ "bus-k10-cp": {
+  "duration_s": 1860,
+  "distance_m": 2200
+ },
+ "bus-ktgb-fkt": {
+  "duration_s": 4080,
+  "distance_m": 4900
+ },
+ "bus-xa2-fkt": {
+  "duration_s": 4140,
+  "distance_m": 4900
+ },
+ "bus-u5-fkt": {
+  "duration_s": 1680,
+  "distance_m": 1900
+ },
+ "bus-g17-fkt": {
+  "duration_s": 1920,
+  "distance_m": 2200
+ },
+ "bus-ktf-fkt": {
+  "duration_s": 1860,
+  "distance_m": 2100
+ },
+ "bus-t02-fkt": {
+  "duration_s": 3060,
+  "distance_m": 3600
+ },
+ "bus-kdoj-psz": {
+  "duration_s": 2760,
+  "distance_m": 3300
+ },
+ "bus-kdse-psz": {
+  "duration_s": 1680,
+  "distance_m": 2000
+ },
+ "bus-przs-ahibs": {
+  "duration_s": 840,
+  "distance_m": 1000
+ },
+ "bus-ktc-fkt": {
+  "duration_s": 1320,
+  "distance_m": 1500
+ }
+}
