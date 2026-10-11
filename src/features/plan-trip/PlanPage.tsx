@@ -4,6 +4,7 @@ import type { Plan } from '../../domain/router/planTrip.ts'
 import { klDateTime, tripsOn } from '../../domain/transit/departures.ts'
 import { Page } from '../../ui/Page.tsx'
 import { useAppStore } from '../app/store.ts'
+import { ShortcutFeedback } from '../feedback/ShortcutFeedback.tsx'
 import { LocationControl } from '../location/LocationControl.tsx'
 import { MarkerLayer, RouteLayer } from '../map/layers.tsx'
 import { FitTo } from '../transit/parts.tsx'
@@ -170,11 +171,15 @@ export function PlanPage() {
                 All options
               </button>
               <OptionDetail option={option} />
+              {option.legs.flatMap((l, i) => l.labels.filter((x) => /unverified/i.test(x.text)).map((x) => <ShortcutFeedback key={`${i}-${x.from}`} geometry={l.geometry.slice(x.from ?? 0, (x.to ?? l.geometry.length - 1) + 1)} />))}
             </>
           ) : (
             <OptionList options={plan.options} selected={selected} onSelect={setSelected} />
           )}
           <div className="actions">
+            <Link to="/report" className="btn btn-quiet">
+              Report a shortcut
+            </Link>
             {!detail && (
               <button type="button" className="btn btn-quiet" onClick={() => setDetail(true)}>
                 Details
