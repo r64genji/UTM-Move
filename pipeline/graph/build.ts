@@ -18,6 +18,12 @@ const M = 111_320
 const KX = M * Math.cos((1.56 * Math.PI) / 180)
 /** A snap closer than this to an existing junction reuses the junction. */
 const NODE_SNAP_M = 2
+/** A dangling way end (a node only one edge uses) this close to another way is a mapping gap and gets a connector. */
+const GAP_M = 12
+/** Two dangling ends facing each other may be this far apart. */
+const GAP_ENDS_M = 18
+/** ...unless the other way is already within this many metres of walking from the end. */
+const GAP_LOCAL_M = 60
 const SAMPLE_M = 10
 const JITTER_M = 0.5
 const SIMPLIFY_M = 0.7
@@ -36,6 +42,8 @@ export interface BuildInputs {
   shortcuts: Feature[]
   /** Doors (Point) and indoor links (LineString). */
   indoor: Feature[]
+  /** Building and water outlines (LineString rings): a gap connector never crosses one. */
+  obstacles?: Feature[]
 }
 
 interface E {
@@ -63,6 +71,8 @@ export interface BuildReport {
   shortcuts: { verified: number; likely: number; skipped: number }
   indoorEdges: number
   doors: number
+  /** Connector edges that closed a gap between two ways. */
+  gaps: { from: LatLon; to: LatLon; lengthM: number }[]
 }
 
 const dist = (p: LatLon, q: LatLon) => Math.hypot((p.lat - q.lat) * M, (p.lon - q.lon) * KX)
@@ -169,6 +179,13 @@ export function buildGraph(inp: BuildInputs): { input: GraphInput; report: Build
     }
   }
 
+  // Cross-product test: do segments ab and cd cross at a point interior to both?
+  const crosses = (a: LatLon, b: LatLon, c: LatLon, d: LatLon) => {
+    const o = (p: LatLon, q: LatLon, r: LatLon) => (q.lon - p.lon) * KX * ((r.lat - p.lat) * M) - (q.lat - p.lat) * M * ((r.lon - p.lon) * KX)
+    return o(a, b, c) * o(a, b, d) < 0 && o(c, d, a) * o(c, d, b) < 0
+  }
+  const obstacles = (inp.obstacles ?? []).filter((f) => f.geometry.type === 'LineString').map((f) => (f.geometry.coordinates as number[][]).map(ll))
+
   // Snap p to the network: an existing junction within NODE_SNAP_M, else split the nearest edge there.
   const snap = (p: LatLon, maxM: number, pool: E[] = edges): { node: number; d: number } | null => {
     let best: { d: number; e: E; i: number; q: LatLon } | null = null
@@ -190,6 +207,58 @@ export function buildGraph(inp: BuildInputs): { input: GraphInput; report: Build
     e.pts = head
     edges.push(copy)
     return { node, d: best.d }
+  }
+
+  // 1b. Mapping gaps: a way that ends within GAP_M of another way without being joined to it.
+  const gaps: BuildReport['gaps'] = []
+  const degree1 = new Map<number, number>()
+  for (const e of edges) for (const n of [e.a, e.b]) degree1.set(n, (degree1.get(n) ?? 0) + 1)
+  for (const d of [...degree1.keys()].sort((x, y) => x - y)) {
+    if (degree1.get(d) !== 1) continue
+    const p = nodes[d]
+    let best: { dist: number; e: E; i: number; q: LatLon } | null = null
+    for (const e of edges) {
+      if (e.a === d || e.b === d) continue
+      for (let i = 1; i < e.pts.length; i++) {
+        const { d: dd, q } = distToSeg(p, e.pts[i - 1], e.pts[i])
+        const endToEnd = (degree1.get(e.a) === 1 && dist(q, nodes[e.a]) < 0.5) || (degree1.get(e.b) === 1 && dist(q, nodes[e.b]) < 0.5)
+        if (dd <= (endToEnd ? GAP_ENDS_M : GAP_M) && (!best || dd < best.dist)) best = { dist: dd, e, i, q }
+      }
+    }
+    if (!best) continue
+    const { e, i, q } = best
+    // Already joined nearby: walking from the end reaches that way within GAP_LOCAL_M.
+    const reach = new Map<number, number>([[d, 0]])
+    for (let grew = true; grew; ) {
+      grew = false
+      for (const x of edges) {
+        const len = lineLen(x.pts)
+        for (const [u, v] of [[x.a, x.b], [x.b, x.a]]) {
+          const du = reach.get(u)
+          if (du !== undefined && du + len <= GAP_LOCAL_M && du + len < (reach.get(v) ?? Infinity)) { reach.set(v, du + len); grew = true }
+        }
+      }
+    }
+    if (reach.has(e.a) || reach.has(e.b)) continue
+    // Never across a building or water. (Another way in between would be nearer, so it cannot be crossed.)
+    if (obstacles.some((ring) => ring.some((y, k) => k > 0 && crosses(p, q, ring[k - 1], y)))) continue
+    const head = [...e.pts.slice(0, i), q]
+    const tail = [q, ...e.pts.slice(i)]
+    let target: number
+    if (lineLen(head) <= NODE_SNAP_M) target = e.a
+    else if (lineLen(tail) <= NODE_SNAP_M) target = e.b
+    else {
+      target = nodes.push(q) - 1
+      edges.push({ ...e, a: target, pts: tail })
+      e.b = target
+      e.pts = head
+      degree1.set(target, 2)
+    }
+    const pts = [p, nodes[target]]
+    edges.push({ a: d, b: target, pts, kind: 'connector', stepFree: true })
+    degree1.set(d, 2)
+    degree1.set(target, (degree1.get(target) ?? 0) + 1)
+    gaps.push({ from: p, to: nodes[target], lengthM: r1(lineLen(pts)) })
   }
 
   // 2. Doors, indoor links, shortcuts.
@@ -327,7 +396,7 @@ export function buildGraph(inp: BuildInputs): { input: GraphInput; report: Build
     }
   })
 
-  const report: BuildReport = { warnings, islands, droppedEdges, stopNode, doorNode, ...rep }
+  const report: BuildReport = { warnings, islands, droppedEdges, stopNode, doorNode, gaps, ...rep }
   return { input: { nodes: outNodes, edges: outEdges }, report }
 }
 
@@ -362,6 +431,7 @@ export function loadInputs(): { inputs: BuildInputs; warnings: string[] } {
     entrances,
     shortcuts: readFeatures('data/shortcuts/scored.geojson'),
     indoor,
+    obstacles: readFeatures('data/osm/obstacles.geojson'),
   }
   return { inputs, warnings }
 }
@@ -389,6 +459,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   console.log(`nodes ${input.nodes.length}, edges ${input.edges.length}, ${km.toFixed(1)} km`)
   console.log('by kind:', Object.entries(byKind).map(([k, v]) => `${k} ${v.n} (${v.km.toFixed(1)} km)`).join(', '))
   console.log(`stops ${report.stopNode.size}, place entrances ${report.doorNode.size}, doors ${report.doors}, indoor links ${report.indoorEdges}, shortcuts`, report.shortcuts)
+  console.log(`gaps closed: ${report.gaps.length}, lengths m`, report.gaps.map((g) => g.lengthM).sort((a, b) => a - b).join(' '))
   console.log(`islands dropped: ${report.islands.length}`, report.islands.slice(0, 5).map((i) => `${i.nodes} nodes ${i.km.toFixed(2)} km at ${i.at.lat.toFixed(4)},${i.at.lon.toFixed(4)}`))
   console.log(`report: ${reportFile}`)
   if (gz > 300 * 1024) throw new Error(`graph.bin is ${(gz / 1024).toFixed(0)} KB gzip, over the 300 KB limit`)

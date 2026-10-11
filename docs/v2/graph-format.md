@@ -105,6 +105,7 @@ Order is part of the format. Only append.
 | 7 | door |
 | 8 | crossing |
 | 9 | ramp |
+| 10 | connector (build-time link closing a gap of a few metres between two mapped ways) |
 
 ### Flags (u8 bitfield)
 

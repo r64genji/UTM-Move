@@ -15,8 +15,8 @@
   },
   "at": "2026-03-17T10:00:00+08:00",
   "profile": "fastest",
-  "maxDetour": 2.85,
-  "detourReason": "Campus layout: ours 992 m, Google 800 m, straight 353 m"
+  "maxDetour": 2.0,
+  "detourReason": "Campus layout: ours 695 m, Google 800 m, straight 353 m"
  },
  {
   "id": "ktho-p05",
@@ -195,8 +195,8 @@
   },
   "at": "2026-03-17T10:00:00+08:00",
   "profile": "fastest",
-  "maxDetour": 4.0,
-  "detourReason": "KNOWN ISSUE (missing link near the library east side): ours 325 m, Google 71 m, straight 82 m"
+  "maxDetour": 3.8,
+  "detourReason": "Mosque point is 40 m from the nearest way and snaps to the far side: ours 307 m, Google 71 m, straight 82 m (fixed by place entrances, #16)"
  },
  {
   "id": "psz-cans",
@@ -213,9 +213,7 @@
    "lon": 103.638415
   },
   "at": "2026-03-17T10:00:00+08:00",
-  "profile": "fastest",
-  "maxDetour": 1.85,
-  "detourReason": "KNOWN ISSUE (missing link near the library east side): ours 368 m, Google 220 m, straight 204 m"
+  "profile": "fastest"
  },
  {
   "id": "els-fkt",
