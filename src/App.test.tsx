@@ -22,7 +22,7 @@ test('home renders, and /stop/CP shows the stop page', async () => {
 test('the plan page reads the trip from the URL', () => {
   const router = createMemoryRouter(routes, { initialEntries: ['/plan?from=me&to=stop:CP&profile=sheltered'] })
   render(<RouterProvider router={router} />)
-  expect(screen.getByText('Your location')).toBeTruthy()
-  expect(screen.getByText('Stop CP')).toBeTruthy()
+  expect(screen.getByRole('button', { name: 'From: My location' })).toBeTruthy()
+  expect(screen.getByRole('button', { name: 'To: Stop CP' })).toBeTruthy()
   expect(screen.getByRole('radio', { name: 'Sheltered' }).getAttribute('aria-checked')).toBe('true')
 })
