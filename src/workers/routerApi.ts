@@ -25,11 +25,11 @@ export interface RouterData {
 
 export const parsePlaces = (json: unknown): Place[] => z.array(Place).parse(json)
 
-function resolve(d: RouterData, s: Spot, fallbackName: string): { name: string; location: LatLon } {
+function resolve(d: RouterData, s: Spot, fallbackName: string): { name: string; location: LatLon; entrances?: LatLon[] } {
   if ('placeId' in s) {
     const p = d.places.find((x) => x.id === s.placeId)
     if (!p) throw new Error(`Unknown place: ${s.placeId}`)
-    return { name: p.name, location: p.location }
+    return { name: p.name, location: p.location, entrances: p.entrances }
   }
   if ('stopId' in s) {
     const p = d.transit.stops.find((x) => x.id === s.stopId)
