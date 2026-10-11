@@ -40,4 +40,16 @@ describe('planQuery on the real data', () => {
   test('an unknown stop is an error', () => {
     expect(() => planQuery(data, { ...cpToUi, to: { stopId: 'NOPE' } })).toThrow('Unknown stop: NOPE')
   })
+
+  test('a place with an entrance is reached through it, not the pin snapped to the wrong side of the building', () => {
+    const place = (id: string, location: { lat: number; lon: number }, entrances?: { lat: number; lon: number }[]) =>
+      ({ id, name: id, aliases: [], category: 'Library', location, entrances }) as RouterData['places'][number]
+    const pin = { lat: 1.563408, lon: 103.651546 }
+    const door = { lat: 1.563819, lon: 103.65169 } // Perpustakaan Raja Zarith Sofiah, north side
+    const walkS = (entrances?: typeof door[]) =>
+      planQuery({ ...data, places: [place('a', { lat: 1.554714, lon: 103.644832 }), place('b', pin, entrances)] }, {
+        from: { placeId: 'a' }, to: { placeId: 'b' }, when: { type: 'depart', at: '2026-03-17T08:00:00+08:00' }, profile: 'fastest',
+      }).options[0].durationS
+    expect([walkS(), walkS([door])]).toEqual([1843, 1626])
+  })
 })

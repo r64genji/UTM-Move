@@ -19,7 +19,12 @@ export const MIN_SAVING_S = 2 * 60
 /** Flat-ground walking speed, m/s. Median of the GPS tracks (data/walk-speeds.json: 1.396). Same default as the walk router. */
 export const WALK_SPEED = 1.4
 
-export interface Place { name: string; location: LatLon }
+export interface Place {
+  name: string
+  location: LatLon
+  /** Doors. The walk starts or ends at the one that gives the shortest walk; the pin is used when absent. */
+  entrances?: LatLon[]
+}
 
 export interface PlanRequest {
   from: Place
@@ -120,8 +125,15 @@ export function planTrip(g: Graph, data: TransitData, req: PlanRequest): Plan {
   const speedMps = req.walkSpeed ?? WALK_SPEED
   const walkOpts = (at: Date) => ({ profile, at, speedMps })
   const endpoint = (p: LatLon): Endpoint => snapToEdge(g, p) ?? snapToNode(g, p)
-  const origin = endpoint(req.from.location)
-  const dest = endpoint(req.to.location)
+  const doors = (p: Place) => (p.entrances?.length ? p.entrances : [p.location]).map(endpoint)
+  const [fromDoors, toDoors] = [doors(req.from), doors(req.to)]
+  let [origin, dest] = [fromDoors[0], toDoors[0]]
+  let direct = route(g, origin, dest, walkOpts(req.at))
+  for (const a of fromDoors)
+    for (const b of toDoors) {
+      const path = route(g, a, b, walkOpts(req.at))
+      if (path && (!direct || path.timeS < direct.timeS)) [origin, dest, direct] = [a, b, path]
+    }
   const info = stopInfo(g, data, profile, req.at, speedMps)
 
   const walkLeg = (a: Endpoint, b: Endpoint, from: Place, to: Place, departS: number, durationS: number): Leg => {
@@ -140,7 +152,6 @@ export function planTrip(g: Graph, data: TransitData, req: PlanRequest): Plan {
 
   // Walk only. Always offered when a path exists.
   const options: TripOption[] = []
-  const direct = route(g, origin, dest, walkOpts(req.at))
   const walkT = direct ? Math.ceil(direct.timeS) : Infinity
   if (direct) {
     const departS = req.mode === 'depart' ? q : q - walkT
