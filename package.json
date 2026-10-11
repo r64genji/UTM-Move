@@ -4,9 +4,9 @@
   "version": "2.0.0",
   "type": "module",
   "scripts": {
-    "predev": "npm run build:transit",
+    "predev": "npm run build:transit && npm run build:graph",
     "dev": "vite",
-    "prebuild": "npm run build:transit",
+    "prebuild": "npm run build:transit && npm run build:graph",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "typecheck": "tsc -b",
@@ -16,7 +16,8 @@
     "build:transit": "tsx pipeline/transit/build.ts",
     "validate": "echo 'validate: no data checks yet (stub, see ticket #19)'",
     "preview": "vite preview",
-    "bench:walk": "tsx pipeline/bench-walk.ts"
+    "bench:walk": "tsx pipeline/bench-walk.ts",
+    "build:graph": "tsx pipeline/graph/build.ts"
   },
   "dependencies": {
     "@fontsource-variable/atkinson-hyperlegible-next": "^5.3.0",
@@ -47,6 +48,7 @@
     "@vitejs/plugin-react": "^6.1.2",
     "eslint": "^10.12.0",
     "eslint-plugin-react-hooks": "^7.1.1",
+    "geotiff": "^3.0.5",
     "globals": "^17.13.0",
     "jsdom": "^30.1.2",
     "tsx": "^4.23.15",
