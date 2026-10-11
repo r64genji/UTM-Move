@@ -84,11 +84,14 @@ Who writes what:
 | #30 user reports | `user-report` | hashed reporter id (never a raw name or email) |
 | OSM import | `osm` | `way/<id>` |
 
-Only record evidence that **supports** a shortcut. There is no negative evidence yet.
+Only record evidence that **supports** a shortcut, with one exception: "did not work" answers from users
+go to `data/evidence/user-negative.jsonl` (`appendNegative` / `readNegatives` in `store.ts`; `readEvidence` skips that file).
+`pipeline/shortcuts/import_form.ts` writes both from the Google Form's response sheet.
 
 ## Scoring rules (`pipeline/shortcuts/score.ts`)
 
 Records with `confidence < 0.5` are dropped first. Counts are distinct `ref` values (or `id` when there is no `ref`).
+First rule: if there is at least one negative and negatives >= supporting records, the level is **guess**.
 
 - **verified**: any `osm` record, or 2+ `gps-trace` records, or 3+ `user-report` records.
 - **likely**: 2+ independent sources (two different `source` values), or `satellite` records on both `esri` and `bing`.

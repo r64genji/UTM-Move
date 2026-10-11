@@ -31,3 +31,23 @@ To fix (needs a human to get the new PDF): put it in `data/raw/`, update the `bu
 `data/transit/route-*.yaml` and the dates in `data/transit/calendar.yaml` (from the 2026/2027
 academic calendar at https://amd.utm.my/academic-calendar/), then run `npm run build:transit`
 and `npm test`.
+
+## #30 Shortcut report form has no shortcut fields
+
+Neither v1 Google Form (bug report `1FAIpQLSfwLOnLv...`, feedback `1FAIpQLSdCnuw2A3...`) has questions for shortcuts.
+`src/features/feedback/shortcutReport.ts` uses the bug form URL and placeholder ids `entry.1000000001..5`.
+Prefill itself was checked against the live form (Playwright, using two existing questions, nothing submitted).
+
+To finish, a human must add these questions to the form (or make a new "UTM Move shortcut" form), then replace
+`SHORTCUT_FORM.url` and the five entry ids (get ids from "Get pre-filled link"):
+
+| Question title (exact, the CSV header) | Type | Values |
+|---|---|---|
+| Kind | Dropdown | Footpath, Covered walkway, Stairs, Through building |
+| Geometry | Paragraph | `lat,lon;lat,lon` |
+| Note | Paragraph | free text |
+| Shortcut ID | Short answer | `sc-...` |
+| Worked | Dropdown | Yes, No |
+
+Then link the form to a sheet, File > Share > Publish to web > CSV, and set `FORM_SHEET_CSV_URL` for `import_form.ts`.
+The sheet's Timestamp format depends on the sheet locale (`M/D/YYYY` assumed; `D/M/YYYY` when the first number is above 12).

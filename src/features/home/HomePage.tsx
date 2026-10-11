@@ -25,6 +25,10 @@ export function HomePage() {
           <strong>Bus departures</strong>
           <span>Routes and stops</span>
         </Link>
+        <Link to="/report" className="quick-item">
+          <strong>Report a shortcut</strong>
+          <span>Draw a path we are missing</span>
+        </Link>
       </nav>
     </article>
   )

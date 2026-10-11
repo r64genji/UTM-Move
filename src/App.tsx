@@ -1,4 +1,5 @@
 import { Link, type RouteObject } from 'react-router'
+import { ReportPage } from './features/feedback/ReportPage.tsx'
 import { HomePage } from './features/home/HomePage.tsx'
 import { NavigatePage } from './features/navigate/NavigatePage.tsx'
 import { PlacePage } from './features/places/PlacePage.tsx'
@@ -19,6 +20,7 @@ export const routes: RouteObject[] = [
       { path: 'search', element: <SearchPage /> },
       { path: 'place/:id', element: <PlacePage /> },
       { path: 'plan', element: <PlanPage /> },
+      { path: 'report', element: <ReportPage /> },
       { path: 'navigate', element: <NavigatePage /> },
       { path: 'stops', element: <StopsPage /> },
       { path: 'stop/:id', element: <StopPage /> },
