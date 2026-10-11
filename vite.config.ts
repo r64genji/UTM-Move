@@ -5,6 +5,6 @@ export default defineConfig({
   plugins: [react()],
   worker: { format: 'es' },
   test: {
-    include: ['src/**/*.test.{ts,tsx}', 'pipeline/**/*.test.ts', 'tests/*.test.ts'],
+    include: ['src/**/*.test.{ts,tsx}', 'pipeline/**/*.test.ts', 'tests/*.test.ts', 'tests/ai-e2e/**/*.test.ts'],
   },
 })
