@@ -11,7 +11,8 @@
     "test": "vitest run",
     "score:shortcuts": "tsx pipeline/shortcuts/score-cli.ts",
     "validate": "echo 'validate: no data checks yet (stub, see ticket #19)'",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "bench:walk": "tsx pipeline/bench-walk.ts"
   },
   "dependencies": {
     "comlink": "^4.4.2",
