@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { Outlet } from 'react-router'
+import { LocationLayers } from '../features/location/LocationLayers.tsx'
 import { MapProvider } from '../features/map/MapContext.tsx'
 import { Sheet } from './Sheet.tsx'
 
@@ -13,6 +14,7 @@ export function Shell() {
         <Suspense fallback={<div className="map" />}>
           <MapView />
         </Suspense>
+        <LocationLayers />
         <Sheet>
           <Outlet />
         </Sheet>

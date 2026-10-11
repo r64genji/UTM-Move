@@ -1,4 +1,5 @@
 import { useSearchParams } from 'react-router'
+import { LocationControl } from '../location/LocationControl.tsx'
 import { Page, Pending } from '../../ui/Page.tsx'
 import { parseTrip, tripSearch, type Endpoint, type Profile } from './tripParams.ts'
 
@@ -26,6 +27,7 @@ export function PlanPage() {
           <dd>{describe(trip.to)}</dd>
         </div>
       </dl>
+      <LocationControl />
       <div className="segmented" role="radiogroup" aria-label="Route type">
         {PROFILES.map((p) => (
           <button
