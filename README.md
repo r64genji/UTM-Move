@@ -45,3 +45,9 @@ other hosts. Rebuild it with `pipeline/basemap/fetch-basemap.sh [YYYYMMDD]`.
 Full plan: [docs/REWRITE_PLAN.md](docs/REWRITE_PLAN.md).
 
 Map data © OpenStreetMap contributors.
+
+## Test deploy (home server)
+
+`npm run deploy:home` builds and copies `dist/` to `/home/abe/sites/utm-move/html/`.
+An `nginx:alpine` container (`utm-move`, `127.0.0.1:8590`) serves it, and the Cloudflare
+tunnel "anythinglah" maps `https://utm.abrahamtan.com` to that port.

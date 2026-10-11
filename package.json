@@ -23,6 +23,7 @@
     "build:places": "tsx pipeline/places/build.ts",
     "build:search": "tsx pipeline/places/search.ts",
     "preview": "vite preview",
+    "deploy:home": "npm run build && rsync -a --delete dist/ /home/abe/sites/utm-move/html/ && chmod -R o+rX /home/abe/sites/utm-move/html",
     "test:ai": "tsx tests/ai-e2e/run.ts",
     "bench:walk": "tsx pipeline/bench-walk.ts",
     "bench:router": "tsx pipeline/bench-router.ts",
