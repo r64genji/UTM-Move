@@ -35,6 +35,13 @@ data/           hand-edited sources (data/raw/ is gitignored)
 tests/e2e/      Playwright
 ```
 
+## Basemap
+
+`public/basemap/` holds the self-hosted map: `campus.pmtiles` (Protomaps
+basemap cut to UTM + margin, z0-15), glyphs and sprites. It is committed, so
+builds need no network and the app makes no tile, font or sprite requests to
+other hosts. Rebuild it with `pipeline/basemap/fetch-basemap.sh [YYYYMMDD]`.
+
 Full plan: [docs/REWRITE_PLAN.md](docs/REWRITE_PLAN.md).
 
 Map data © OpenStreetMap contributors.
