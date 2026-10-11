@@ -9,10 +9,10 @@ import { LocationControl } from '../location/LocationControl.tsx'
 import { MarkerLayer, RouteLayer } from '../map/layers.tsx'
 import { FitTo } from '../transit/parts.tsx'
 import { useTransit } from '../transit/useTransit.ts'
-import { loadPlaces, PlacePicker } from './PlacePicker.tsx'
+import { PlacePicker } from './PlacePicker.tsx'
 import { OptionDetail, OptionList, optionToRoute } from './TripOptions.tsx'
-import { getRouter, type Spot } from './routerClient.ts'
-import { parseTrip, tripSearch, type Endpoint, type Profile, type Trip } from './tripParams.ts'
+import { planFor } from './routerClient.ts'
+import { parseTrip, tripSearch, type Profile, type Trip } from './tripParams.ts'
 
 const PROFILES: { id: Profile; label: string }[] = [
   { id: 'fastest', label: 'Fastest' },
@@ -51,27 +51,13 @@ export function PlanPage() {
   const startKey = start ? `${start.lat},${start.lon}` : ''
   const key = tripKey + startKey
   useEffect(() => {
-    const { from, to, when, profile } = parseTrip(new URLSearchParams(tripKey))
-    if (!from || !to || (needsStart && (from.kind === 'me' || to.kind === 'me'))) return
+    const trip = parseTrip(new URLSearchParams(tripKey))
+    if (!trip.from || !trip.to || (needsStart && (trip.from.kind === 'me' || trip.to.kind === 'me'))) return
     let live = true
     ;(async () => {
-      const spot = (e: Endpoint): Spot => {
-        if (e.kind === 'me') return { lat: start!.lat, lon: start!.lon }
-        if (e.kind === 'point') return { lat: e.lat, lon: e.lon }
-        return e.kind === 'stop' ? { stopId: e.id } : { placeId: e.id }
-      }
-      const at = when.type === 'now' ? new Date() : new Date(`${when.time}:00+08:00`)
-      if (Number.isNaN(at.getTime())) throw new Error('That time is not valid.')
-      const router = getRouter()
-      const hasPlaces = (await loadPlaces()).length > 0
-      await router.init(hasPlaces ? '/data/places.json' : undefined)
-      const plan = await router.planTrip({
-        from: spot(from),
-        to: spot(to),
-        when: { type: when.type === 'arrive' ? 'arrive' : 'depart', at: at.toISOString() },
-        profile,
-      })
-      if (live) setResult({ key, plan: { options: [...plan.options].sort((a, b) => a.durationS - b.durationS) }, at })
+      const at = trip.when.type === 'now' ? new Date() : new Date(`${trip.when.time}:00+08:00`)
+      const plan = await planFor(trip, start, at)
+      if (live) setResult({ key, plan, at })
     })().catch((e: unknown) => live && setResult({ key, error: e instanceof Error ? e.message : 'Planning failed.' }))
     return () => void (live = false)
     // eslint-disable-next-line react-hooks/exhaustive-deps
