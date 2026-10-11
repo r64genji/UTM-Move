@@ -22,8 +22,12 @@ To fix (needs a human with Vercel access, without touching production):
 
 ## #5/#6 Bus timetable for session 2026/2027
 
-- `data/transit/` holds the 2025/2026 timetable (effective 6 Oct 2025). That session ended
-  4 Oct 2026, so the calendar has no service days after that date.
+Carried over by user decision 2026-10-12: the 2025/2026 times are used for session 2026/2027 and the
+app shows "Timetable from 2025/2026. Times may change." (`timetableNote` in `transit.json`). Dates come
+from the 2026/2027 academic calendar. Replace the times when the 2026/2027 PDF is published (steps below).
+
+- `data/transit/` holds the 2025/2026 timetable (effective 6 Oct 2025). Its calendar now runs to
+  3 Oct 2027 (2026/2027 academic calendar dates, holidays and breaks).
 - Session 2026/2027 starts 12 Oct 2026 (UTM Pekeliling Akademik Bil. 6/2026). UTM Fleet (Jabatan
   TNC(P)) usually issues a new "Jadual Shuttle Kampus" PDF for each session.
 
@@ -32,31 +36,15 @@ To fix (needs a human to get the new PDF): put it in `data/raw/`, update the `bu
 academic calendar at https://amd.utm.my/academic-calendar/), then run `npm run build:transit`
 and `npm test`.
 
-## #30 Shortcut report form has no shortcut fields
+## #30 Shortcut report form
 
-Neither v1 Google Form (bug report `1FAIpQLSfwLOnLv...`, feedback `1FAIpQLSdCnuw2A3...`) has questions for shortcuts.
-`src/features/feedback/shortcutReport.ts` uses the bug form URL and placeholder ids `entry.1000000001..5`.
-Prefill itself was checked against the live form (Playwright, using two existing questions, nothing submitted).
-
-To finish, a human must add these questions to the form (or make a new "UTM Move shortcut" form), then replace
-`SHORTCUT_FORM.url` and the five entry ids (get ids from "Get pre-filled link"):
-
-| Question title (exact, the CSV header) | Type | Values |
-|---|---|---|
-| Kind | Dropdown | Footpath, Covered walkway, Stairs, Through building |
-| Geometry | Paragraph | `lat,lon;lat,lon` |
-| Note | Paragraph | free text |
-| Shortcut ID | Short answer | `sc-...` |
-| Worked | Dropdown | Yes, No |
-
-Then link the form to a sheet, File > Share > Publish to web > CSV, and set `FORM_SHEET_CSV_URL` for `import_form.ts`.
-The sheet's Timestamp format depends on the sheet locale (`M/D/YYYY` assumed; `D/M/YYYY` when the first number is above 12).
+Removed by user decision 2026-10-12: no Google Form.
 
 ## #34 Weekly data rebuild: first scheduled run
 
 `.github/workflows/weekly-data.yml` and `npm run data:weekly` are done and the script was run locally (report in `data/raw/reports/weekly.md`).
 "The first scheduled run opens a PR" can only be checked after `v2` is pushed (the user controls pushes), and scheduled workflows only run from the default branch, so it also needs the workflow on `main` at cutover (#33), or a manual `workflow_dispatch` run once the workflow is on a pushed branch.
-Also needed: repo setting Actions > Workflow permissions > "Allow GitHub Actions to create and approve pull requests", and the `FORM_SHEET_CSV_URL` secret (see #30; until set, the form step is skipped).
+Also needed: repo setting Actions > Workflow permissions > "Allow GitHub Actions to create and approve pull requests".
 No `build:places` script exists on `v2` yet; the workflow runs it with `--if-present`, so places are rebuilt once the places branch is merged.
 PRs opened with the default `GITHUB_TOKEN` do not trigger CI; run the checks locally or use a PAT.
 

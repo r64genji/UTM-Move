@@ -139,7 +139,6 @@ English words, typo tolerance.
 - Route view with live "next bus" countdown.
 - Saved places (home, faculty).
 - Shareable links: URL holds the trip.
-- Feedback: keep the Google Form. Prefill the place ID or route ID.
 
 **Offline (PWA).** Precache the app, all `public/data`, and `campus.pmtiles`.
 This replaces `precacheTiles.js`, which breaks the OSM tile rules.

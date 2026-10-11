@@ -6,12 +6,11 @@ import { join } from 'node:path'
 import { Shortcut, type Evidence } from '../../src/domain/schemas.ts'
 import { isInOsm, readOsmWays } from './osm.ts'
 import { scoreShortcut } from './score.ts'
-import { featureCollection, readCandidates, readEvidence, readNegatives, toFeature } from './store.ts'
+import { featureCollection, readCandidates, readEvidence, toFeature } from './store.ts'
 
 const root = process.argv[2] ?? 'data'
 const candidates = readCandidates(root)
 const evidence = readEvidence(root)
-const negatives = readNegatives(root)
 
 const byShortcut = new Map<string, Evidence[]>()
 for (const e of evidence) byShortcut.set(e.shortcutId, [...(byShortcut.get(e.shortcutId) ?? []), e])
@@ -22,7 +21,7 @@ if (orphans.length) console.warn(`evidence for unknown shortcuts (ignored): ${or
 const osmWays = existsSync(join(root, 'osm', 'walk-ways.geojson')) ? readOsmWays(root) : []
 const features = candidates.map((c) => {
   const ev = byShortcut.get(c.id) ?? []
-  const { level, reasons } = scoreShortcut(ev, negatives.filter((n) => n.shortcutId === c.id))
+  const { level, reasons } = scoreShortcut(ev)
   const shortcut = Shortcut.parse({
     id: c.id,
     geometry: c.geometry,

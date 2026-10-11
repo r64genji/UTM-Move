@@ -35,7 +35,7 @@ export function StopPage() {
     <Page title={stop.name} kicker={`Bus stop ${stop.id}`}>
       <StopMarkers stops={data.stops} selectedId={id} />
       <FitTo points={[stop.location]} maxZoom={17} />
-      <Note />
+      <Note carried={data.timetableNote} />
       {byRoute.map(([rid, deps]) => (
         <section key={rid} className="dep-group" aria-label={`Route ${rid}`}>
           <h2>

@@ -4,7 +4,6 @@ import { createNavigation, follow, startState, view, type Fix, type NavState, ty
 import type { TripOption } from '../../domain/router/planTrip.ts'
 import { klDateTime } from '../../domain/transit/departures.ts'
 import { Page } from '../../ui/Page.tsx'
-import { feedbackUrl, tripTimeText } from '../feedback/form.ts'
 import { watchLocation } from '../location/useUserLocation.ts'
 import { useMap } from '../map/MapContext.tsx'
 import { MarkerLayer, RouteLayer } from '../map/layers.tsx'
@@ -77,10 +76,6 @@ export function NavigatePage() {
   const [state, setState] = useState<NavState>(startState)
   const [fix, setFix] = useState<Fix | null>(null)
   const [now, setNow] = useState(() => new Date())
-  const [timed, setTimed] = useState(false)
-  const [arrivedAt, setArrivedAt] = useState<number | null>(null)
-  const [startedAt] = useState(() => Date.now())
-  const [planned, setPlanned] = useState<TripOption | null>(null)
   const live = useRef({ nav: null as Navigation | null, state: startState, rerouting: false })
   const gotFirst = useRef(false)
 
@@ -109,7 +104,6 @@ export function NavigatePage() {
       replan(from)
         .then((o) => {
           if (!o) throw new Error('No route found.')
-          setPlanned(o)
           install(o)
           setStatus('ready')
         })
@@ -131,7 +125,6 @@ export function NavigatePage() {
       live.current.state = r.state
       setState(r.state)
       for (const e of r.events) {
-        if (e.type === 'arrive') setArrivedAt(f.t)
         if (e.type === 'reroute' && !live.current.rerouting) {
           // Same destination and route type, planned from where the user is now.
           live.current.rerouting = true
@@ -182,29 +175,7 @@ export function NavigatePage() {
       {state.arrived && nav && (
         <section className="guidance" aria-label="Arrived">
           <p className="guide-now">You have arrived at {last!.to.name}.</p>
-          {timed && arrivedAt !== null && planned && (
-            <a
-              className="btn btn-primary"
-              target="_blank"
-              rel="noreferrer"
-              href={feedbackUrl(
-                tripTimeText({
-                  from: planned.legs[0].from.name,
-                  to: last!.to.name,
-                  plannedMin: Math.round(planned.durationS / 60),
-                  actualMin: Math.round((arrivedAt - startedAt) / 60_000),
-                }),
-              )}
-            >
-              Send my trip time
-            </a>
-          )}
         </section>
-      )}
-      {!state.arrived && nav && (
-        <label className="check">
-          <input type="checkbox" checked={timed} onChange={(e) => setTimed(e.target.checked)} /> Time my trip, then offer to send it
-        </label>
       )}
     </Page>
   )

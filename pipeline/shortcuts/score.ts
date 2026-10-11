@@ -12,22 +12,17 @@ function count(evidence: Evidence[], source: Evidence['source']): number {
 }
 
 /**
- * verified: in OSM, or 2+ GPS traces, or 3+ user confirmations.
+ * verified: in OSM, or 2+ GPS traces.
  * likely: 2+ independent sources (different `source` kinds), or a satellite line on both Esri and Bing.
- * guess: anything else, or as many users said "did not work" (negatives) as there are supporting records.
+ * guess: anything else.
  * Records with confidence below 0.5 are ignored.
  */
-export function scoreShortcut(evidence: Evidence[], negatives: Evidence[] = []): Score {
+export function scoreShortcut(evidence: Evidence[]): Score {
   const ev = evidence.filter((e) => (e.confidence ?? 1) >= 0.5)
-  const no = new Set(negatives.map((e) => e.ref ?? e.id)).size
-  const yes = new Set(ev.map((e) => e.ref ?? e.id)).size
-  if (no > 0 && no >= yes) return { level: 'guess', reasons: [`${no} users said it does not work, ${yes} evidence records support it`] }
   const verified: string[] = []
   if (count(ev, 'osm') > 0) verified.push('in OSM')
   const traces = count(ev, 'gps-trace')
   if (traces >= 2) verified.push(`${traces} GPS traces`)
-  const users = count(ev, 'user-report')
-  if (users >= 3) verified.push(`${users} user confirmations`)
   if (verified.length) return { level: 'verified', reasons: verified }
 
   const likely: string[] = []

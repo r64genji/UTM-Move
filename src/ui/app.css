@@ -807,13 +807,6 @@ a {
   width: 100%;
   accent-color: var(--maroon);
 }
-.check {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-  color: var(--ink-2);
-  font-size: var(--text-sm);
-}
 
 .update-toast {
   position: fixed;

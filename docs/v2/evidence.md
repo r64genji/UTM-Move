@@ -65,7 +65,7 @@ One JSON record per line, one file per source. One record = one claim about one 
 |---|---|---|
 | `id` | string | default `ev-<hash>` |
 | `shortcutId` | string | candidate id |
-| `source` | `research` \| `satellite` \| `floor-plan` \| `gps-trace` \| `user-report` \| `osm` | |
+| `source` | `research` \| `satellite` \| `floor-plan` \| `gps-trace` \| `osm` | |
 | `summary` | string | one line, human readable |
 | `url` | URL, optional | |
 | `observedAt` | `YYYY-MM-DD` | when the claim was seen |
@@ -81,19 +81,15 @@ Who writes what:
 | #15 vision | `satellite` (+ `imagery`) | `esri:z/x/y` or `bing:quadkey` |
 | #16 floor plans | `floor-plan` | plan file name + page |
 | #17 GPS | `gps-trace` | trace id |
-| #30 user reports | `user-report` | hashed reporter id (never a raw name or email) |
 | OSM import | `osm` | `way/<id>` |
 
-Only record evidence that **supports** a shortcut, with one exception: "did not work" answers from users
-go to `data/evidence/user-negative.jsonl` (`appendNegative` / `readNegatives` in `store.ts`; `readEvidence` skips that file).
-`pipeline/shortcuts/import_form.ts` writes both from the Google Form's response sheet.
+Only record evidence that **supports** a shortcut.
 
 ## Scoring rules (`pipeline/shortcuts/score.ts`)
 
 Records with `confidence < 0.5` are dropped first. Counts are distinct `ref` values (or `id` when there is no `ref`).
-First rule: if there is at least one negative and negatives >= supporting records, the level is **guess**.
 
-- **verified**: any `osm` record, or 2+ `gps-trace` records, or 3+ `user-report` records.
+- **verified**: any `osm` record, or 2+ `gps-trace` records.
 - **likely**: 2+ independent sources (two different `source` values), or `satellite` records on both `esri` and `bing`.
 - **guess**: anything else, including no evidence.
 

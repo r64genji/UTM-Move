@@ -7,7 +7,8 @@ import { useMap } from '../map/MapContext.tsx'
 
 export const TIMETABLE_NOTE = 'Timetable only. No live bus positions.'
 
-export const Note = () => <p className="note">{TIMETABLE_NOTE}</p>
+/** `carried` is the transit data's `timetableNote`, set while the times are from an earlier session. */
+export const Note = ({ carried }: { carried?: string }) => <p className="note">{carried ? `${carried} ` : ''}{TIMETABLE_NOTE}</p>
 
 /** Stops as map markers. Tapping one opens its stop page. */
 export function StopMarkers({ stops, selectedId }: { stops: Stop[]; selectedId?: string }) {

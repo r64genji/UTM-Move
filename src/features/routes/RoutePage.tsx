@@ -46,7 +46,7 @@ export function RoutePage() {
       <RouteLayer legs={[{ mode: 'bus', path: line, color: route.color ?? '#7a1f2b', routeId: id }]} />
       <StopMarkers stops={patternStops} />
       <FitTo points={line} maxZoom={16} />
-      <Note />
+      <Note carried={data.timetableNote} />
       {patterns.length > 1 && (
         <label className="pick">
           Direction
