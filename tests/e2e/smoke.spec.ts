@@ -25,12 +25,12 @@ test('fake GPS, search a place (with a typo), plan a trip, navigate and watch th
   await expect(page).toHaveURL(/\/navigate/)
   const now = page.locator('.guide-now')
   await expect(now).toBeVisible()
-  await expect(now).toHaveText('Head northeast')
+  await expect(now).toHaveText('Head south')
 
   // Walk towards the library: the guidance has to move on to the next step.
   for (const [latitude, longitude] of [[1.5605, 103.6376], [1.5616, 103.6383], [1.5627, 103.639], [1.5638, 103.6397]]) {
     await context.setGeolocation({ latitude, longitude, accuracy: 10 })
     await page.waitForTimeout(500)
   }
-  await expect(now).not.toHaveText('Head northeast')
+  await expect(now).not.toHaveText('Head south')
 })
