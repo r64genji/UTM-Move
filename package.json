@@ -13,6 +13,7 @@
     "test": "vitest run",
     "gps:shortcuts": "tsx pipeline/gps/shortcuts-cli.ts",
     "vision:shortcuts": "tsx pipeline/vision/run.ts",
+    "research:shortcuts": "tsx pipeline/research/run.ts",
     "score:shortcuts": "tsx pipeline/shortcuts/score-cli.ts",
     "build:transit": "tsx pipeline/transit/build.ts",
     "validate": "echo 'validate: no data checks yet (stub, see ticket #19)'",
