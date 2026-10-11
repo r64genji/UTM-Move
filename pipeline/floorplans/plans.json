@@ -1,0 +1,38 @@
+[
+  {
+    "id": "ifog-n29a-gf",
+    "file": "03-1.png",
+    "url": "https://research.utm.my/ifog/wp-content/uploads/sites/13/2026/05/FIRE-ESCAPE-PLAN-GF.png",
+    "title": "IFOG N29A ground floor fire escape plan",
+    "near": {
+      "lat": 1.5664,
+      "lon": 103.6402
+    },
+    "radiusM": 400,
+    "osmIds": [
+      "w207274658"
+    ]
+  },
+  {
+    "id": "ifog-n29a-l1",
+    "file": "04-1.png",
+    "url": "https://research.utm.my/ifog/wp-content/uploads/sites/13/2026/05/FIRE-ESCAPE-PLAN-L1-2026-SHARED-scaled.png",
+    "title": "IFOG N29A first floor fire escape plan",
+    "near": {
+      "lat": 1.5664,
+      "lon": 103.6402
+    },
+    "radiusM": 400
+  },
+  {
+    "id": "akademi-bahasa-d06",
+    "file": "08-05.png",
+    "url": "https://humanities.utm.my/languageacademy/wp-content/uploads/sites/7/2016/04/PELAN-TINDAKAN-KECEMASAN-AB-2016-edited-version-WEB.pdf",
+    "title": "Akademi Bahasa D05/D06 emergency plan",
+    "near": {
+      "lat": 1.5613,
+      "lon": 103.6381
+    },
+    "radiusM": 120
+  }
+]
