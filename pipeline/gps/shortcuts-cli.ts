@@ -21,7 +21,9 @@ for (const f of existsSync(gpxDir) ? readdirSync(gpxDir).filter((n) => n.toLower
     tracks.push({ ...t, id: t.id.includes('#') ? `gpx-${basename(f, '.gpx')}${t.id.slice(t.id.indexOf('#'))}` : t.id })
 
 // Walk network: every OSM way (walkers use roads too). Off-network = more than 25 m from all of them.
-const ways = JSON.parse(readFileSync(join(root, 'raw', 'osm', 'ways.geojson'), 'utf8')) as { features: { geometry: { coordinates: [number, number][] } }[] }
+// data/raw is not in git, so CI falls back to the committed walkable ways (roads included).
+const rawWays = join(root, 'raw', 'osm', 'ways.geojson')
+const ways = JSON.parse(readFileSync(existsSync(rawWays) ? rawWays : join(root, 'osm', 'walk-ways.geojson'), 'utf8')) as { features: { geometry: { coordinates: [number, number][] } }[] }
 const network = new LineIndex(ways.features.map((f) => f.geometry.coordinates.map(([lon, lat]) => ({ lat, lon }))))
 
 // Walking-speed runs per track.

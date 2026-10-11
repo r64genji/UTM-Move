@@ -4,6 +4,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { Shortcut, type Evidence } from '../../src/domain/schemas.ts'
+import { isInOsm, readOsmWays } from './osm.ts'
 import { scoreShortcut } from './score.ts'
 import { featureCollection, readCandidates, readEvidence, readNegatives, toFeature } from './store.ts'
 
@@ -17,6 +18,8 @@ for (const e of evidence) byShortcut.set(e.shortcutId, [...(byShortcut.get(e.sho
 const orphans = [...byShortcut.keys()].filter((id) => !candidates.some((c) => c.id === id))
 if (orphans.length) console.warn(`evidence for unknown shortcuts (ignored): ${orphans.join(', ')}`)
 
+// A candidate OSM now has (>= 70% within 8 m of an OSM way) is marked inOsm and dropped from the overlay.
+const osmWays = existsSync(join(root, 'osm', 'walk-ways.geojson')) ? readOsmWays(root) : []
 const features = candidates.map((c) => {
   const ev = byShortcut.get(c.id) ?? []
   const { level, reasons } = scoreShortcut(ev, negatives.filter((n) => n.shortcutId === c.id))
@@ -30,14 +33,15 @@ const features = candidates.map((c) => {
     covered: c.kind === 'covered-walkway' || c.kind === 'through-building',
     note: c.note,
   })
-  return toFeature({ ...shortcut, from: c.from, to: c.to, reasons })
+  const inOsm = osmWays.length > 0 && isInOsm(c.geometry, osmWays)
+  return toFeature({ ...shortcut, from: c.from, to: c.to, reasons, ...(inOsm ? { inOsm: true } : {}) })
 })
 
 writeFileSync(join(root, 'shortcuts', 'scored.geojson'), featureCollection(features))
 
 const levels = { verified: 0, likely: 0, guess: 0 }
 for (const f of features) levels[f.properties.level as keyof typeof levels] += 1
-console.log(`${candidates.length} candidates, ${evidence.length} evidence records:`, levels)
+console.log(`${candidates.length} candidates, ${evidence.length} evidence records:`, levels, `, ${features.filter((f) => f.properties.inOsm).length} already in OSM (dropped from overlay)`)
 
 const boundaryPath = join(root, 'campus-boundary.geojson')
 const boundary = existsSync(boundaryPath) ? readFileSync(boundaryPath, 'utf8') : 'null'

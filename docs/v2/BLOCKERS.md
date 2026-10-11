@@ -51,3 +51,17 @@ To finish, a human must add these questions to the form (or make a new "UTM Move
 
 Then link the form to a sheet, File > Share > Publish to web > CSV, and set `FORM_SHEET_CSV_URL` for `import_form.ts`.
 The sheet's Timestamp format depends on the sheet locale (`M/D/YYYY` assumed; `D/M/YYYY` when the first number is above 12).
+
+## #34 Weekly data rebuild: first scheduled run
+
+`.github/workflows/weekly-data.yml` and `npm run data:weekly` are done and the script was run locally (report in `data/raw/reports/weekly.md`).
+"The first scheduled run opens a PR" can only be checked after `v2` is pushed (the user controls pushes), and scheduled workflows only run from the default branch, so it also needs the workflow on `main` at cutover (#33), or a manual `workflow_dispatch` run once the workflow is on a pushed branch.
+Also needed: repo setting Actions > Workflow permissions > "Allow GitHub Actions to create and approve pull requests", and the `FORM_SHEET_CSV_URL` secret (see #30; until set, the form step is skipped).
+No `build:places` script exists on `v2` yet; the workflow runs it with `--if-present`, so places are rebuilt once the places branch is merged.
+PRs opened with the default `GITHUB_TOKEN` do not trigger CI; run the checks locally or use a PAT.
+
+## #35 OSM checklist
+
+Adding to OpenStreetMap is a manual human step (iD editor, Esri or Bing imagery, one small changeset per area, no bulk upload). Nothing here edits OSM.
+Today 0 candidates are `verified` (5 likely, 104 guess) and there are no door overrides, so `docs/v2/osm-checklist.md` is empty. It fills in as evidence arrives (`npm run export:osm`).
+The drop rule is live: `score:shortcuts` marks a candidate `inOsm` when at least 70% of it is within 8 m of a way in `data/osm/walk-ways.geojson`, and `build:graph` skips it. It only takes effect after `data/osm/walk-ways.geojson` is re-extracted from a newer OSM export; that step needs the `.pbf` and is not in the weekly workflow. "First changeset is live, next build drops those items" is unverifiable until a human makes a changeset.
