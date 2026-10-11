@@ -1,0 +1,12 @@
+{
+  "tracks": 17,
+  "points": 1618,
+  "all": {
+    "kmh": 5.02,
+    "mps": 1.396,
+    "p25Kmh": 2.84,
+    "p75Kmh": 6.64
+  },
+  "slopeBands": null,
+  "note": "Points at 2-8 km/h only (standing and vehicles removed). No elevation in OSM trackpoints, so no slope bands."
+}
