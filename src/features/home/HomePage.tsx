@@ -1,4 +1,5 @@
 import { Link } from 'react-router'
+import { LocationControl } from '../location/LocationControl.tsx'
 
 export function HomePage() {
   return (
@@ -14,6 +15,7 @@ export function HomePage() {
         </svg>
         Search buildings, faculties, stops
       </Link>
+      <LocationControl />
       <nav className="quick" aria-label="Shortcuts">
         <Link to="/plan?from=me" className="quick-item">
           <strong>Plan a trip</strong>

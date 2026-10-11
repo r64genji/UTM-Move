@@ -426,3 +426,74 @@ a {
   color: var(--ink);
   box-shadow: 0 1px 4px oklch(25% 0.03 30 / 0.16);
 }
+
+/* ── Location ─────────────────────────────────────────── */
+
+.loc {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  background: var(--paper-2);
+}
+
+.loc-main {
+  gap: 10px;
+  border: 0;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.loc-main:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.loc-msg {
+  font-size: var(--text-sm);
+  color: var(--ink-2);
+}
+
+.loc-msg[data-status='denied'],
+.loc-msg[data-status='unavailable'],
+.loc-msg[data-status='timeout'],
+.loc-msg[data-status='off-campus'],
+.loc-msg[data-status='low-accuracy'] {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.loc-how {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding-left: 18px;
+  font-size: var(--text-sm);
+  color: var(--ink-2);
+}
+
+.btn-quiet {
+  border: 1.5px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-quiet:hover {
+  background: var(--maroon-wash);
+}
+
+/* Start pin: maroon teardrop, tip at the point. */
+.start-pin {
+  width: 30px;
+  height: 40px;
+  cursor: grab;
+  background: no-repeat center / contain
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 40'><path d='M15 39C15 39 2 25 2 14a13 13 0 0 1 26 0c0 11-13 25-13 25z' fill='%23701a2c' stroke='white' stroke-width='2.5'/><circle cx='15' cy='14' r='5' fill='white'/></svg>");
+  filter: drop-shadow(0 2px 3px oklch(25% 0.03 30 / 0.4));
+}
