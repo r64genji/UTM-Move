@@ -1,0 +1,34 @@
+[
+ {
+  "id": "p1",
+  "name": "Main Library",
+  "aliases": [],
+  "category": "Library",
+  "location": {
+   "lat": 1.5611,
+   "lon": 103.6358
+  },
+  "entrances": [
+   {
+    "lat": 1.5611,
+    "lon": 103.6358
+   }
+  ]
+ },
+ {
+  "id": "p2",
+  "name": "Cafe Bahru",
+  "aliases": [],
+  "category": "Library",
+  "location": {
+   "lat": 1.5611,
+   "lon": 103.6362
+  },
+  "entrances": [
+   {
+    "lat": 1.5611,
+    "lon": 103.6362
+   }
+  ]
+ }
+]

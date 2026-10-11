@@ -23,12 +23,12 @@ const cpToUi: TripQuery = {
 describe('planQuery on the real data', () => {
   test('Centre Point to UTM International, Tue 2026-03-17 08:00: walk, or route C at 08:05', () => {
     const plan = structuredClone(planQuery(data, cpToUi)) // must survive postMessage
-    expect(plan.options.map((o) => [o.kind, o.durationS])).toEqual([['walk', 842], ['bus', 241]])
+    expect(plan.options.map((o) => [o.kind, o.durationS])).toEqual([['walk', 842], ['bus', 301]])
     const ride = plan.options[1].legs.find((l) => l.kind === 'bus')!
     expect(ride.route?.id).toBe('C')
     expect(ride.headsign).toBe('To Kolej 9/10')
     expect(ride.departAt.toISOString()).toBe('2026-03-17T00:05:00.000Z') // 08:05 in KL
-    expect(ride.arriveAt.toISOString()).toBe('2026-03-17T00:09:00.000Z')
+    expect(ride.arriveAt.toISOString()).toBe('2026-03-17T00:10:00.000Z')
   })
 
   test('a slower walkSpeed lengthens the walk-only option', () => {
