@@ -1,19 +1,22 @@
 // @vitest-environment jsdom
 import { act, cleanup, render, screen } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
-import { afterEach, expect, test } from 'vitest'
+import transitJson from '../public/data/transit.json?raw'
+import { afterEach, expect, test, vi } from 'vitest'
 import { routes } from './App.tsx'
 
 afterEach(cleanup)
 
 test('home renders, and /stop/CP shows the stop page', async () => {
+  const json = transitJson
+  vi.stubGlobal('fetch', async () => new Response(json))
   const router = createMemoryRouter(routes, { initialEntries: ['/'] })
   render(<RouterProvider router={router} />)
   expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Where to?')
 
   await act(() => router.navigate('/stop/CP'))
-  expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Stop CP')
-  expect(screen.getByText('Bus stop')).toBeTruthy()
+  expect((await screen.findByRole('heading', { level: 1, name: 'Centre Point' })).textContent).toBe('Centre Point')
+  expect(screen.getByText('Timetable only. No live bus positions.')).toBeTruthy()
 })
 
 test('the plan page reads the trip from the URL', () => {

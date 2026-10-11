@@ -6,6 +6,7 @@ import { SearchPage } from './features/places/SearchPage.tsx'
 import { PlanPage } from './features/plan-trip/PlanPage.tsx'
 import { RoutePage } from './features/routes/RoutePage.tsx'
 import { StopPage } from './features/stops/StopPage.tsx'
+import { StopsPage } from './features/stops/StopsPage.tsx'
 import { Page } from './ui/Page.tsx'
 import { Shell } from './ui/Shell.tsx'
 
@@ -19,6 +20,7 @@ export const routes: RouteObject[] = [
       { path: 'place/:id', element: <PlacePage /> },
       { path: 'plan', element: <PlanPage /> },
       { path: 'navigate', element: <NavigatePage /> },
+      { path: 'stops', element: <StopsPage /> },
       { path: 'stop/:id', element: <StopPage /> },
       { path: 'route/:id', element: <RoutePage /> },
       {

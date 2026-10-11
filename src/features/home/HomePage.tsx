@@ -21,9 +21,9 @@ export function HomePage() {
           <strong>Plan a trip</strong>
           <span>Walk and campus bus</span>
         </Link>
-        <Link to="/stop/CP" className="quick-item">
+        <Link to="/stops" className="quick-item">
           <strong>Bus departures</strong>
-          <span>Centre Point</span>
+          <span>Routes and stops</span>
         </Link>
       </nav>
     </article>
