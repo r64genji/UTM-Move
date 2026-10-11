@@ -16,7 +16,7 @@ test('home renders, and /stop/CP shows the stop page', async () => {
 
   await act(() => router.navigate('/stop/CP'))
   expect((await screen.findByRole('heading', { level: 1, name: 'Centre Point' })).textContent).toBe('Centre Point')
-  expect(screen.getByText('Timetable only. No live bus positions.')).toBeTruthy()
+  expect(screen.getByText(/Timetable from 2025\/2026\. Times may change\. Timetable only\. No live bus positions\./)).toBeTruthy()
 })
 
 test('the plan page reads the trip from the URL', () => {

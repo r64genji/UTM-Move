@@ -34,6 +34,6 @@ test('2026-03-10 is in the semester break: no service, next service day is 2026-
   `)
 })
 
-test('the expired timetable (after 2026-10-04) has no later service day', () => {
-  expect(firstServiceDay('2026-10-04', (d) => departuresOn(data, 'CP', d))).toBeNull()
+test('the expired timetable (after 2027-10-03) has no later service day', () => {
+  expect(firstServiceDay('2027-10-03', (d) => departuresOn(data, 'CP', d))).toBeNull()
 })

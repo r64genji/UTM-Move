@@ -46,6 +46,7 @@ export const RouteFile = z.strictObject({
 })
 
 export const CalendarFile = z.strictObject({
+  timetableNote: z.string().min(1).optional(),
   session: z.strictObject({ start: ISODate, end: ISODate }),
   services: z.record(Id, z.array(Weekday).min(1)),
   fridayPrayerGap: z.strictObject({ from: HHMM, to: HHMM }),
@@ -154,6 +155,7 @@ export function buildTransit(src: TransitSources): TransitData {
     routes,
     patterns,
     calendars: buildCalendars(src.calendar),
+    timetableNote: src.calendar.timetableNote,
     trips,
   })
 }

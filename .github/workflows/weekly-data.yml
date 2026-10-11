@@ -22,11 +22,9 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      # Imports form reports (skipped when FORM_SHEET_CSV_URL is unset), downloads fresh OSM GPS traces
+      # Downloads fresh OSM GPS traces
       # (1 request/s), re-scores, rebuilds, runs validate + tests, writes data/raw/reports/weekly.md.
       - run: npm run data:weekly
-        env:
-          FORM_SHEET_CSV_URL: ${{ secrets.FORM_SHEET_CSV_URL }}
       - id: date
         run: echo "ymd=$(date -u +%Y%m%d)" >> "$GITHUB_OUTPUT"
       # Opens a PR only. Nothing here deploys.

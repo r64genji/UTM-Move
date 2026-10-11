@@ -1,6 +1,5 @@
 import { Link, useParams } from 'react-router'
 import { Page, Pending } from '../../ui/Page.tsx'
-import { feedbackUrl } from '../feedback/form.ts'
 import { MarkerLayer } from '../map/layers.tsx'
 import { usePlaces } from '../plan-trip/PlacePicker.tsx'
 import { FitTo } from '../transit/parts.tsx'
@@ -49,14 +48,6 @@ export function PlacePage() {
         <Link className="btn btn-primary" to={`/plan?from=me&to=place:${encodeURIComponent(id)}`}>
           Directions
         </Link>
-        <a
-          className="btn btn-quiet"
-          target="_blank"
-          rel="noreferrer"
-          href={feedbackUrl(`Problem with place "${place.name}" (${place.id}): `)}
-        >
-          Report a problem
-        </a>
       </div>
     </Page>
   )

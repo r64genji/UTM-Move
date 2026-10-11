@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import { departuresOn, nextDepartures } from '../../src/domain/transit/departures.ts'
 import { buildTransit, loadSources } from './build.ts'
 
 const sources = loadSources()
@@ -68,7 +69,27 @@ describe('calendars', () => {
 
   test('public holidays and final breaks are removed, mid-semester breaks are not', () => {
     const removed = data.calendars.find((c) => c.id === 'weekday')!.exceptions.map((e) => e.date)
-    expect(['2025-10-20', '2026-02-09', '2026-03-15', '2026-07-20', '2026-10-04'].every((d) => removed.includes(d))).toBe(true)
+    expect(['2025-10-20', '2026-02-09', '2026-03-15', '2026-07-20', '2026-11-09', '2027-01-22', '2027-03-01', '2027-08-31'].every((d) => removed.includes(d))).toBe(true)
     expect(removed.includes('2025-11-25')).toBe(false)
+    expect(removed.includes('2026-12-01')).toBe(false)
+  })
+
+  test('2026/2027 uses the 2025/2026 times', () => {
+    const first = (date: string) => nextDepartures(data, 'CP', new Date(`${date}T07:30:00+08:00`), 4).map((d) => `${d.routeId} ${d.time}`)
+    expect(first('2026-10-13')).toEqual(first('2026-03-17'))
+    expect(first('2026-10-13').length).toBe(4)
+  })
+
+  test('mid-semester break runs, final break and Deepavali 2026 do not', () => {
+    const count = (date: string) => departuresOn(data, 'CP', date).length
+    expect(count('2026-12-01')).toBe(count('2026-10-13'))
+    expect(count('2026-12-01')).toBeGreaterThan(0)
+    expect(count('2027-03-01')).toBe(0)
+    expect(count('2026-11-09')).toBe(0)
+    expect(count('2026-10-07')).toBeGreaterThan(0)
+  })
+
+  test('the timetable note is carried to transit.json', () => {
+    expect(data.timetableNote).toBe('Timetable from 2025/2026. Times may change.')
   })
 })

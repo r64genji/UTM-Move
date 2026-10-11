@@ -1,5 +1,5 @@
 // npm run data:weekly  (same thing the weekly-data GitHub Action runs; never deploys, never pushes)
-// form reports -> fresh OSM GPS traces -> re-score -> OSM checklist -> rebuild -> validate + test -> diff report.
+// fresh OSM GPS traces -> re-score -> OSM checklist -> rebuild -> validate + test -> diff report.
 // Report: data/raw/reports/weekly.md (the workflow uses it as the PR body).
 import { spawnSync } from 'node:child_process'
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
@@ -53,28 +53,20 @@ run('baseline build', npm('build:data'))
 const before = snapshot()
 const graphBefore = graphStats()
 
-// 1. Form reports.
-const csv = process.env.FORM_SHEET_CSV_URL
-let formNote = 'skipped (FORM_SHEET_CSV_URL not set)'
-if (csv) {
-  run('import form reports', ['npx', 'tsx', 'pipeline/shortcuts/import_form.ts'])
-  formNote = 'imported'
-} else console.log('\n== import form reports: FORM_SHEET_CSV_URL not set, skipping')
-
-// 2. Fresh OSM public GPS traces (cache removed first so nothing is stale; the fetcher does 1 request/s with a User-Agent).
+// 1. Fresh OSM public GPS traces (cache removed first so nothing is stale; the fetcher does 1 request/s with a User-Agent).
 rmSync('data/raw/gpx-osm', { recursive: true, force: true })
 run('refresh OSM GPS traces', npm('gps:shortcuts'))
 
-// 3. Re-score (drops candidates OSM now has), OSM checklist, rebuild.
+// 2. Re-score (drops candidates OSM now has), OSM checklist, rebuild.
 run('re-score evidence', npm('score:shortcuts'))
 run('OSM checklist', npm('export:osm'))
 run('build data', npm('build:data'))
 
-// 4. Checks. Failures go in the report; the PR still opens so a human sees them.
+// 3. Checks. Failures go in the report; the PR still opens so a human sees them.
 run('validate', npm('validate'), { fatal: false })
 run('tests', npm('test'), { fatal: false })
 
-// 5. Report.
+// 4. Report.
 const after = snapshot()
 const graphAfter = graphStats()
 const added = [...after.ids].filter(([id]) => !before.ids.has(id))
@@ -99,8 +91,6 @@ const md = `# Weekly data rebuild
 | graph nodes | ${graphBefore.nodes} | ${graphAfter.nodes} |
 | graph edges | ${graphBefore.edges} | ${graphAfter.edges} |
 | graph.bin bytes | ${graphBefore.bytes} | ${graphAfter.bytes} |
-
-Form import: ${formNote}.
 
 ## New shortcuts (${added.length})
 ${list(added)}

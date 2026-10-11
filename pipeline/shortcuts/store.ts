@@ -134,31 +134,11 @@ export function addCandidate(input: NewCandidate, root = 'data'): { id: string; 
 
 // ---------- evidence: data/evidence/<source>.jsonl ----------
 
-/** "This shortcut did not work" reports. The Evidence schema only supports, so they live apart (docs/v2/evidence.md). */
-const NEGATIVE_FILE = 'user-negative.jsonl'
-
-export function readNegatives(root = 'data'): Evidence[] {
-  const path = join(evidenceDir(root), NEGATIVE_FILE)
-  if (!existsSync(path)) return []
-  return readFileSync(path, 'utf8').split('\n').filter((l) => l.trim()).map((l) => Evidence.parse(JSON.parse(l)))
-}
-
-export function appendNegative(input: NewEvidence, root = 'data'): { record: Evidence; added: boolean } {
-  const id = input.id ?? `ev-${hash([input.shortcutId, 'negative', input.ref ?? input.summary].join('|'))}`
-  const record = Evidence.parse({ ...input, id })
-  const path = join(evidenceDir(root), NEGATIVE_FILE)
-  return withLock(path, () => {
-    const seen = existsSync(path) && readFileSync(path, 'utf8').split('\n').some((l) => l && JSON.parse(l).id === id)
-    if (!seen) appendFileSync(path, JSON.stringify(record) + '\n')
-    return { record, added: !seen }
-  })
-}
-
 export function readEvidence(root = 'data'): Evidence[] {
   const dir = evidenceDir(root)
   if (!existsSync(dir)) return []
   return readdirSync(dir)
-    .filter((f) => f.endsWith('.jsonl') && f !== NEGATIVE_FILE)
+    .filter((f) => f.endsWith('.jsonl'))
     .sort()
     .flatMap((f) =>
       readFileSync(join(dir, f), 'utf8')

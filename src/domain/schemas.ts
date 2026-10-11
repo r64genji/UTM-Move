@@ -119,7 +119,6 @@ export const EvidenceSource = z.enum([
   'satellite',
   'floor-plan',
   'gps-trace',
-  'user-report',
   'osm',
 ])
 
@@ -190,6 +189,8 @@ export const TransitData = z.object({
   patterns: z.array(Pattern),
   calendars: z.array(Calendar),
   trips: z.array(Trip),
+  /** Shown next to departures when the times are carried over from an earlier session. */
+  timetableNote: z.string().optional(),
 })
 
 export type LatLon = z.infer<typeof LatLon>

@@ -1,17 +1,24 @@
-# Service calendar for the 2025/2026 session. All dates and times are Asia/Kuala_Lumpur.
+# Service calendar for sessions 2025/2026 and 2026/2027, using the 2025/2026 bus times (carried over by user decision
+# 2026-10-12 until UTM Fleet publishes the 2026/2027 timetable). All dates and times are Asia/Kuala_Lumpur.
 #
 # Sources:
-# - Bus rules: Jadual-Shuttle-Kampus-Sesi-2025-2026.pdf (UTM Fleet, Jabatan TNC(P)), every weekday page:
+# - Bus rules and times: Jadual-Shuttle-Kampus-Sesi-2025-2026.pdf (UTM Fleet, Jabatan TNC(P)), every weekday page:
 #   "Bus services are not available on Saturday, Sunday, Public Holidays and during semester breaks."
-#   "No service from 12:40 to 14:00 every FRIDAY". "Effective schedule from 6/10/2025".
-# - Semester dates and public holidays: UTM Academic Calendar 2025/2026, Bachelor, Master and Doctoral
-#   Programme, https://amd.utm.my/wp-content/uploads/sites/460/2025/12/POSTGRADUATE-2025-2026-02122026.pdf
+#   "No service from 12:40 to 14:00 every FRIDAY". Effective from 6/10/2025 (times kept for 2026/2027).
+# - Semester dates and public holidays: UTM Academic Calendar 2026/2027, Bachelor, Master and Doctoral
+#   Programme, https://amd.utm.my/wp-content/uploads/sites/460/2026/05/Final_Kalendar-Akademik-Sarjana-Muda.Sarjana.Kedoktoran-20262027-14.5.2026-pembetulan.pdf
 #   (linked from https://amd.utm.my/academic-calendar/). Holidays below are the ones that apply to the
-#   Johor Bahru campus; "KL only" days (New Year, Federal Territory Day, Nuzul Al-Quran) are left out.
+#   Johor Bahru campus; "KL only" days (New Year 1 Jan, Federal Territory Day, Nuzul Al-Quran) are left out.
+#   2025/2026 dates (first block of each list) come from the 2025/2026 calendar,
+#   https://amd.utm.my/wp-content/uploads/sites/460/2025/12/POSTGRADUATE-2025-2026-02122026.pdf
+#   The 2026/2027 calendar lists no Israk Mikraj holiday for Johor, so none is added.
+
+timetableNote: Timetable from 2025/2026. Times may change.
 
 session:
-  start: 2025-10-06 # timetable effective date
-  end: 2026-10-04 # last day of the 2025/2026 session (end of Semester II / short semester)
+  start: 2025-10-06 # 2025/2026 timetable effective date
+  # 2026/2027 starts 2026-10-05. Orientation week (Minggu Mesra Mahasiswa, 5-9 Oct 2026) counts as service days: new students are on campus.
+  end: 2027-10-03 # last day of the 2026/2027 session (end of Semester II / short semester)
 
 # Which weekdays each service runs.
 services:
@@ -24,7 +31,7 @@ services:
 # (for example A1 runs at 14:00 on Friday, but not at 12:40 or 13:20).
 fridayPrayerGap: { from: '12:40', to: '14:00' }
 
-# No bus service on these days (all services).
+# No bus service on these days (all services). Weekend dates are kept so the list matches the PDF.
 publicHolidays:
   - { date: 2025-10-20, name: Deepavali }
   - { date: 2025-12-25, name: Christmas Day }
@@ -44,11 +51,35 @@ publicHolidays:
   - { date: 2026-08-25, name: Prophet Muhammad's Birthday }
   - { date: 2026-08-31, name: Merdeka Day }
   - { date: 2026-09-16, name: Malaysia Day }
+  - { date: 2026-11-08, name: Deepavali }
+  - { date: 2026-11-09, name: Deepavali (second day) }
+  - { date: 2026-12-25, name: Christmas Day }
+  - { date: 2027-01-22, name: Thaipusam (Johor) }
+  - { date: 2027-02-06, name: Chinese New Year }
+  - { date: 2027-02-07, name: Chinese New Year (second day) }
+  - { date: 2027-02-08, name: Chinese New Year (third day) / Awal Ramadan (Johor) }
+  - { date: 2027-03-10, name: Hari Raya Aidilfitri }
+  - { date: 2027-03-11, name: Hari Raya Aidilfitri (second day) }
+  - { date: 2027-03-23, name: Sultan of Johor's Birthday }
+  - { date: 2027-05-01, name: Labour Day }
+  - { date: 2027-05-17, name: Hari Raya Aidiladha }
+  - { date: 2027-05-20, name: Wesak Day }
+  - { date: 2027-06-06, name: Awal Muharram (Johor) }
+  - { date: 2027-06-07, name: "Awal Muharram (Johor, second day) / Agong's Birthday" }
+  - { date: 2027-07-10, name: Hol Almarhum Sultan Iskandar (Johor) }
+  - { date: 2027-08-15, name: Prophet Muhammad's Birthday }
+  - { date: 2027-08-16, name: Prophet Muhammad's Birthday (second day) }
+  - { date: 2027-08-31, name: Merdeka Day }
+  - { date: 2027-09-16, name: Malaysia Day }
 
 # kind: final -> no bus service (the PDF's "semester breaks").
 # kind: mid -> buses assumed to run (the PDF does not say; students stay on campus). See docs/v2/transit.md.
 semesterBreaks:
-  - { from: 2025-11-24, to: 2025-11-30, kind: mid, name: 'Mid-semester break, Semester I' }
-  - { from: 2026-02-09, to: 2026-03-15, kind: final, name: 'Final break, Semester I' }
-  - { from: 2026-05-04, to: 2026-05-10, kind: mid, name: 'Mid-semester break, Semester II' }
-  - { from: 2026-07-20, to: 2026-10-04, kind: final, name: 'Final break, Semester II' }
+  - { from: 2025-11-24, to: 2025-11-30, kind: mid, name: 'Mid-semester break, Semester I 2025/2026' }
+  - { from: 2026-02-09, to: 2026-03-15, kind: final, name: 'Final break, Semester I 2025/2026' }
+  - { from: 2026-05-04, to: 2026-05-10, kind: mid, name: 'Mid-semester break, Semester II 2025/2026' }
+  - { from: 2026-07-20, to: 2026-10-04, kind: final, name: 'Final break, Semester II 2025/2026' }
+  - { from: 2026-11-30, to: 2026-12-06, kind: mid, name: 'Mid-semester break, Semester I 2026/2027' }
+  - { from: 2027-02-20, to: 2027-03-21, kind: final, name: 'Final break, Semester I 2026/2027' }
+  - { from: 2027-05-17, to: 2027-05-23, kind: mid, name: 'Mid-semester break, Semester II 2026/2027' }
+  - { from: 2027-07-26, to: 2027-10-03, kind: final, name: 'Final break, Semester II 2026/2027' }

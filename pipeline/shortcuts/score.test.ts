@@ -38,16 +38,6 @@ describe('scoreShortcut', () => {
     })
   })
 
-  test('3 user confirmations are verified', () => {
-    const users = ['u1', 'u2', 'u3'].map((ref) => ev('user-report', { ref }))
-    expect(scoreShortcut(users)).toEqual({ level: 'verified', reasons: ['3 user confirmations'] })
-  })
-
-  test('2 user confirmations are only a guess', () => {
-    const users = ['u1', 'u2'].map((ref) => ev('user-report', { ref }))
-    expect(scoreShortcut(users)).toEqual({ level: 'guess', reasons: ['only user-report'] })
-  })
-
   test('2 independent sources are likely', () => {
     expect(scoreShortcut([ev('research'), ev('floor-plan')])).toEqual({
       level: 'likely',
