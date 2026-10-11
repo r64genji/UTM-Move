@@ -1,0 +1,428 @@
+/* UTM Move — calm, warm paper, high-contrast ink. Built to read on a phone in sunlight. */
+:root {
+  --paper: oklch(98.6% 0.006 85);
+  --paper-2: oklch(95.6% 0.01 80);
+  --line: oklch(89% 0.012 70);
+  --ink: oklch(21% 0.02 25);
+  --ink-2: oklch(41% 0.02 30);
+  --ink-3: oklch(52% 0.018 35);
+  --maroon: oklch(38% 0.125 12);
+  --maroon-ink: oklch(98% 0.01 20);
+  --maroon-wash: oklch(94.5% 0.025 15);
+  --gold: oklch(80% 0.13 82);
+  --focus: oklch(55% 0.17 255);
+
+  --font: 'Atkinson Hyperlegible Next Variable', system-ui, sans-serif;
+  --text-sm: 0.9375rem;
+  --text-md: 1.0625rem;
+  --text-lg: 1.375rem;
+  --text-xl: clamp(1.75rem, 1.4rem + 1.5vw, 2.125rem);
+
+  --radius: 14px;
+  --panel-w: 400px;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  color: var(--ink);
+  background: var(--paper);
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  overscroll-behavior: none;
+}
+
+h1,
+h2,
+p,
+dl,
+dd {
+  margin: 0;
+}
+
+a {
+  color: var(--maroon);
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* ── Shell ─────────────────────────────────────────────── */
+
+.shell {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+}
+
+.shell > .map {
+  /* beats MapLibre's own .maplibregl-map { position: relative } */
+  position: absolute;
+  inset: 0;
+  background: #f4f1ea;
+}
+
+.map-error {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  right: 16px;
+  padding: 12px 14px;
+  background: var(--paper);
+  border-radius: var(--radius);
+}
+
+/* Phone: bottom sheet. */
+.sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  border-radius: 20px 20px 0 0;
+  box-shadow:
+    0 -1px 0 oklch(0% 0 0 / 0.06),
+    0 -8px 28px oklch(25% 0.03 30 / 0.14);
+  transform: translateY(calc(100% - var(--sheet-visible, 50%)));
+  transition: transform 340ms var(--ease-out);
+  will-change: transform;
+}
+
+.sheet[data-dragging] {
+  transition: none;
+}
+
+.sheet-handle {
+  flex: none;
+  display: grid;
+  place-items: center;
+  height: 28px;
+  border: 0;
+  background: none;
+  cursor: grab;
+  touch-action: none;
+}
+
+.sheet-handle span {
+  width: 44px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--line);
+}
+
+.sheet-body {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 20px calc(var(--sheet-hidden, 0px) + 24px + env(safe-area-inset-bottom));
+}
+
+/* Desktop: floating side panel. */
+@media (min-width: 900px) {
+  .sheet {
+    top: 16px;
+    bottom: auto;
+    max-height: calc(100% - 32px);
+    left: 16px;
+    right: auto;
+    width: var(--panel-w);
+    border-radius: 18px;
+    transform: none;
+    box-shadow:
+      0 0 0 1px oklch(0% 0 0 / 0.05),
+      0 12px 36px oklch(25% 0.03 30 / 0.16);
+  }
+
+  .sheet-body {
+    padding: 28px 28px 28px;
+  }
+}
+
+/* MapLibre controls, restyled to match. */
+.maplibregl-ctrl-top-right {
+  top: max(10px, env(safe-area-inset-top));
+}
+
+.maplibregl-ctrl-group:not(:empty) {
+  border-radius: 12px;
+  box-shadow: 0 2px 10px oklch(25% 0.03 30 / 0.16);
+}
+
+.maplibregl-ctrl-group button {
+  width: 40px;
+  height: 40px;
+}
+
+.maplibregl-ctrl-attrib {
+  font-family: var(--font);
+  font-size: 12px;
+}
+
+/* ── Page frame ───────────────────────────────────────── */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding-top: 4px;
+  animation: page-in 260ms var(--ease-out);
+}
+
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page {
+    animation: none;
+  }
+  .sheet {
+    transition: none;
+  }
+}
+
+.page-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: -8px;
+}
+
+.page-head h1 {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.kicker {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--maroon);
+}
+
+.icon-btn {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.icon-btn:hover {
+  background: var(--paper-2);
+}
+
+.pending {
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  background: var(--paper-2);
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+}
+
+/* ── Home ─────────────────────────────────────────────── */
+
+.wordmark {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--ink-2);
+}
+
+.wordmark span {
+  color: var(--maroon);
+}
+
+.home-title {
+  font-size: var(--text-xl);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+  margin-top: -8px;
+}
+
+.search-field {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 0 16px;
+  border-radius: var(--radius);
+  background: var(--paper-2);
+  border: 1.5px solid var(--line);
+  color: var(--ink-2);
+  font-size: var(--text-md);
+  text-decoration: none;
+  transition: border-color 160ms;
+}
+
+.search-field:hover {
+  border-color: var(--ink-3);
+}
+
+.search-field svg {
+  color: var(--ink);
+}
+
+.quick {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.quick-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  border: 1.5px solid var(--line);
+  color: var(--ink);
+  text-decoration: none;
+  transition:
+    border-color 160ms,
+    background 160ms;
+}
+
+.quick-item:first-child {
+  background: var(--maroon);
+  border-color: var(--maroon);
+  color: var(--maroon-ink);
+}
+
+.quick-item:first-child span {
+  color: oklch(88% 0.03 15);
+}
+
+.quick-item:not(:first-child):hover {
+  background: var(--maroon-wash);
+  border-color: oklch(80% 0.05 15);
+}
+
+.quick-item strong {
+  font-size: var(--text-md);
+}
+
+.quick-item span {
+  font-size: var(--text-sm);
+  color: var(--ink-2);
+}
+
+/* ── Controls ─────────────────────────────────────────── */
+
+.field {
+  width: 100%;
+  min-height: 52px;
+  padding: 0 16px;
+  border-radius: var(--radius);
+  border: 1.5px solid var(--line);
+  background: var(--paper-2);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--text-md);
+}
+
+.field:focus {
+  outline: none;
+  border-color: var(--maroon);
+  background: var(--paper);
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 22px;
+  border-radius: 999px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: var(--maroon);
+  color: var(--maroon-ink);
+}
+
+.trip-ends {
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.trip-ends > div {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  align-items: baseline;
+  padding: 14px 16px;
+}
+
+.trip-ends > div + div {
+  border-top: 1.5px solid var(--line);
+}
+
+.trip-ends dt {
+  font-size: var(--text-sm);
+  color: var(--ink-3);
+}
+
+.trip-ends dd {
+  font-weight: 700;
+}
+
+.segmented {
+  display: flex;
+  padding: 4px;
+  gap: 4px;
+  border-radius: 12px;
+  background: var(--paper-2);
+}
+
+.segmented button {
+  flex: 1;
+  min-height: 42px;
+  border: 0;
+  border-radius: 9px;
+  background: none;
+  color: var(--ink-2);
+  font: inherit;
+  font-weight: 700;
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.segmented button[aria-checked='true'] {
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 1px 4px oklch(25% 0.03 30 / 0.16);
+}
