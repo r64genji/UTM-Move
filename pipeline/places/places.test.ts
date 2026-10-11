@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { loadBoundary } from './geo.ts'
 import { blockCode, buildingMatch, junkReason, samePoint, type Member } from './merge.ts'
@@ -78,9 +78,11 @@ describe('validatePlaces', () => {
     ])
   })
 
-  it.runIf(existsSync(CURATED))('the committed curated places are valid', () => {
+  it('the committed curated places are valid and carry only our own fields', () => {
     const places = JSON.parse(readFileSync(CURATED, 'utf8'))
     expect(validatePlaces(places, ring)).toEqual([])
     expect(places.length).toBeGreaterThan(300)
+    const keys = new Set(places.flatMap((p: object) => Object.keys(p)))
+    expect([...keys].sort()).toEqual(['aliases', 'blockCode', 'buildingId', 'category', 'entrances', 'id', 'location', 'name'])
   })
 })
