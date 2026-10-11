@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "typecheck": "tsc -b",
     "test": "vitest run",
+    "vision:shortcuts": "tsx pipeline/vision/run.ts",
     "score:shortcuts": "tsx pipeline/shortcuts/score-cli.ts",
     "validate": "echo 'validate: no data checks yet (stub, see ticket #19)'",
     "preview": "vite preview"
@@ -41,6 +42,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.13.0",
     "jsdom": "^30.1.2",
+    "sharp": "^0.35.5",
     "tsx": "^4.23.15",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.71.1",
