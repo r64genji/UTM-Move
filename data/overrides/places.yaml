@@ -1,0 +1,844 @@
+# Place review decisions (#11). Applied on every `npm run build:places`.
+# Key: candidate id (osm-w123 = OSM way, osm-n123 = OSM node, g-xxxxxxxxxx = hashed Google place).
+# action: keep | fix (name/category/aliases/location) | drop | merge (mergeInto: <id>)
+# by: agent = first pass by the coding agent, user = you. Change anything you disagree with.
+g-04c602fddd:
+  action: merge
+  mergeInto: osm-n4718193711
+  by: agent
+  note: Duplicate of MSI Mart at Masjid Sultan Ismail.
+g-04e0d39071:
+  action: keep
+  by: agent
+  note: Real campus cafe inside UTM Alumni House.
+g-097d56b753:
+  action: merge
+  mergeInto: osm-w207279307
+  by: agent
+  note: Duplicate hostel block pin; merge into Block U4 building.
+g-09c656a4a4:
+  action: drop
+  by: agent
+  note: Drop because the pin is 150 m away from any building and cannot be moved.
+g-0d2e21a2e7:
+  action: merge
+  mergeInto: osm-w302533851
+  by: agent
+  note: Duplicate entry for Dewan Kuliah P19; merge with the lecture hall building.
+g-0dde8d5ea0:
+  action: drop
+  by: agent
+  note: Office pin placed 96 m from any building in an outdoor area.
+g-10583bde72:
+  action: merge
+  mergeInto: osm-w262856911
+  by: agent
+  note: Duplicate pin for the Block T06 FGHT faculty building.
+g-119d034d5a:
+  action: keep
+  by: agent
+  note: Real walk-in phone repair shop at the HEMA student center.
+g-12004337b6:
+  action: merge
+  mergeInto: osm-w206379891
+  by: agent
+  note: Duplicate pin for the Block U7 Kolej Perdana hostel building.
+g-131152991b:
+  action: merge
+  mergeInto: osm-n4718193711
+  by: agent
+  note: Duplicate entry for MSI Mart at Masjid Sultan Ismail.
+g-164e2a5234:
+  action: drop
+  by: agent
+  note: Internal landscaping initiative rather than a public campus destination.
+g-16940bd21b:
+  action: merge
+  mergeInto: osm-w161046429
+  by: agent
+  note: Duplicate Google pin for Block XB2, correctly merged into building polygon.
+g-1c0afb7bcf:
+  action: drop
+  by: agent
+  note: Pin is on the Arked KDSE food court; no cricket ground there.
+g-1eb655b52c:
+  action: drop
+  by: agent
+  note: Ambiguous faculty acronym mistakenly categorized as a food cafe.
+g-26a977399e:
+  action: merge
+  mergeInto: osm-w302533850
+  by: agent
+  note: Duplicate faculty pin; merge into FKE building P19a.
+g-2b7f9e82b0:
+  action: drop
+  by: agent
+  note: Duplicate faculty pin located 46 m from any building.
+g-32051f0ff6:
+  action: drop
+  by: agent
+  note: Informal duplicate entry ('Manu lab') misplaced 51 m away across buildings.
+g-36f94b69dd:
+  action: drop
+  by: agent
+  note: Vague entity or personal name with no distinct walk-in campus facility.
+g-385deebb56:
+  action: keep
+  by: agent
+  note: Real campus computer and repair shop inside UTM Alumni House.
+g-3c217f36c6:
+  action: merge
+  mergeInto: g-e43c5128ba
+  by: agent
+  note: Duplicate of Port19 Cafe at Dewan Kuliah P19.
+g-3c56b8f889:
+  action: merge
+  mergeInto: osm-w372869132
+  by: agent
+  note: Duplicate entry for Block P08, FKE; merge into the building polygon.
+g-3cb1c167ef:
+  action: drop
+  by: agent
+  note: Martial arts club with no UTM facility of its own; not a campus place.
+g-4051735ddb:
+  action: keep
+  by: agent
+  note: Real campus cafe and recreational facility at UTM.
+g-407a118b4f:
+  action: merge
+  mergeInto: osm-w207409195
+  by: agent
+  note: Duplicate entry for Dewan Sultan Iskandar.
+g-40ee58b29a:
+  action: drop
+  by: agent
+  note: Duplicate lab entry with pin placed 383 m away from its actual location in P06.
+g-40ee77a203:
+  action: keep
+  by: agent
+  note: Real cafe located inside Arked Cengal.
+g-41aac64070:
+  action: merge
+  mergeInto: osm-w667596451
+  by: agent
+  note: Duplicate of Tok Su Cafe, FABU.
+g-42fb1a7b51:
+  action: merge
+  mergeInto: g-6f6c3ea817
+  by: agent
+  note: Duplicate entry for Vice-Chancellor's Office inside Bangunan Canselori Sultan Ibrahim.
+g-434c945f8d:
+  action: drop
+  by: agent
+  note: Google pin is in forest, no building; zero reviews.
+g-46792f5794:
+  action: keep
+  by: agent
+  note: Real eatery located inside Arked Cengal.
+g-46c8d1e226:
+  action: keep
+  by: agent
+  note: Real campus cafe serving KLG student residences.
+g-4ef3267dd7:
+  action: drop
+  by: agent
+  note: Misplaced pin located over 60 m away from any campus building.
+g-4fdbcbb980:
+  action: merge
+  mergeInto: osm-w302533843
+  by: agent
+  note: Duplicate of Block M46, Faculty of Civil Engineering.
+g-5724d05043:
+  action: drop
+  by: agent
+  note: Pin is in trees next to the removed Student Mall cluster, one review.
+g-57c8d4d995:
+  action: merge
+  mergeInto: osm-w206498113
+  by: agent
+  note: Duplicate pin for Block MA1, KTDI.
+g-5a54e846aa:
+  action: drop
+  by: agent
+  note: Pin is on an open grass patch, no building; not a findable shop.
+g-5b7376abf9:
+  action: keep
+  by: agent
+  note: Real cafeteria at Pejabat Harta Bina.
+g-5eb9c88ac9:
+  action: drop
+  by: agent
+  note: Duplicate faculty pin located 67 m from any building.
+g-6a27ea077e:
+  action: drop
+  by: agent
+  note: Not a genuine walk-in cafe and located 42m away from any building.
+g-6bafa87e5f:
+  action: merge
+  mergeInto: osm-w262023127
+  by: agent
+  note: Duplicate entry for hostel block S47, now part of Scholar's Inn.
+g-6cdc2523ea:
+  action: drop
+  by: agent
+  note: Single-review place sitting in a hostel area without a proper building, likely invalid or closed.
+g-6e9cf7971b:
+  action: keep
+  by: agent
+  note: Real convenience store correctly located inside Arked Lestari.
+g-6fc16a1d31:
+  action: drop
+  by: agent
+  note: Wing of Block U3; folded into Block U3 as an alias.
+g-7240f6d474:
+  action: drop
+  by: agent
+  note: Private company without a clearly verified walk-in retail storefront.
+g-73bc27db51:
+  action: keep
+  by: agent
+  note: Real open-air cafe operating at UTM Equestrian Park.
+g-75c7c3c4df:
+  action: keep
+  by: agent
+  note: Real food stall located at Kolej Perdana food court.
+g-7786a8e2c1:
+  action: drop
+  by: agent
+  note: Pin on open ground with unrelated aliases (SOE, FSSH); Makmal Automotif SKM covers it.
+g-795ff23539:
+  action: drop
+  by: agent
+  note: Student Mall pin sits on trees in current Esri imagery and the building is gone; the shops pinned in it are gone with it.
+g-7a50c406ab:
+  action: drop
+  by: agent
+  note: Wing of Block U3; folded into Block U3 as an alias.
+g-7bd919becc:
+  action: drop
+  by: agent
+  note: Severely misplaced pin located 235m away from Block L29.
+g-7d0aef1622:
+  action: drop
+  by: agent
+  note: Likely a personal pin rather than a genuine campus food establishment.
+g-7e93083656:
+  action: keep
+  by: agent
+  note: Genuine walk-in outdoor cafe operating at UTM Equestrian Park.
+g-7f7c188a11:
+  action: drop
+  by: agent
+  note: Unverified private enterprise without a physical storefront on campus.
+g-8076ceb878:
+  action: drop
+  by: agent
+  note: Informal student business located inside a residential hostel block.
+g-80eadadbf0:
+  action: drop
+  by: agent
+  note: Mislocated pin for Block S42 placed inside building S43.
+g-8281686c8b:
+  action: keep
+  by: agent
+  note: Kolej Tuanku Canselor main entry, at the college office building. The OSM node of the same name is dropped as the duplicate.
+g-831b0a07b0:
+  action: merge
+  mergeInto: g-f5f99f9a85
+  by: agent
+  note: Duplicate of Civil Engineering Testing Unit (CETU) located 7 m away.
+g-88df3a9414:
+  action: drop
+  by: agent
+  note: Photo-spot sign with a hashtag name, not a place people navigate to.
+g-8c93423a47:
+  action: drop
+  by: agent
+  note: Google pin 20 m from any building on a road, zero reviews.
+g-8d38de450e:
+  action: keep
+  by: agent
+  note: Real cafe located in Arked Lestari food court.
+g-8d921b0a14:
+  action: merge
+  mergeInto: g-324e9e85cd
+  by: agent
+  note: Duplicate Malay name for University Industry Research Laboratory at T03.
+g-8fc6b192b6:
+  action: merge
+  mergeInto: osm-w206386596
+  by: agent
+  note: Duplicate pin for the Block K04 KTR hostel building.
+g-90dbcb4a42:
+  action: merge
+  mergeInto: osm-w206379332
+  by: agent
+  note: Duplicate entry for Pak Lah Cafe; merge into the cafe building.
+g-913962c5fb:
+  action: drop
+  by: agent
+  note: Misplaced administration office pin located over 40 m from any building on sports courts.
+g-96bbb00a73:
+  action: fix
+  aliases:
+    - Taska Ihsan UTM
+  by: agent
+  note: Removed aliases that name the other court.
+g-971817e6b6:
+  action: drop
+  by: agent
+  note: Unclear commercial listing without verified walk-in presence on campus.
+g-98bb7eaf3f:
+  action: drop
+  by: agent
+  note: Same parade ground as Padang Kawad (36 m apart).
+g-9a410f17b5:
+  action: drop
+  by: agent
+  note: Google pin is in forest, no building; zero reviews.
+g-9cd6334590:
+  action: merge
+  mergeInto: osm-w206516595
+  by: agent
+  note: Duplicate entry for Block M25 at KTDI.
+g-9d8091132d:
+  action: drop
+  by: agent
+  note: Wing of Block U3; folded into Block U3 as an alias.
+g-a9687d8be4:
+  action: drop
+  by: agent
+  note: Misplaced pin located over 50 m away from any campus building.
+g-ab38003277:
+  action: drop
+  by: agent
+  note: Misplaced indoor laboratory pin placed 150 m away from any building.
+g-ab3f59bcee:
+  action: drop
+  by: agent
+  note: Pin is on the roof of a building, not on a car park.
+g-ad1eb2ea60:
+  action: merge
+  mergeInto: g-b7e082747b
+  by: agent
+  note: Duplicate pin for Hutan Rekreasi UTM.
+g-b26617cf9c:
+  action: drop
+  by: agent
+  note: Google pin 58 m from any building, in vegetation; zero reviews.
+g-b339e0e194:
+  action: drop
+  by: agent
+  note: Severely misplaced pin 110m away from the actual block building.
+g-ba98d6da78:
+  action: fix
+  aliases:
+    - Kolej 9-10 Futsal Court
+    - Gelanggang Futsal Kolej 9 & 10
+  by: agent
+  note: Removed aliases that name the other court.
+g-bb1d583fc2:
+  action: merge
+  mergeInto: osm-w302533850
+  by: agent
+  note: Duplicate faculty pin; merge into FKE building P19a.
+g-bbbedb3919:
+  action: drop
+  by: agent
+  note: Misplaced pin for Block C14 situated inside the distinct Block C17 building.
+g-bf1cec18c8:
+  action: drop
+  by: agent
+  note: Pin is in a wooded area with no building; the MPP office is listed under the Chancellery entry.
+g-bfc5fa0a19:
+  action: drop
+  by: agent
+  note: Duplicate faculty pin for Block N01a.
+g-c15aa9b1f3:
+  action: keep
+  by: agent
+  note: Findable food stall operating in the outdoor Marhaen recreation track area.
+g-c48df62ab7:
+  action: drop
+  by: agent
+  note: Unverified dessert business with zero reviews and no confirmed walk-in storefront.
+g-c59b10418d:
+  action: merge
+  mergeInto: g-324e9e85cd
+  by: agent
+  note: Duplicate entry for University Industry Research Laboratory at T03.
+g-c61a82bceb:
+  action: merge
+  mergeInto: g-2fefec608a
+  by: agent
+  note: Official Malay name for the Production Lab; merge into Machine Shop and Production Lab (E01).
+g-c9abe8eead:
+  action: drop
+  by: agent
+  note: Misplaced pin for N28A located 153 m away at N28.
+g-ce1e77c188:
+  action: fix
+  name: Block S46, Scholar's Inn
+  category: Residential college
+  aliases:
+    - UTM Scholar's Inn-S46
+    - Scholar's Inn S46
+    - Block S46
+    - S46
+  by: agent
+  note: Hostel block, not Other.
+g-d10426011f:
+  action: drop
+  by: agent
+  note: Student Mall pin sits on trees in current Esri imagery and the building is gone; the shops pinned in it are gone with it.
+g-d32e44eb81:
+  action: keep
+  by: agent
+  note: Real bakery and cafe located at Kolej Perdana.
+g-d4e601a48d:
+  action: drop
+  by: agent
+  note: Duplicate block pin located 67 m from any building.
+g-d51182310c:
+  action: drop
+  by: agent
+  note: Misplaced duplicate pin located over 200 m away from the actual research institute building.
+g-d5c3dbebcb:
+  action: keep
+  by: agent
+  note: Real print and convenience store at Student Mall.
+g-d5eaef1316:
+  action: merge
+  mergeInto: osm-w636189635
+  by: agent
+  note: Duplicate entry for Azman Hashim Stadium; merge with the stadium building.
+g-d8970e69c0:
+  action: keep
+  by: agent
+  note: Real campus laundromat facility situated inside Arked Lestari.
+g-dedc9f78c3:
+  action: keep
+  by: agent
+  note: Real outdoor botanical research living lab for the Faculty of Science.
+g-df39c86ccb:
+  action: keep
+  by: agent
+  note: Real eatery located inside Arked Meranti.
+g-e10f2bfbc4:
+  action: drop
+  by: agent
+  note: Pin is far from the park it names; Hutan Rekreasi UTM and Tasik Ilmu cover the area.
+g-e3bdfe5e8c:
+  action: drop
+  by: agent
+  note: Dubious eatery name with negligible reviews and no confirmed walk-in place.
+g-e43c5128ba:
+  action: keep
+  by: agent
+  note: Real cafe operating at lecture hall complex P19.
+g-edd195a6fa:
+  action: keep
+  by: agent
+  note: Real campus photocopy and printing service at HEMA.
+g-ee3b5f333c:
+  action: keep
+  by: agent
+  note: Food stall located inside Arked Cengal.
+g-f04eab56aa:
+  action: merge
+  mergeInto: osm-n6430105421
+  by: agent
+  note: Duplicate faculty entry within building B12.
+g-f0e15699a4:
+  action: drop
+  by: agent
+  note: Misplaced indoor laboratory pin placed 150 m away from any building.
+g-f318c78562:
+  action: merge
+  mergeInto: osm-w206516595
+  by: agent
+  note: Duplicate entry for Block M25 at KTDI.
+g-f50bf8c88b:
+  action: drop
+  by: agent
+  note: Duplicate pin placed at faculty administration building B12; INSTeG is located at Block T06.
+g-f57a0adcb1:
+  action: merge
+  mergeInto: osm-w261186161
+  by: agent
+  note: Duplicate entry for Unit Awam under Pejabat Harta Bina.
+g-f6760a8b52:
+  action: merge
+  mergeInto: osm-w302533850
+  by: agent
+  note: Duplicate faculty pin; merge into FKE building P19a.
+g-f7105dd7eb:
+  action: drop
+  by: agent
+  note: Zero reviews and pin sits in a residential hostel area far from food arcade.
+g-f97e794b90:
+  action: merge
+  mergeInto: osm-w264153636
+  by: agent
+  note: Duplicate faculty entry for AHIBS T08.
+g-fce0557580:
+  action: merge
+  mergeInto: osm-n2185219367
+  by: agent
+  note: Duplicate of Arked Merbau at KTHO.
+osm-n1471659484:
+  action: drop
+  by: agent
+  note: Duplicate college area node located 163 m away from the main Kolej Tun Hussein Onn pin.
+osm-n1471659514:
+  action: drop
+  by: agent
+  note: Duplicate college-level pin where individual hostel blocks and main college pin g-8281686c8b already exist.
+osm-n2187074752:
+  action: keep
+  by: agent
+  note: Valid campus parking lot for Kolej Dato' Onn Jaafar.
+osm-n3067842649:
+  action: drop
+  by: agent
+  note: Taxi stand named after a Kolej Mawar that UTM does not have; not a campus place.
+osm-n3067842650:
+  action: drop
+  by: agent
+  note: Student Mall pin sits on trees in current Esri imagery and the building is gone; the shops pinned in it are gone with it.
+osm-n4717548639:
+  action: drop
+  by: agent
+  note: Student Mall pin sits on trees in current Esri imagery and the building is gone; the shops pinned in it are gone with it.
+osm-n4718173844:
+  action: drop
+  by: agent
+  note: Student Mall pin sits on trees in current Esri imagery and the building is gone; the shops pinned in it are gone with it.
+osm-n5194651321:
+  action: merge
+  mergeInto: g-448a4c5ced
+  by: agent
+  note: Duplicate OSM point for Jabatan Bendahari within the same Chancellery building.
+osm-n6430105421:
+  action: drop
+  by: agent
+  note: Same faculty as Block B12 (13 m apart); the building entry is renamed to the faculty.
+osm-r18133633:
+  action: fix
+  name: Faculty of Built Environment and Surveying (Block B12)
+  category: Faculty/Academic
+  aliases:
+    - FABU
+    - B12
+    - Fakulti Alam Bina dan Ukur
+    - FAB
+  by: agent
+  note: Merged the duplicate faculty pin into the building.
+osm-w1215622358:
+  action: fix
+  name: Block B06, FABU
+  category: Faculty/Academic
+  aliases:
+    - B06
+  by: agent
+  note: B blocks belong to FABU; added the faculty for context.
+osm-w206495688:
+  action: fix
+  name: Block MA7, KTDI
+  category: Residential college
+  aliases:
+    - MA7
+    - KTDI
+  by: agent
+  note: Hostel block of KTDI; added the college for context.
+osm-w206496424:
+  action: fix
+  name: Block MA5, KTDI
+  category: Residential college
+  aliases:
+    - MA5
+    - KTDI
+  by: agent
+  note: Hostel block of KTDI; added the college for context.
+osm-w206497312:
+  action: fix
+  name: Block MA6, KTDI
+  category: Residential college
+  aliases:
+    - MA6
+    - KTDI
+  by: agent
+  note: Hostel block of KTDI; added the college for context.
+osm-w206513843:
+  action: fix
+  name: Block M10, KTDI
+  category: Residential college
+  aliases:
+    - M10
+    - KTDI
+  by: agent
+  note: Hostel block of KTDI; added the college for context.
+osm-w206513933:
+  action: fix
+  name: Block M11, KTDI
+  category: Residential college
+  aliases:
+    - M11
+    - KTDI
+  by: agent
+  note: Hostel block of KTDI; added the college for context.
+osm-w206524537:
+  action: fix
+  category: Other
+  by: agent
+  note: Not a faculty; ancillary block next to Campus Sustainability.
+osm-w206806880:
+  action: fix
+  name: Block B04, FABU
+  category: Faculty/Academic
+  aliases:
+    - B04
+  by: agent
+  note: B blocks belong to FABU; added the faculty for context.
+osm-w206806892:
+  action: fix
+  name: Block B07, FABU
+  category: Faculty/Academic
+  aliases:
+    - B07
+  by: agent
+  note: B blocks belong to FABU; added the faculty for context.
+osm-w206844535:
+  action: keep
+  by: agent
+  note: Valid prayer facility for Kolej 9 situated at block UA2.
+osm-w207273423:
+  action: fix
+  name: Faculty of Chemical Engineering
+  category: Faculty/Academic
+  aliases:
+    - FKK
+    - FChE
+    - FKT
+    - Fakulti Kejuruteraan Kimia
+  by: agent
+  note: Main faculty building; do not merge across 286 m.
+osm-w207275532:
+  action: fix
+  name: Volleyball Court B, KTHO
+  category: Sport
+  aliases:
+    - Gelanggang Bola Tampar KTHO
+  by: agent
+  note: Distinct volleyball court 43 m away from osm-w207759919; should not be merged.
+osm-w207275920:
+  action: fix
+  name: Block B09, FABU
+  category: Faculty/Academic
+  aliases:
+    - B09
+  by: agent
+  note: B blocks belong to FABU; added the faculty for context.
+osm-w207278224:
+  action: fix
+  name: Sepak Takraw Court A, Kolej 9
+  category: Sport
+  aliases:
+    - Takraw Court A
+    - Gelanggang Takraw A Kolej 9
+  by: agent
+  note: Renamed to distinguish from adjacent takraw court osm-w207278231.
+osm-w207278231:
+  action: fix
+  name: Sepak Takraw Court B, Kolej 9
+  category: Sport
+  aliases:
+    - Takraw Court B
+    - Gelanggang Takraw B Kolej 9
+  by: agent
+  note: Renamed to distinguish from adjacent takraw court osm-w207278224.
+osm-w207278259:
+  action: drop
+  by: agent
+  note: Same building as Dewan Kuliah N24 (19 m apart); the lecture hall entry stays.
+osm-w207279309:
+  action: fix
+  aliases:
+    - U3
+    - U03
+    - U3A
+    - U3B
+    - U3C
+  by: agent
+  note: Parent building keeps the wing names as aliases.
+osm-w207279310:
+  action: fix
+  name: Scholar's Inn (Block U9)
+  category: Residential college
+  aliases:
+    - U9
+    - Block U9
+    - U09
+    - Scholar's Inn UTM
+  by: agent
+  note: Hostel block, not Other.
+osm-w207280119:
+  action: fix
+  name: Volleyball Court (Block L36), KTHO
+  category: Sport
+  aliases:
+    - Gelanggang Bola Tampar KTHO
+    - KTHO Volleyball Court
+  by: agent
+  note: Removed aliases that name the other court.
+osm-w207409195:
+  action: keep
+  by: agent
+  note: Main convocation hall building on campus.
+osm-w207759919:
+  action: fix
+  name: Volleyball Court (Block L07), KTHO
+  category: Sport
+  aliases:
+    - Gelanggang Bola Tampar KTHO
+    - KTHO Volleyball Court
+  by: agent
+  note: Removed aliases that name the other court.
+osm-w261409395:
+  action: drop
+  by: agent
+  note: Same building as UTM International (alias Block S19 already there).
+osm-w261412845:
+  action: fix
+  name: Tennis Court 1, KTC
+  category: Sport
+  aliases:
+    - KTC Tennis Court 1
+    - Gelanggang Tenis 1 KTC
+    - Tennis Court, KTC
+  by: agent
+  note: Differentiated from the second KTC tennis court by numbering.
+osm-w261469291:
+  action: fix
+  name: Tennis Court (Block S02), KTC
+  category: Sport
+  aliases:
+    - Gelanggang Tenis KTC
+    - KTC Tennis Court
+    - Tennis Court, KTC
+  by: agent
+  note: Renamed to distinguish from the other KTC tennis court.
+osm-w261474425:
+  action: fix
+  category: Other
+  note: Kindergarten, not a faculty.
+  by: agent
+osm-w262022404:
+  action: fix
+  name: Badminton Court (Block G26), KRP
+  category: Sport
+  aliases:
+    - Gelanggang Badminton KRP
+    - KRP Badminton Court
+  by: agent
+  note: Removed aliases that name the other court.
+osm-w262023127:
+  action: fix
+  category: Residential college
+  by: agent
+  note: Hostel block, not Other.
+osm-w262498900:
+  action: fix
+  aliases:
+    - Parade Ground
+    - Dataran UTM
+  note: Absorbs the Dataran UTM duplicate.
+  by: agent
+osm-w262856911:
+  action: keep
+  by: agent
+  note: Valid research centre housed in its own dedicated academic building (Block T06).
+osm-w264036594:
+  action: fix
+  name: Badminton Court (Block G06), KRP
+  category: Sport
+  aliases:
+    - Gelanggang Badminton KRP
+    - KRP Badminton Court
+  by: agent
+  note: Removed aliases that name the other court.
+osm-w302533865:
+  action: drop
+  by: agent
+  note: Student Mall pin sits on trees in current Esri imagery and the building is gone; the shops pinned in it are gone with it.
+osm-w331195441:
+  action: fix
+  name: Hockey and Frisbee Field (Padang Tapak)
+  aliases:
+    - Padang Tapak
+    - Padang Hoki
+    - Padang Frisbee
+  by: agent
+  note: Clearer name.
+osm-w413230790:
+  action: fix
+  name: Block S42, KTC
+  category: Residential college
+  aliases:
+    - S42
+    - Blok S42
+  by: agent
+  note: Valid hostel block; do not merge into the misplaced pin in block S43.
+osm-w477217837:
+  action: fix
+  name: UTM Gate 1
+  category: Gate/Entrance
+  aliases:
+    - Entrance 1
+    - Pintu 1
+  by: agent
+  note: Named as a campus gate so it is findable.
+osm-w477217838:
+  action: fix
+  name: UTM Gate 2
+  category: Gate/Entrance
+  aliases:
+    - Entrance 2
+    - Pintu 2
+    - Pintu Desa Bakti
+  by: agent
+  note: Named as a campus gate so it is findable.
+osm-w477296683:
+  action: fix
+  name: UTM Gate 3
+  category: Gate/Entrance
+  aliases:
+    - Entrance 3
+    - Pintu 3
+  by: agent
+  note: Named as a campus gate so it is findable.
+osm-w477296684:
+  action: fix
+  name: UTM Gate 4
+  category: Gate/Entrance
+  aliases:
+    - Entrance 4
+    - Pintu 4
+  by: agent
+  note: Named as a campus gate so it is findable.
+osm-w612218889:
+  action: drop
+  by: agent
+  note: Pin is in dense forest with no trail or facility.
+osm-w686051865:
+  action: fix
+  name: Block B08, FABU
+  category: Faculty/Academic
+  aliases:
+    - B08
+  by: agent
+  note: B blocks belong to FABU; added the faculty for context.
+osm-w686136014:
+  action: drop
+  by: agent
+  note: OSM outline sits on open ground and trees; no building visible, and the bare code gives no context.

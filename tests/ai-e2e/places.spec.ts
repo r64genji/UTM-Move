@@ -11,6 +11,8 @@ import { CAMPUS_CONTEXT } from './lib/viewports.ts'
 
 const PLACES = 'public/data/places.json'
 const BATCH = 50
+/** Gemini flags a person checked against the data and rejected: { placeId: reason }. They are still listed, but do not fail the run. */
+const ACCEPTED: Record<string, string> = JSON.parse(readFileSync('tests/ai-e2e/places-accepted.json', 'utf8'))
 
 interface Place extends PlaceRow { category: string; aliases?: string[]; buildingId?: string; blockCode?: string }
 
@@ -36,6 +38,7 @@ function cluster(ps: Place[], n: number): Place[][] {
 test.skip(!hasKey(), SKIP_MESSAGE)
 
 test('B: places audit', async () => {
+  test.setTimeout(40 * 60_000) // ~16 sequential Gemini calls
   const info = test.info()
   test.skip(info.project.name !== 'desktop', 'viewport independent: runs once')
   if (!existsSync(PLACES)) {
@@ -67,12 +70,12 @@ test('B: places audit', async () => {
       if (p) flagged.push({ id: p.id, name: p.name, category: p.category, issue: f.issue, severity: f.severity, reason: f.reason })
     }
   }
-  const high = flagged.filter((f) => f.severity === 'high')
+  const high = flagged.filter((f) => f.severity === 'high' && !ACCEPTED[f.id])
   writeFileSync(join(RUN_DIR, 'places-audit.json'), JSON.stringify({ total: places.length, deterministic, flagged }, null, 1))
   const md = [
     `# Places audit`, '', `${places.length} places in ${batches.length} batches.`, '',
     `## Deterministic checks`, '', ...(deterministic.length ? deterministic.map((d) => `- ${d}`) : ['All passed.']), '',
-    `## Gemini flags (${flagged.length}, ${high.length} high)`, '', '| severity | id | name | category | issue | reason |', '|---|---|---|---|---|---|',
+    `## Gemini flags (${flagged.length}, ${high.length} high, ${flagged.filter((f) => ACCEPTED[f.id]).length} accepted after review)`, '', '| severity | id | name | category | issue | reason |', '|---|---|---|---|---|---|',
     ...flagged.sort((a, b) => b.severity.localeCompare(a.severity)).map((f) => `| ${f.severity} | ${f.id} | ${f.name} | ${f.category} | ${f.issue} | ${f.reason.replace(/\|/g, '/')} |`),
   ].join('\n')
   writeFileSync(join(RUN_DIR, 'places-audit.md'), md)

@@ -2,7 +2,7 @@
 // `npm run build:places`
 //   - with data/raw/gosom + data/raw/osm present: merge -> Gemini clean (cached) -> check -> overrides
 //     -> writes data/places.curated.json (committed) and public/data/.
-//   - without raw data (CI): validates data/places.curated.json and emits public/data/ from it.
+//   - without raw data, or with --curated (CI): validates data/places.curated.json and emits public/data/ from it.
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { pathToFileURL } from 'node:url'
 import { z } from 'zod'
@@ -181,10 +181,13 @@ function emit(places: Place[]) {
 
 async function main() {
   const ring = loadBoundary()
-  const haveRaw = existsSync('data/raw/osm/buildings.geojson') && existsSync('data/raw/gosom') &&
+  const haveRaw = !process.argv.includes('--curated') && existsSync('data/raw/osm/buildings.geojson') && existsSync('data/raw/gosom') &&
     readdirSync('data/raw/gosom').some((f) => f.endsWith('.csv'))
   if (!haveRaw) {
+    const overrides = loadOverrides()
     const places = z.array(Place).parse(JSON.parse(readFileSync(CURATED, 'utf8')))
+      .filter((p) => !['drop', 'merge'].includes(overrides[p.id]?.action ?? ''))
+      .map((p) => { const d = overrides[p.id]; return d?.action === 'fix' ? { ...p, ...(d.name && { name: d.name }), ...(d.category && { category: d.category }), ...(d.aliases && { aliases: d.aliases }), ...(d.location && { location: d.location }) } : p })
     const errors = validatePlaces(places, ring)
     if (errors.length) throw new Error(`invalid ${CURATED}:\n${errors.join('\n')}`)
     emit(places)
