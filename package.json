@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "typecheck": "tsc -b",
     "test": "vitest run",
+    "build:transit": "tsx pipeline/transit/build.ts",
     "validate": "echo 'validate: no data checks yet (stub, see ticket #19)'",
     "preview": "vite preview"
   },

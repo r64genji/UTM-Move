@@ -1,0 +1,28 @@
+# Route H: CP - Jalan Amal - V01 (Taman Universiti) - CP
+# Source: Jadual-Shuttle-Kampus-Sesi-2025-2026.pdf (UTM Fleet, Jabatan TNC(P)),
+#   page(s) 19. Effective from 2025-10-06. Times are Asia/Kuala_Lumpur.
+# Each bus lists its departure times from the first stop of each pattern, exactly as in the PDF.
+# driveSecs: driving time per hop, from v1 Backend/data/route_durations.json (measured),
+#   or estimated from the shape length where v1 had no measurement (marked "estimated").
+# shape: the v1 route line (route_geometries.json), Google encoded polyline, precision 5.
+id: H
+name: Route H
+color: '#FF44AA'
+patterns:
+  to-v01:
+    headsign: To V01 (Taman Universiti)
+    stops: [CP, JA1, JA2, JA3, JA4, P19A, V01]
+    driveSecs: [52, 17, 20, 18, 22, 293]  # estimated: P19A>V01
+    shape: 'isoHydpwRu@BBEwACK?{@U?Q@c@?k@CO[iAq@eCK]aAaDAW?W@Q@E~@qCPoA^iAFQJYl@a@nDgA??JCnBk@lAa@dBv@`@TFBpAr@dAjAHTb@fAVrA?p@?n@MdBQv@D?bBd@XLJDf@RRHdA`@|@`@v@VXTb@Xh@`@D?D@BBBB@D?DLNb@f@b@l@|B|DTb@NV`ArAf@h@^\dCzBbBrA`@ZdFfE`Av@TPl@d@f@^NHvIvBxAZZ?TCNEJGhAe@ZOHCHAR?|AAb@CTGFAJEr@e@p@s@hA}B?KAO?IAMSKECIICKAU?I?KHKJGNCR?FCFCR_@'
+  to-cp:
+    headsign: To Centre Point (CP)
+    stops: [V01, CP]
+    driveSecs: [304]  # estimated: V01>CP
+    shape: 'gplHwtowRS^GBGBS?OBKFIJ?JDHRPDDPJXNPNIRm@tAUd@i@p@k@f@g@^GDMFQFOD[BiBBYBG@IBUJoAl@KBYHQBQ?YC_@EmEoAuD}@WMWO}@w@SQaHyFuAiAe@a@ECgCuBs@s@a@c@c@m@]i@MUWc@gAkBKSi@}@We@U[SQSMEAECACAEgAu@c@Wi@YeCgAUIYM[MUKm@OOGe@KCAa@x@KXy@rA]h@aAhAEBONSRSTSNMJ[V]TKHk@XMFUBSB?Du@B'
+buses:
+  - id: H
+    page: 19
+    service: weekday
+    departures:
+      to-v01: ['07:15', '07:45', '08:15', '08:45', '09:15', '09:45', '11:20', '12:00', '12:40', '13:20', '14:00', '16:00', '16:40', '17:20', '18:00']
+      to-cp: ['07:30', '08:00', '08:30', '09:00', '09:30', '10:00', '11:40', '12:20', '13:00', '13:40', '14:20', '16:20', '17:00', '17:40', '18:20']

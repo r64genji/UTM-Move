@@ -1,0 +1,28 @@
+# Route D: CP - N24 - FKT (N29) - P19 - CP
+# Source: Jadual-Shuttle-Kampus-Sesi-2025-2026.pdf (UTM Fleet, Jabatan TNC(P)),
+#   page(s) 8. Effective from 2025-10-06. Times are Asia/Kuala_Lumpur.
+# Each bus lists its departure times from the first stop of each pattern, exactly as in the PDF.
+# driveSecs: driving time per hop, from v1 Backend/data/route_durations.json (measured),
+#   or estimated from the shape length where v1 had no measurement (marked "estimated").
+# shape: the v1 route line (route_geometries.json), Google encoded polyline, precision 5.
+id: D
+name: Route D
+color: '#FF8800'
+patterns:
+  to-fkt:
+    headsign: To FKT (N29)
+    stops: [CP, PGT, N24, FKT]
+    driveSecs: [67, 95, 154]
+    shape: 'isoHydpwRu@BBEwACK?{@Uu@Ws@WUKuBqA{AwAOSGMKWGMCIi@yAEg@CWD@A[Am@Bk@BYD[D[Lu@@IG?PiAF[d@sBHa@jAuCCEUSMIICg@?]LQPY^SXOTYVWL[NQVGXKZORKXWb@y@vAi@p@YLKDq@Ti@FYDS@u@?O?uAE]CSKMUSu@iAkDCIGWBY@WFO^YTIJE'
+  to-cp:
+    headsign: To Centre Point (CP)
+    stops: [FKT, P19, P19A, CP]
+    driveSecs: [120, 64, 77]
+    shape: 'w}pHyfqwR\QJGLGJINKLQYm@CYBKBKb@]n@Oh@Ib@?R?RBNDVJl@p@|AbBx@fARVTFb@BP@ZOVMXWNURYX_@PQ\Mf@?HBTAXAT?J?PSTWh@g@XOZGRGREfAI?Ix@@F?r@Fn@VbAn@CDLJXPRL^V\VPLdBv@`@TFBpAr@dAjAHTb@fAVrA?p@?n@MdBQv@ERa@x@KXy@rA]h@aAhAEBONSRSTSNMJ[V]TKHk@XMFUBSB?Du@B'
+buses:
+  - id: D1
+    page: 8
+    service: weekday
+    departures:
+      to-fkt: ['07:15', '07:45', '08:15', '08:45', '09:15', '09:45', '11:45', '12:15', '12:45', '13:45', '14:15', '16:15', '16:45', '17:15', '17:45']
+      to-cp: ['07:30', '08:00', '08:30', '09:00', '09:30', '10:00', '11:30', '12:00', '12:30', '13:00', '14:00', '14:30', '16:00', '16:30', '17:00', '17:30', '18:00']

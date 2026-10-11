@@ -1,0 +1,34 @@
+# Route J: Centre Point (FABU) - Stadium
+# Source: Jadual-Shuttle-Kampus-Sesi-2025-2026.pdf (UTM Fleet, Jabatan TNC(P)),
+#   page(s) 20. Effective from 2025-10-06. Times are Asia/Kuala_Lumpur.
+# Each bus lists its departure times from the first stop of each pattern, exactly as in the PDF.
+# driveSecs: driving time per hop, from v1 Backend/data/route_durations.json (measured),
+#   or estimated from the shape length where v1 had no measurement (marked "estimated").
+# shape: the v1 route line (route_geometries.json), Google encoded polyline, precision 5.
+id: J
+name: Route J
+color: '#44AAFF'
+patterns:
+  to-stadium:
+    headsign: To Stadium
+    stops: [CP, JA1, JA2, JA3, JA4, P19A2, UI, KTC_B1E, STADIUM]
+    driveSecs: [52, 17, 20, 18, 83, 42, 40, 197]  # estimated: KTC_B1E>STADIUM
+    shape: 'isoHydpwRu@BBEwACK?{@U?Q@c@?k@CO[iAq@eCK]aAaDAW?W@Q@E~@qCPoA^iAFQJYl@a@nDgA??JCnBk@lAa@dBv@@EDUQKa@Mu@g@QRvAp@\PDUDMj@cBv@eCBILWRg@T_@POb@WpA]NElAQfAQ`BYbBWj@I^E\KEc@AQUi@w@uAUc@[m@Q[cAeBQYGUA]@[BSF[JYBi@`@uAFYVcAh@{BNm@BQFa@Jo@BWDs@Be@FgC?y@AeBA{@@UAcA?qC?qE?kLGg@M_@W]g@c@m@SwAo@}@?c@@k@@u@?GOCECAe@?'
+  to-cp:
+    headsign: To Centre Point (CP)
+    stops: [STADIUM, KTC_B1W, KTC_B2W, P19A, CP]
+    driveSecs: [189, 51, 152, 77]  # estimated: STADIUM>KTC_B1W, KTC_B1W>KTC_B2W, KTC_B2W>P19A
+    shape: 'cboHcktwRd@?B@BDFNt@?j@Ab@A|@?vAn@l@Rf@b@V\L^Ff@?jL?pE?pC@bAAT@z@@dB?x@GfCCd@Er@CVKn@G`@CPOl@i@zBWbAGXa@tACh@KXGZCRAZ@\FTPXbAdBPZp@pAKFCBBCJGq@qAQ[QYq@kAQYGUA]@[BSF[JYBi@Ng@Pm@FYVcAXFYGWbAGXa@tACh@KXGZCRAZ@\FTPXbAdBPZp@pAv@tATh@@PDb@]J_@Dk@HcBVaBXgAPmAPaBb@c@VQNU^Sf@MVCHw@dCk@bBELETAD`@TFBpAr@dAjAHTb@fAVrA?p@?n@MdBQv@ERa@x@KXy@rA]h@aAhAEBONSRSTSNMJ[V]TKHk@XMFUBSB?Du@B'
+buses:
+  - id: J
+    page: 20
+    service: tuesday
+    departures:
+      to-stadium: ['14:30', '15:00']
+      to-cp: ['14:45', '15:15']
+  - id: J
+    page: 20
+    service: weekday
+    departures:
+      to-stadium: ['16:30', '17:00', '17:30', '18:15', '18:45']
+      to-cp: ['16:45', '17:15', '18:00', '18:30', '19:00']
