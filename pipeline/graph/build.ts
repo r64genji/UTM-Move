@@ -296,7 +296,7 @@ export function buildGraph(inp: BuildInputs): { input: GraphInput; report: Build
   for (const f of inp.shortcuts) {
     const p = f.properties
     const level = p.level as string
-    if ((level !== 'verified' && level !== 'likely') || p.access === 'private' || f.geometry.type !== 'LineString') { rep.shortcuts.skipped++; continue }
+    if ((level !== 'verified' && level !== 'likely') || p.access === 'private' || p.inOsm || f.geometry.type !== 'LineString') { rep.shortcuts.skipped++; continue }
     const stairs = p.kind === 'stairs'
     const ok = attach(
       (f.geometry.coordinates as number[][]).map(ll),

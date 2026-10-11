@@ -1,0 +1,44 @@
+name: Weekly data
+
+on:
+  schedule:
+    - cron: '0 19 * * 0' # Sunday 19:00 UTC = Monday 03:00 MYT
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # Imports form reports (skipped when FORM_SHEET_CSV_URL is unset), downloads fresh OSM GPS traces
+      # (1 request/s), re-scores, rebuilds, runs validate + tests, writes data/raw/reports/weekly.md.
+      - run: npm run data:weekly
+        env:
+          FORM_SHEET_CSV_URL: ${{ secrets.FORM_SHEET_CSV_URL }}
+      - id: date
+        run: echo "ymd=$(date -u +%Y%m%d)" >> "$GITHUB_OUTPUT"
+      # Opens a PR only. Nothing here deploys.
+      - uses: peter-evans/create-pull-request@v7
+        with:
+          base: v2
+          branch: data/weekly-${{ steps.date.outputs.ymd }}
+          title: 'data: weekly rebuild ${{ steps.date.outputs.ymd }}'
+          commit-message: 'data: weekly rebuild ${{ steps.date.outputs.ymd }}'
+          body-path: data/raw/reports/weekly.md
+          add-paths: |
+            data/evidence
+            data/shortcuts
+            data/walk-speeds.json
+            docs/v2/osm-checklist.md
