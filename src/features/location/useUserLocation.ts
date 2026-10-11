@@ -1,3 +1,4 @@
+import type { Fix } from '../../domain/navigate/follow.ts'
 import { useAppStore } from '../app/store.ts'
 import { classifyError, classifyFix } from './state.ts'
 
@@ -16,6 +17,25 @@ export function requestLocation() {
     (err) => setLocation(classifyError(err.code)),
     { enableHighAccuracy: true, timeout: 15_000, maximumAge: 0 },
   )
+}
+
+/** Follow the device (navigation). Every fix also updates the shared location, so the blue dot moves. Returns the stop function. */
+export function watchLocation(onFix: (fix: Fix) => void): () => void {
+  const { setLocation } = useAppStore.getState()
+  if (!('geolocation' in navigator)) {
+    setLocation({ status: 'unavailable' })
+    return () => {}
+  }
+  const id = navigator.geolocation.watchPosition(
+    ({ coords }) => {
+      const fix = { lat: coords.latitude, lon: coords.longitude, accuracy: coords.accuracy }
+      setLocation(classifyFix(fix))
+      onFix({ ...fix, t: Date.now() })
+    },
+    (err) => setLocation(classifyError(err.code)),
+    { enableHighAccuracy: true, timeout: 20_000, maximumAge: 0 },
+  )
+  return () => navigator.geolocation.clearWatch(id)
 }
 
 /** Location state plus the actions the UI offers. Shared across pages through the store. */

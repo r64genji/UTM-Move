@@ -782,3 +782,35 @@ a {
   margin-left: auto;
   white-space: nowrap;
 }
+
+/* Live navigation */
+.guidance {
+  display: grid;
+  gap: 0.5rem;
+}
+.guide-dist {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--text-md);
+}
+.guide-now {
+  margin: 0;
+  font-size: var(--text-xl);
+  font-weight: 700;
+  line-height: 1.15;
+}
+.guide-then {
+  margin: 0;
+  color: var(--ink-2);
+}
+.guidance progress {
+  width: 100%;
+  accent-color: var(--maroon);
+}
+.check {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+}
