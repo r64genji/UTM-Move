@@ -1,0 +1,595 @@
+[
+ {
+  "id": "ktdi-n28",
+  "name": "KTDI to N28",
+  "category": "hostel-faculty",
+  "from": {
+   "name": "Kolej Tun Dr Ismail",
+   "lat": 1.565247,
+   "lon": 103.635122
+  },
+  "to": {
+   "name": "N28 School of Computing",
+   "lat": 1.56415,
+   "lon": 103.638103
+  },
+  "at": "2026-03-17T10:00:00+08:00",
+  "profile": "fastest",
+  "maxDetour": 2.85,
+  "detourReason": "Campus layout: ours 992 m, Google 800 m, straight 353 m"
+ },
+ {
+  "id": "ktho-p05",
+  "name": "KTHO to FKE P05",
+  "category": "hostel-faculty",
+  "from": {
+   "name": "Kolej Tun Hussein Onn",
+   "lat": 1.564027,
+   "lon": 103.631094
+  },
+  "to": {
+   "name": "P05 FKE",
+   "lat": 1.559622,
+   "lon": 103.642788
+  },
+  "at": "2026-03-17T10:00:00+08:00",
+  "profile": "fastest"
+ },
+ {
+  "id": "ktr-psz",
+  "name": "KTR to library",
+  "category": "hostel-faculty",
+  "from": {
+   "name": "Kolej Tun Razak",
+   "lat": 1.563405,
+   "lon": 103.626609
+  },
+  "to": {
+   "name": "Perpustakaan Sultanah Zanariah",
+   "lat": 1.559474,
+   "lon": 103.636963
+  },
+  "at": "2026-03-17T10:00:00+08:00",
+  "profile": "fastest"
+ },
+ {
+  "id": "ktdi-psz",
+  "name": "KTDI to library",
+  "category": "hostel-faculty",
+  "from": {
+   "name": "Kolej Tun Dr Ismail",
+   "lat": 1.565247,
+   "lon": 103.635122
+  },
+  "to": {
+   "name": "Perpustakaan Sultanah Zanariah",
+   "lat": 1.559474,
+   "lon": 103.636963
+  },
+  "at": "2026-03-17T10:00:00+08:00",
+  "profile": "fastest",
+  "maxDetour": 2.05,
+  "detourReason": "Campus layout: ours 1375 m, Google 1200 m, straight 674 m"
+ },
+ {
+  "id": "krp-fab",
+  "name": "Rahman Putra to FAB",
+  "category": "hostel-faculty",
+  "from": {
+   "name": "Kolej Rahman Putra",
+   "lat": 1.55848,
+   "lon": 103.631525
+  },
+  "to": {
+   "name": "FAB Alam Bina",
+   "lat": 1.558865,
+   "lon": 103.635548
+  },
+  "at": "2026-03-17T10:00:00+08:00",
+  "profile": "fastest"
+ },
+ {
+  "id": "ktc-msi",
+  "name": "KTC to Masjid Sultan Ismail",
+  "category": "hostel-faculty",
+  "from": {
+   "name": "Kolej Tuanku Canselor",
+   "lat": 1.557399,
+   "lon": 103.644226
+  },
+  "to": {
+   "name": "Masjid Sultan Ismail",
+   "lat": 1.559212,
+   "lon": 103.637657
+  },
+  "at": "2026-03-17T10:00:00+08:00",
+  "profile": "fastest"
+ },
+ {
+  "id": "fkm-fkt",
+  "name": "FKM to FKT",
+  "category": "faculty-faculty",
+  "from": {
+   "name": "FKM Mechanical Eng",
+   "lat": 1.560717,
+   "lon": 103.640693
+  },
+  "to": {
+   "name": "FKT Chemical/Energy Eng",
+   "lat": 1.56652,
+   "lon": 103.640282
+  },
+  "at": "2026-03-17T10:00:00+08:00",
+  "profile": "fastest",
+  "maxDetour": 1.9,
+  "detourReason": "Campus layout: ours 1221 m, Google 1200 m, straight 647 m"
+ },
+ {
+  "id": "fab-fkm",
+  "name": "FAB to FKM",
+  "category": "faculty-faculty",
+  "from": {
+   "name": "FAB Alam Bina",
+   "lat": 1.558865,
+   "lon": 103.635548
+  },
+  "to": {
+   "name": "FKM Mechanical Eng",
+   "lat": 1.560717,
+   "lon": 103.640693
+  },
+  "at": "2026-03-17T10:00:00+08:00",
+  "profile": "fastest",
+  "maxDetour": 2.0,
+  "detourReason": "Campus layout: ours 1205 m, Google 1000 m, straight 608 m"
+ },
+ {
+  "id": "p05-n28",
+  "name": "FKE P05 to N28",
+  "category": "faculty-faculty",
+  "from": {
+   "name": "P05 FKE",
+   "lat": 1.559622,
+   "lon": 103.642788
+  },
+  "to": {
+   "name": "N28 School of Computing",
+   "lat": 1.56415,
+   "lon": 103.638103
+  },
+  "at": "2026-03-17T10:00:00+08:00",
+  "profile": "fastest"
+ },
+ {
+  "id": "fkt-psz",
+  "name": "FKT to library",
+  "category": "faculty-faculty",
+  "from": {
+   "name": "FKT Chemical/Energy Eng",
+   "lat": 1.56652,
+   "lon": 103.640282
+  },
+  "to": {
+   "name": "Perpustakaan Sultanah Zanariah",
+   "lat": 1.559474,
+   "lon": 103.636963
+  },
+  "at": "2026-03-17T10:00:00+08:00",
+  "profile": "fastest",
+  "maxDetour": 2.25,
+  "detourReason": "Campus layout: ours 1914 m, Google 1700 m, straight 866 m"
+ },
+ {
+  "id": "psz-msi",
+  "name": "Library to mosque",
+  "category": "landmark",
+  "from": {
+   "name": "Perpustakaan Sultanah Zanariah",
+   "lat": 1.559474,
+   "lon": 103.636963
+  },
+  "to": {
+   "name": "Masjid Sultan Ismail",
+   "lat": 1.559212,
+   "lon": 103.637657
+  },
+  "at": "2026-03-17T10:00:00+08:00",
+  "profile": "fastest",
+  "maxDetour": 4.0,
+  "detourReason": "KNOWN ISSUE (missing link near the library east side): ours 325 m, Google 71 m, straight 82 m"
+ },
+ {
+  "id": "psz-cans",
+  "name": "Library to Canselori",
+  "category": "landmark",
+  "from": {
+   "name": "Perpustakaan Sultanah Zanariah",
+   "lat": 1.559474,
+   "lon": 103.636963
+  },
+  "to": {
+   "name": "Canselori Sultan Ibrahim",
+   "lat": 1.558352,
+   "lon": 103.638415
+  },
+  "at": "2026-03-17T10:00:00+08:00",
+  "profile": "fastest",
+  "maxDetour": 1.85,
+  "detourReason": "KNOWN ISSUE (missing link near the library east side): ours 368 m, Google 220 m, straight 204 m"
+ },
+ {
+  "id": "els-fkt",
+  "name": "ELS to FKT",
+  "category": "faculty-faculty",
+  "from": {
+   "name": "ELS Language Centre",
+   "lat": 1.562353,
+   "lon": 103.638859
+  },
+  "to": {
+   "name": "FKT Chemical/Energy Eng",
+   "lat": 1.56652,
+   "lon": 103.640282
+  },
+  "at": "2026-03-17T10:00:00+08:00",
+  "profile": "fastest",
+  "maxDetour": 1.95,
+  "detourReason": "Campus layout: ours 936 m, Google 900 m, straight 490 m"
+ },
+ {
+  "id": "ja1-ja4",
+  "name": "Jalan Amal 1 to Jalan Amal 4 stops",
+  "category": "stop",
+  "from": {
+   "name": "Jalan Amal 1 stop",
+   "lat": 1.561266,
+   "lon": 103.636564
+  },
+  "to": {
+   "name": "Jalan Amal 4 stop",
+   "lat": 1.559756,
+   "lon": 103.640115
+  },
+  "at": "2026-03-17T10:00:00+08:00",
+  "profile": "fastest"
+ },
+ {
+  "id": "pgt-cp",
+  "name": "PGT stop to Centre Point",
+  "category": "stop",
+  "from": {
+   "name": "PGT bus stop",
+   "lat": 1.562768,
+   "lon": 103.636461
+  },
+  "to": {
+   "name": "Centre Point bus stop",
+   "lat": 1.559728,
+   "lon": 103.634814
+  },
+  "at": "2026-03-17T10:00:00+08:00",
+  "profile": "fastest"
+ },
+ {
+  "id": "b04-c05",
+  "name": "B04 to C05 (through the academic blocks)",
+  "category": "through-building",
+  "from": {
+   "name": "B04",
+   "lat": 1.55959,
+   "lon": 103.635233
+  },
+  "to": {
+   "name": "C05",
+   "lat": 1.560293,
+   "lon": 103.636997
+  },
+  "at": "2026-03-17T10:00:00+08:00",
+  "profile": "fastest",
+  "maxDetour": 2.15,
+  "detourReason": "Campus layout: ours 451 m, Google 400 m, straight 211 m"
+ },
+ {
+  "id": "b12-c02",
+  "name": "B12 to C02 (through the academic blocks)",
+  "category": "through-building",
+  "from": {
+   "name": "B12",
+   "lat": 1.55875,
+   "lon": 103.63561
+  },
+  "to": {
+   "name": "C02",
+   "lat": 1.56031,
+   "lon": 103.635555
+  },
+  "at": "2026-03-17T10:00:00+08:00",
+  "profile": "fastest"
+ },
+ {
+  "id": "fab-dsi",
+  "name": "FAB to Dewan Sultan Iskandar",
+  "category": "through-building",
+  "from": {
+   "name": "FAB Alam Bina",
+   "lat": 1.558865,
+   "lon": 103.635548
+  },
+  "to": {
+   "name": "Dewan Sultan Iskandar",
+   "lat": 1.559212,
+   "lon": 103.638749
+  },
+  "at": "2026-03-17T10:00:00+08:00",
+  "profile": "fastest"
+ },
+ {
+  "id": "rain-ktdi-psz",
+  "name": "Rainy: KTDI to library",
+  "category": "rainy",
+  "from": {
+   "name": "Kolej Tun Dr Ismail",
+   "lat": 1.565247,
+   "lon": 103.635122
+  },
+  "to": {
+   "name": "Perpustakaan Sultanah Zanariah",
+   "lat": 1.559474,
+   "lon": 103.636963
+  },
+  "at": "2026-03-17T10:00:00+08:00",
+  "profile": "sheltered",
+  "maxDetour": 2.1,
+  "detourReason": "Campus layout: ours 1385 m, Google 1200 m, straight 674 m"
+ },
+ {
+  "id": "rain-ktho-n28",
+  "name": "Rainy: KTHO to N28",
+  "category": "rainy",
+  "from": {
+   "name": "Kolej Tun Hussein Onn",
+   "lat": 1.564027,
+   "lon": 103.631094
+  },
+  "to": {
+   "name": "N28 School of Computing",
+   "lat": 1.56415,
+   "lon": 103.638103
+  },
+  "at": "2026-03-17T10:00:00+08:00",
+  "profile": "sheltered"
+ },
+ {
+  "id": "rain-b12-c05",
+  "name": "Rainy: B12 to C05",
+  "category": "rainy",
+  "from": {
+   "name": "B12",
+   "lat": 1.55875,
+   "lon": 103.63561
+  },
+  "to": {
+   "name": "C05",
+   "lat": 1.560293,
+   "lon": 103.636997
+  },
+  "at": "2026-03-17T10:00:00+08:00",
+  "profile": "sheltered",
+  "maxDetour": 2.4,
+  "detourReason": "Campus layout: ours 543 m, Google 450 m, straight 231 m"
+ },
+ {
+  "id": "bus-k9-cp",
+  "name": "Kolej 9 to Centre Point, 08:00",
+  "category": "bus",
+  "from": {
+   "name": "Kolej 9 bus stop",
+   "lat": 1.558691,
+   "lon": 103.649264
+  },
+  "to": {
+   "name": "Centre Point bus stop",
+   "lat": 1.559728,
+   "lon": 103.634814
+  },
+  "at": "2026-03-17T08:00:00+08:00",
+  "profile": "fastest"
+ },
+ {
+  "id": "bus-k10-cp",
+  "name": "Kolej 10 to Centre Point, 08:00",
+  "category": "bus",
+  "from": {
+   "name": "Kolej 10 bus stop",
+   "lat": 1.560592,
+   "lon": 103.648817
+  },
+  "to": {
+   "name": "Centre Point bus stop",
+   "lat": 1.559728,
+   "lon": 103.634814
+  },
+  "at": "2026-03-17T08:00:00+08:00",
+  "profile": "fastest"
+ },
+ {
+  "id": "bus-ktgb-fkt",
+  "name": "KTGB to FKT, 07:00",
+  "category": "bus",
+  "from": {
+   "name": "Kolej Tun Ghafar Baba",
+   "lat": 1.572242,
+   "lon": 103.620665
+  },
+  "to": {
+   "name": "FKT Chemical/Energy Eng",
+   "lat": 1.56652,
+   "lon": 103.640282
+  },
+  "at": "2026-03-17T07:00:00+08:00",
+  "profile": "fastest",
+  "note": "v1 test ktgb_fkt_route"
+ },
+ {
+  "id": "bus-xa2-fkt",
+  "name": "KTGB XA2 to FKT, 14:53",
+  "category": "bus",
+  "from": {
+   "name": "KTGB XA2 block",
+   "lat": 1.572842,
+   "lon": 103.61999
+  },
+  "to": {
+   "name": "FKT Chemical/Energy Eng",
+   "lat": 1.56652,
+   "lon": 103.640282
+  },
+  "at": "2026-03-19T14:53:00+08:00",
+  "profile": "fastest",
+  "note": "v1 routing_edge_cases"
+ },
+ {
+  "id": "bus-u5-fkt",
+  "name": "U5 Kolej Perdana to FKT, 16:30",
+  "category": "bus",
+  "from": {
+   "name": "U5 Kolej Perdana",
+   "lat": 1.558666,
+   "lon": 103.646432
+  },
+  "to": {
+   "name": "FKT Chemical/Energy Eng",
+   "lat": 1.56652,
+   "lon": 103.640282
+  },
+  "at": "2026-03-19T16:30:00+08:00",
+  "profile": "fastest",
+  "note": "v1 routing_edge_cases (expected KP1 stop)",
+  "maxDetour": 1.95,
+  "detourReason": "Campus layout: ours 2119 m, Google 1900 m, straight 1109 m"
+ },
+ {
+  "id": "bus-g17-fkt",
+  "name": "G17 to FKT, 08:00",
+  "category": "bus",
+  "from": {
+   "name": "G17",
+   "lat": 1.558355,
+   "lon": 103.630752
+  },
+  "to": {
+   "name": "FKT Chemical/Energy Eng",
+   "lat": 1.56652,
+   "lon": 103.640282
+  },
+  "at": "2026-03-17T08:00:00+08:00",
+  "profile": "fastest",
+  "note": "v1 repro_G17_FKT"
+ },
+ {
+  "id": "bus-ktf-fkt",
+  "name": "KTF to FKT, 08:14",
+  "category": "bus",
+  "from": {
+   "name": "Kolej Tun Fatimah (KTF) stop",
+   "lat": 1.558832,
+   "lon": 103.630772
+  },
+  "to": {
+   "name": "FKT Chemical/Energy Eng",
+   "lat": 1.56652,
+   "lon": 103.640282
+  },
+  "at": "2026-03-16T08:14:00+08:00",
+  "profile": "fastest",
+  "note": "v1 routing_improvements"
+ },
+ {
+  "id": "bus-t02-fkt",
+  "name": "T02 to FKT, 08:00",
+  "category": "bus",
+  "from": {
+   "name": "T02 Biosains cluster",
+   "lat": 1.564448,
+   "lon": 103.653426
+  },
+  "to": {
+   "name": "FKT Chemical/Energy Eng",
+   "lat": 1.56652,
+   "lon": 103.640282
+  },
+  "at": "2026-03-17T08:00:00+08:00",
+  "profile": "fastest",
+  "note": "v1 t02_fkt_route",
+  "maxDetour": 2.6,
+  "detourReason": "Campus layout: ours 3837 m, Google 3600 m, straight 1479 m"
+ },
+ {
+  "id": "bus-kdoj-psz",
+  "name": "KDOJ to library, 08:00",
+  "category": "bus",
+  "from": {
+   "name": "KDOJ stop",
+   "lat": 1.575657,
+   "lon": 103.619664
+  },
+  "to": {
+   "name": "Perpustakaan Sultanah Zanariah",
+   "lat": 1.559474,
+   "lon": 103.636963
+  },
+  "at": "2026-03-17T08:00:00+08:00",
+  "profile": "fastest"
+ },
+ {
+  "id": "bus-kdse-psz",
+  "name": "KDSE to library, 12:30",
+  "category": "bus",
+  "from": {
+   "name": "Kolej Datin Seri Endon",
+   "lat": 1.566671,
+   "lon": 103.626516
+  },
+  "to": {
+   "name": "Perpustakaan Sultanah Zanariah",
+   "lat": 1.559474,
+   "lon": 103.636963
+  },
+  "at": "2026-03-17T12:30:00+08:00",
+  "profile": "fastest"
+ },
+ {
+  "id": "bus-przs-ahibs",
+  "name": "PRZS to AHIBS, 17:30",
+  "category": "bus",
+  "from": {
+   "name": "Perpustakaan Raja Zarith Sofea",
+   "lat": 1.563502,
+   "lon": 103.65155
+  },
+  "to": {
+   "name": "AHIBS",
+   "lat": 1.559806,
+   "lon": 103.656131
+  },
+  "at": "2026-03-17T17:30:00+08:00",
+  "profile": "fastest"
+ },
+ {
+  "id": "bus-ktc-fkt",
+  "name": "KTC to FKT, 08:30",
+  "category": "bus",
+  "from": {
+   "name": "Kolej Tuanku Canselor",
+   "lat": 1.557399,
+   "lon": 103.644226
+  },
+  "to": {
+   "name": "FKT Chemical/Energy Eng",
+   "lat": 1.56652,
+   "lon": 103.640282
+  },
+  "at": "2026-03-17T08:30:00+08:00",
+  "profile": "fastest"
+ }
+]
