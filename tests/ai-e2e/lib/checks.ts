@@ -69,7 +69,6 @@ export const LIMITS: RouteLimits = { minWalkKmh: 3, maxWalkKmh: 6.5, maxDetour: 
 export function checkRoute(from: LatLon, to: LatLon, options: OptionRow[], limits: Partial<RouteLimits> = {}): string[] {
   const L = { ...LIMITS, ...limits }
   const fails: string[] = []
-  const straight = distanceM(from, to)
   if (!options.some((o) => o.kind === 'walk')) fails.push('no walk-only option')
   options.forEach((o, oi) => {
     const tag = `option ${oi + 1} (${o.kind})`
@@ -97,7 +96,7 @@ export function checkRoute(from: LatLon, to: LatLon, options: OptionRow[], limit
     if (distanceM(first, from) > L.endpointM) fails.push(`${tag}: starts ${Math.round(distanceM(first, from))} m from the origin`)
     if (distanceM(last, to) > L.endpointM) fails.push(`${tag}: ends ${Math.round(distanceM(last, to))} m from the destination`)
     if (o.kind === 'walk') {
-      const ratio = lengthM(o.legs.flatMap((l) => l.geometry)) / Math.max(straight, 100)
+      const ratio = lengthM(o.legs.flatMap((l) => l.geometry)) / Math.max(distanceM(first, last), 100)
       if (ratio > L.maxDetour) fails.push(`${tag}: detour ratio ${ratio.toFixed(2)} > ${L.maxDetour}`)
     }
   })

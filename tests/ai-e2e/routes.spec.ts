@@ -78,7 +78,7 @@ for (const trip of buildTrips()) {
       const walkM = o.legs.filter((l) => l.kind === 'walk').reduce((s, l) => s + lengthM(l.geometry), 0)
       return {
         option: i + 1, kind: o.kind, durationMin: +(o.durationS / 60).toFixed(1), walkM: Math.round(walkM), straightLineM: Math.round(straightM),
-        detourRatio: +(lengthM(o.legs.flatMap((l) => l.geometry)) / Math.max(straightM, 100)).toFixed(2),
+        detourRatio: +(lengthM(o.legs.flatMap((l) => l.geometry)) / Math.max(distanceM(o.legs[0].geometry[0], o.legs.at(-1)!.geometry.at(-1)!), 100)).toFixed(2),
         busLegs: o.legs.filter((l) => l.kind === 'bus').map((l) => `${l.route?.name ?? l.route?.id}: ${l.stops?.[0]?.name} -> ${l.stops?.at(-1)?.name}`),
       }
     })
