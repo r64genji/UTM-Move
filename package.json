@@ -17,6 +17,8 @@
     "validate": "echo 'validate: no data checks yet (stub, see ticket #19)'",
     "preview": "vite preview",
     "bench:walk": "tsx pipeline/bench-walk.ts",
+    "bench:router": "tsx pipeline/bench-router.ts",
+    "bench:router:browser": "tsx pipeline/bench/browser.ts",
     "build:graph": "tsx pipeline/graph/build.ts"
   },
   "dependencies": {

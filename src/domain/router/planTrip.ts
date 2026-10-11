@@ -16,7 +16,8 @@ export const ACCESS_CAP_S = 15 * 60
 export const TRANSFER_CAP_S = 5 * 60
 /** A bus option must beat walking by at least this much, or it is not offered. */
 export const MIN_SAVING_S = 2 * 60
-const WALK_SPEED = 1.4
+/** Flat-ground walking speed, m/s. Median of the GPS tracks (data/walk-speeds.json: 1.396). Same default as the walk router. */
+export const WALK_SPEED = 1.4
 
 export interface Place { name: string; location: LatLon }
 
@@ -27,6 +28,8 @@ export interface PlanRequest {
   mode: 'depart' | 'arrive'
   at: Date
   profile?: Profile
+  /** Flat-ground walking speed, m/s. */
+  walkSpeed?: number
 }
 
 export interface LegLabel { text: string; /** Index range into the leg's geometry; absent means the whole leg. */ from?: number; to?: number }
@@ -62,23 +65,26 @@ export interface Plan { options: TripOption[] }
 
 interface StopInfo { nodes: Int32Array; gapS: Float64Array; transfers: Transfers }
 
-const stopCache = new WeakMap<Graph, WeakMap<TransitData, StopInfo>>()
+const stopCache = new WeakMap<Graph, WeakMap<TransitData, Map<string, StopInfo>>>()
 
-function stopInfo(g: Graph, data: TransitData, profile: Profile, at: Date): StopInfo {
+function stopInfo(g: Graph, data: TransitData, profile: Profile, at: Date, speedMps: number): StopInfo {
   let per = stopCache.get(g)
   if (!per) stopCache.set(g, (per = new WeakMap()))
-  const hit = per.get(data)
+  let byKey = per.get(data)
+  if (!byKey) per.set(data, (byKey = new Map()))
+  const cacheKey = `${profile}@${speedMps}`
+  const hit = byKey.get(cacheKey)
   if (hit) return hit
   const { nodeLat, nodeLon } = g
   const nodes = Int32Array.from(data.stops, (s) => snapToNode(g, s.location))
   const gapS = Float64Array.from(data.stops, (s, i) => {
     if (nodes[i] < 0) return Infinity
-    return distanceM(s.location, { lat: nodeLat[nodes[i]] / 1e7, lon: nodeLon[nodes[i]] / 1e7 }) / WALK_SPEED
+    return distanceM(s.location, { lat: nodeLat[nodes[i]] / 1e7, lon: nodeLon[nodes[i]] / 1e7 }) / speedMps
   })
   const transfers = new Map<string, { to: string; secs: number }[]>()
   data.stops.forEach((s, i) => {
     if (nodes[i] < 0) return
-    const t = walkTimes(g, nodes[i], nodes, { profile, at, maxTimeS: TRANSFER_CAP_S })
+    const t = walkTimes(g, nodes[i], nodes, { profile, at, speedMps, maxTimeS: TRANSFER_CAP_S })
     const list: { to: string; secs: number }[] = []
     data.stops.forEach((o, j) => {
       const secs = Math.ceil(t[j] + gapS[i] + gapS[j])
@@ -87,7 +93,7 @@ function stopInfo(g: Graph, data: TransitData, profile: Profile, at: Date): Stop
     transfers.set(s.id, list)
   })
   const info = { nodes, gapS, transfers }
-  per.set(data, info)
+  byKey.set(cacheKey, info)
   return info
 }
 
@@ -111,11 +117,12 @@ export function planTrip(g: Graph, data: TransitData, req: PlanRequest): Plan {
   const dayStart = Date.parse(`${date}T00:00:00+08:00`)
   const q = (req.at.getTime() - dayStart) / 1000
   const when = (s: number) => new Date(dayStart + s * 1000)
-  const walkOpts = (at: Date) => ({ profile, at })
+  const speedMps = req.walkSpeed ?? WALK_SPEED
+  const walkOpts = (at: Date) => ({ profile, at, speedMps })
   const endpoint = (p: LatLon): Endpoint => snapToEdge(g, p) ?? snapToNode(g, p)
   const origin = endpoint(req.from.location)
   const dest = endpoint(req.to.location)
-  const info = stopInfo(g, data, profile, req.at)
+  const info = stopInfo(g, data, profile, req.at, speedMps)
 
   const walkLeg = (a: Endpoint, b: Endpoint, from: Place, to: Place, departS: number, durationS: number): Leg => {
     const departAt = when(departS)
