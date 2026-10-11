@@ -1,0 +1,168 @@
+// Shared data shapes for the pipeline and the app. One source of truth.
+import { z } from 'zod'
+
+/** Coordinates are always `{ lat, lon }`. Unknown keys (like `lng`) are rejected. */
+export const LatLon = z.strictObject({
+  lat: z.number().min(-90).max(90),
+  lon: z.number().min(-180).max(180),
+})
+
+const Id = z.string().min(1, 'id must not be empty')
+const HHMM = z.string().regex(/^\d{2}:[0-5]\d$/, 'time must be HH:MM')
+const ISODate = z.iso.date('date must be YYYY-MM-DD')
+const Line = z.array(LatLon).min(2, 'a line needs at least 2 points')
+
+export const Category = z.enum([
+  'Faculty/Academic',
+  'Lab/Workshop',
+  'Library',
+  'Residential college',
+  'Food',
+  'Prayer',
+  'Sport',
+  'Admin/Office',
+  'Health',
+  'Bank/ATM',
+  'Shop/Service',
+  'Hall/Event',
+  'Parking',
+  'Bus stop',
+  'Gate/Entrance',
+  'Other',
+])
+
+/** Who may walk through an indoor item. */
+export const Access = z.enum(['public', 'restricted', 'private']).default('public')
+
+export const Weekday = z.enum(['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'])
+
+export const OpeningHours = z.array(
+  z.object({
+    days: z.array(Weekday).min(1),
+    open: HHMM,
+    close: HHMM,
+  }),
+)
+
+export const Place = z.object({
+  id: Id,
+  name: z.string().min(1, 'name must not be empty'),
+  aliases: z.array(z.string()).default([]),
+  category: Category,
+  location: LatLon,
+  buildingId: Id.optional(),
+  blockCode: z.string().optional(),
+  openingHours: OpeningHours.optional(),
+})
+
+export const Building = z.object({
+  id: Id,
+  name: z.string().optional(),
+  blockCode: z.string().optional(),
+  outline: z.array(LatLon).min(4, 'a building outline needs at least 4 points'),
+  osmId: z.string().optional(),
+})
+
+export const Door = z.object({
+  id: Id,
+  buildingId: Id,
+  location: LatLon,
+  level: z.number().int().default(0),
+  access: Access,
+})
+
+export const WalkEdgeKind = z.enum(['footway', 'road', 'steps', 'indoor', 'shortcut'])
+
+export const WalkEdge = z.object({
+  id: Id,
+  from: Id,
+  to: Id,
+  kind: WalkEdgeKind,
+  geometry: Line,
+  lengthM: z.number().positive(),
+  climbM: z.number().default(0),
+  covered: z.boolean().default(false),
+  access: Access,
+})
+
+/** verified: used. likely: used with a label. guess: never used. */
+export const ShortcutLevel = z.enum(['verified', 'likely', 'guess'])
+
+export const Shortcut = z.object({
+  id: Id,
+  geometry: Line,
+  level: ShortcutLevel,
+  evidenceIds: z.array(Id).default([]),
+  indoor: z.boolean().default(false),
+  covered: z.boolean().default(false),
+  access: Access,
+  note: z.string().optional(),
+})
+
+export const EvidenceSource = z.enum([
+  'research',
+  'satellite',
+  'floor-plan',
+  'gps-trace',
+  'user-report',
+  'osm',
+])
+
+export const Evidence = z.object({
+  id: Id,
+  shortcutId: Id,
+  source: EvidenceSource,
+  summary: z.string().min(1, 'summary must not be empty'),
+  url: z.url().optional(),
+  observedAt: ISODate,
+})
+
+export const Stop = z.object({
+  id: Id,
+  name: z.string().min(1, 'name must not be empty'),
+  location: LatLon,
+})
+
+export const Route = z.object({
+  id: Id,
+  name: z.string().min(1, 'name must not be empty'),
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'color must be #RRGGBB').optional(),
+})
+
+/** Times are Asia/Kuala_Lumpur wall-clock times. */
+export const Trip = z.object({
+  id: Id,
+  routeId: Id,
+  calendarId: Id,
+  headsign: z.string().optional(),
+  stopTimes: z
+    .array(z.object({ stopId: Id, time: HHMM }))
+    .min(2, 'a trip needs at least 2 stop times'),
+})
+
+export const Calendar = z.object({
+  id: Id,
+  days: z.array(Weekday).min(1),
+  startDate: ISODate,
+  endDate: ISODate,
+  exceptions: z
+    .array(z.object({ date: ISODate, type: z.enum(['added', 'removed']) }))
+    .default([]),
+})
+
+export type LatLon = z.infer<typeof LatLon>
+export type Category = z.infer<typeof Category>
+export type Access = z.infer<typeof Access>
+export type Weekday = z.infer<typeof Weekday>
+export type OpeningHours = z.infer<typeof OpeningHours>
+export type Place = z.infer<typeof Place>
+export type Building = z.infer<typeof Building>
+export type Door = z.infer<typeof Door>
+export type WalkEdge = z.infer<typeof WalkEdge>
+export type ShortcutLevel = z.infer<typeof ShortcutLevel>
+export type Shortcut = z.infer<typeof Shortcut>
+export type Evidence = z.infer<typeof Evidence>
+export type Stop = z.infer<typeof Stop>
+export type Route = z.infer<typeof Route>
+export type Trip = z.infer<typeof Trip>
+export type Calendar = z.infer<typeof Calendar>
