@@ -1,0 +1,28 @@
+# Route A: KP (U7) - CP - Jalan Amal - KP
+# Source: Jadual-Shuttle-Kampus-Sesi-2025-2026.pdf (UTM Fleet, Jabatan TNC(P)),
+#   page(s) 1. Effective from 2025-10-06. Times are Asia/Kuala_Lumpur.
+# Each bus lists its departure times from the first stop of each pattern, exactly as in the PDF.
+# driveSecs: driving time per hop, from v1 Backend/data/route_durations.json (measured),
+#   or estimated from the shape length where v1 had no measurement (marked "estimated").
+# shape: the v1 route line (route_geometries.json), Google encoded polyline, precision 5.
+id: A
+name: Route A
+color: '#FF4444'
+patterns:
+  to-cp:
+    headsign: To Centre Point (CP)
+    stops: [KP1, KTC_A, P19A, CP]
+    driveSecs: [117, 83, 77]
+    shape: 'wkoHaorwROIg@WF}@Nw@TeADMDKHKNGJCNAJ@~@Pv@PHB|@Nb@PRJTLRRXZ^h@g@h@cAvAo@|@[`@[P[DB`@Bl@F^N\Zh@f@t@b@j@l@z@~ArB`@fAf@|AgAPmAPaBb@c@VQNU^Sf@MVCHw@dCk@bBELETAD`@TFBpAr@dAjAHTb@fAVrA?p@?n@MdBQv@ERa@x@KXy@rA]h@aAhAEBONSRSTSNMJ[V]TKHk@XMFUBSB?Du@B'
+  to-kp:
+    headsign: To Kolej Perdana (KP)
+    stops: [CP, JA1, JA2, JA3, JA4, UI, KTC_A, KP1]
+    driveSecs: [52, 17, 20, 18, 55, 52, 42]
+    shape: 'isoHydpwRu@BBEwACK?{@U?Q@c@?k@CO[iAq@eCK]aAaDAW?W@Q@E~@qCPoA^iAFQJYl@a@nDgA??JCnBk@lAa@dBv@@EDUDMj@cBv@eCBILWRg@T_@POb@WpA]NElAQfAQg@}Aa@gA_BsBm@{@c@k@g@u@[i@O]G_@Cm@Ca@A]ESSWKKWOs@[g@YSK'
+buses:
+  - id: A1
+    page: 1
+    service: weekday
+    departures:
+      to-cp: ['07:30', '08:00', '08:30', '09:00', '09:30', '10:00', '12:00', '12:40', '13:20', '14:00', '14:40', '16:50', '17:30', '18:10', '19:45', '20:15']
+      to-kp: ['07:45', '08:15', '08:45', '09:15', '09:45', '10:15', '12:20', '13:00', '13:40', '14:20', '15:00', '16:30', '17:10', '17:50', '20:00', '22:00', '23:00']

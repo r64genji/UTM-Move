@@ -1,0 +1,160 @@
+# Bus stops. Source: v1 Backend/data/schedule.json (tag v1).
+# Removed (no trip in the PDF or v1 stops there): KLUSTER_BS, K18, K24, K27, K32, K33. See docs/v2/transit.md.
+stops:
+  - id: CP
+    name: Centre Point
+    location: { lat: 1.559728, lon: 103.634814 }
+  - id: AM
+    name: Arked Meranti
+    location: { lat: 1.559394, lon: 103.632808 }
+  - id: KP1
+    name: Kolej Perdana 1
+    location: { lat: 1.558539, lon: 103.6467 }
+  - id: KTC_A
+    name: Kolej Tuanku Canselor A
+    location: { lat: 1.55717, lon: 103.644674 }
+  - id: KTC_B1E
+    name: Kolej Tuanku Canselor B1 Eastbound
+    location: { lat: 1.554962, lon: 103.644206 }
+  - id: KTC_B1W
+    name: Kolej Tuanku Canselor B1 Westbound
+    location: { lat: 1.555178, lon: 103.644781 }
+  - id: KTC_B2W
+    name: Kolej Tuanku Canselor B2 Westbound
+    location: { lat: 1.555336, lon: 103.646424 }
+  - id: JA1
+    name: Jalan Amal 1
+    location: { lat: 1.561266, lon: 103.636564 }
+  - id: JA2
+    name: Jalan Amal 2
+    location: { lat: 1.561569, lon: 103.637891 }
+  - id: JA3
+    name: Jalan Amal 3
+    location: { lat: 1.561023, lon: 103.639434 }
+  - id: JA4
+    name: Jalan Amal 4
+    location: { lat: 1.559756, lon: 103.640115 }
+  - id: H01
+    name: H01 KTF
+    location: { lat: 1.559453, lon: 103.631853 }
+  - id: P19A
+    name: Fakulti Kejuruteraan Elektrik (P19A)
+    location: { lat: 1.558037, lon: 103.640191 }
+  - id: P19A2
+    name: Fakulti Kejuruteraan Elektrik (P19A)
+    location: { lat: 1.558405, lon: 103.640408 }
+  - id: P19
+    name: Fakulti Kejuruteraan Elektrik (P19)
+    location: { lat: 1.560329, lon: 103.64155 }
+  - id: KLG_W
+    name: KLG Campus Residence Westbound
+    location: { lat: 1.572674, lon: 103.620784 }
+  - id: KLG_E
+    name: KLG Campus Residence Eastbound
+    location: { lat: 1.572551, lon: 103.621104 }
+  - id: T02
+    name: Cluster/T02
+    location: { lat: 1.564448, lon: 103.653426 }
+  - id: K9
+    name: Kolej 9
+    location: { lat: 1.558691, lon: 103.649264 }
+  - id: K10
+    name: Kolej 10
+    location: { lat: 1.560592, lon: 103.648817 }
+  - id: KDOJ
+    name: Kolej Dato Onn Jaafar
+    location: { lat: 1.575657, lon: 103.619664 }
+  - id: KDOJ_XB2
+    name: Kolej Dato Onn Jaafar XB2
+    location: { lat: 1.575147, lon: 103.618143 }
+  - id: KDSE_W
+    name: Kolej Dato Seri Endon Westbound
+    location: { lat: 1.56659, lon: 103.626928 }
+  - id: KDSE_E
+    name: Kolej Dato Seri Endon Eastbound
+    location: { lat: 1.566535, lon: 103.627183 }
+  - id: PKU_E
+    name: Pusat Kesihatan Universiti Eastbound
+    location: { lat: 1.558676, lon: 103.627715 }
+  - id: PKU_W
+    name: Pusat Kesihatan Universiti Westbound
+    location: { lat: 1.55833, lon: 103.627771 }
+  - id: KRP
+    name: Kolej Rahman Putra
+    location: { lat: 1.558252, lon: 103.63021 }
+  - id: KTF
+    name: Kolej Tun Fatimah K4
+    location: { lat: 1.558832, lon: 103.630772 }
+  - id: K6
+    name: K6
+    location: { lat: 1.557871, lon: 103.629384 }
+  - id: N24
+    name: N24
+    location: { lat: 1.562719, lon: 103.63915 }
+  - id: T06
+    name: T06
+    location: { lat: 1.562537, lon: 103.655784 }
+  - id: T08
+    name: T08
+    location: { lat: 1.56005, lon: 103.655797 }
+  - id: K11
+    name: Kolej Dato Seri Endon B K11
+    location: { lat: 1.56803, lon: 103.624344 }
+  - id: KLUSTER_BN
+    name: KLUSTER_B Northbound
+    location: { lat: 1.562899, lon: 103.654968 }
+  - id: PGT
+    name: Pusat Geokejuruteraan Tropika
+    location: { lat: 1.562768, lon: 103.636461 }
+  - id: FKT
+    name: Fakulti Kejuruteraan Tenaga/Kimia
+    location: { lat: 1.56652, lon: 103.640282 }
+  - id: K17
+    name: K17
+    location: { lat: 1.561158, lon: 103.632518 }
+  - id: K19
+    name: K19
+    location: { lat: 1.561711, lon: 103.629325 }
+  - id: K20
+    name: K20
+    location: { lat: 1.562791, lon: 103.627574 }
+  - id: K21
+    name: K21
+    location: { lat: 1.563783, lon: 103.627444 }
+  - id: K22
+    name: K22
+    location: { lat: 1.564856, lon: 103.627817 }
+  - id: K23
+    name: K23
+    location: { lat: 1.563897, lon: 103.629488 }
+  - id: K25
+    name: K25
+    location: { lat: 1.564395, lon: 103.629821 }
+  - id: K26
+    name: K26
+    location: { lat: 1.563098, lon: 103.630343 }
+  - id: K28
+    name: K28
+    location: { lat: 1.564423, lon: 103.631931 }
+  - id: K29
+    name: K29
+    location: { lat: 1.564371, lon: 103.636079 }
+  - id: K30
+    name: K30
+    location: { lat: 1.565412, lon: 103.634746 }
+  - id: K31
+    name: K31
+    location: { lat: 1.564992, lon: 103.634028 }
+  - id: UI
+    name: UTM International
+    location: { lat: 1.556706, lon: 103.642561 }
+  - id: STADIUM
+    name: STADIUM
+    location: { lat: 1.556982, lon: 103.656303 }
+  - id: V01
+    name: V01 (Taman Universiti)
+    location: { lat: 1.543925, lon: 103.632305 }
+    # Route H terminus. The PDF names it "V01 (TMN U)": it is in Taman Universiti, outside
+    # the campus. The point sits on Jalan Kebudayaan 1 next to UTMSPACE (OSM), so it is kept
+    # and marked offCampus instead of moved.
+    offCampus: true

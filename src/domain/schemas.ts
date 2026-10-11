@@ -8,8 +8,8 @@ export const LatLon = z.strictObject({
 })
 
 const Id = z.string().min(1, 'id must not be empty')
-const HHMM = z.string().regex(/^\d{2}:[0-5]\d$/, 'time must be HH:MM')
-const ISODate = z.iso.date('date must be YYYY-MM-DD')
+export const HHMM = z.string().regex(/^\d{2}:[0-5]\d$/, 'time must be HH:MM')
+export const ISODate = z.iso.date('date must be YYYY-MM-DD')
 const Line = z.array(LatLon).min(2, 'a line needs at least 2 points')
 
 export const Category = z.enum([
@@ -140,6 +140,8 @@ export const Stop = z.object({
   id: Id,
   name: z.string().min(1, 'name must not be empty'),
   location: LatLon,
+  /** A real stop outside the UTM boundary (route H's Taman Universiti terminus). */
+  offCampus: z.boolean().optional(),
 })
 
 export const Route = z.object({
@@ -154,6 +156,7 @@ export const Trip = z.object({
   routeId: Id,
   calendarId: Id,
   headsign: z.string().optional(),
+  patternId: Id.optional(),
   stopTimes: z
     .array(z.object({ stopId: Id, time: HHMM }))
     .min(2, 'a trip needs at least 2 stop times'),
@@ -167,6 +170,24 @@ export const Calendar = z.object({
   exceptions: z
     .array(z.object({ date: ISODate, type: z.enum(['added', 'removed']) }))
     .default([]),
+})
+
+/** One stop sequence of a route, with its line as a Google encoded polyline (precision 5). */
+export const Pattern = z.object({
+  id: Id,
+  routeId: Id,
+  headsign: z.string().min(1),
+  stopIds: z.array(Id).min(2, 'a pattern needs at least 2 stops'),
+  shape: z.string().min(1, 'shape must not be empty'),
+})
+
+/** The emitted `public/data/transit.json`. */
+export const TransitData = z.object({
+  stops: z.array(Stop),
+  routes: z.array(Route),
+  patterns: z.array(Pattern),
+  calendars: z.array(Calendar),
+  trips: z.array(Trip),
 })
 
 export type LatLon = z.infer<typeof LatLon>
@@ -187,3 +208,5 @@ export type Stop = z.infer<typeof Stop>
 export type Route = z.infer<typeof Route>
 export type Trip = z.infer<typeof Trip>
 export type Calendar = z.infer<typeof Calendar>
+export type Pattern = z.infer<typeof Pattern>
+export type TransitData = z.infer<typeof TransitData>

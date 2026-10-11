@@ -1,0 +1,34 @@
+# Route G: KTR / KTHO / KTDI - N24 - FKT (N29) - P19 - CP
+# Source: Jadual-Shuttle-Kampus-Sesi-2025-2026.pdf (UTM Fleet, Jabatan TNC(P)),
+#   page(s) 17, 18. Effective from 2025-10-06. Times are Asia/Kuala_Lumpur.
+# Each bus lists its departure times from the first stop of each pattern, exactly as in the PDF.
+# driveSecs: driving time per hop, from v1 Backend/data/route_durations.json (measured),
+#   or estimated from the shape length where v1 had no measurement (marked "estimated").
+# shape: the v1 route line (route_geometries.json), Google encoded polyline, precision 5.
+id: G
+name: Route G
+color: '#AAAA00'
+patterns:
+  to-fkt:
+    headsign: To FKT (N29)
+    stops: [K19, K20, K21, K22, K23, K26, K25, K28, K31, K30, K29, PGT, N24, FKT]
+    driveSecs: [15, 6, 7, 33, 52, 23, 68, 70, 13, 36, 64, 95, 154]
+    shape: 'a`pHgbowR@N@n@BxA@d@Gf@Qb@WXi@Ti@DqAJy@HaAH_@@i@Bi@@[AYAQG_@O_@QEESSMKYk@Ow@Es@@YFQHOPQXO`@K`ASnAQBAv@KjAMjAGnCOJA[aAW][WSK]Gk@E[@E?S@}Cj@UFq@f@ONQPSL[Nw@BWE]OQKe@g@Q[M[GYAYAm@Bm@Da@N_@FKFIVWXQ^M\I`@Ib@Ir@Q@?p@Ud@c@l@o@Lc@Pc@Va@VYXWRQk@]s@a@_@Qi@AcACW?QCYKc@YSUYa@Qa@Wk@I[G[E_AAS?mA?ODQFOJONGHGJAb@A|@Dh@NXHl@f@TPd@^VLpARBERe@\_@`@]v@m@OSGMKWGMCIi@yAEg@CWD@A[Am@Bk@BYD[D[Lu@@IG?PiAF[d@sBHa@jAuCCEUSMIICg@?]LQPY^SXOTYVWL[NQVGXKZORKXWb@y@vAi@p@YLKDq@Ti@FYDS@u@?O?uAE]CSKMUSu@iAkDCIGWBY@WFO^YTIJE'
+  to-ktr:
+    headsign: To KTR (K01)
+    stops: [FKT, P19, P19A, CP, K17, K19]
+    driveSecs: [120, 64, 77, 66, 21]
+    shape: 'w}pHyfqwR\QJGLGJINKLQYm@CYBKBKb@]n@Oh@Ib@?R?RBNDVJl@p@|AbBx@fARVTFb@BP@ZOVMXWNURYX_@PQ\Mf@?HBTAXAT?J?PSTWh@g@XOZGRGREfAI?Ix@@F?r@Fn@VbAn@CDLJXPRL^V\VPLdBv@`@TFBpAr@dAjAHTb@fAVrA?p@?n@MdBQv@ERa@x@KXy@rA]h@aAhAEBONSRSTSNMJ[V]TKHk@XMFUBSB?Du@Bu@BBEwACK?{@U?D@~@@NBP^h@`@p@u@r@[t@GNUl@u@zBELOb@Of@Y~@K^]nAKl@Ar@FxC@p@BlA'
+buses:
+  - id: G1
+    page: 17
+    service: weekday
+    departures:
+      to-fkt: ['07:00', '07:30', '08:00', '08:30', '09:00', '09:30', '11:40', '12:20', '13:00', '13:40', '14:20', '16:20', '17:00', '17:40', '18:20']
+      to-ktr: ['07:15', '07:45', '08:15', '08:45', '09:15', '09:45', '11:20', '12:00', '12:40', '13:20', '14:00', '14:40', '16:00', '16:40', '17:20', '18:00', '18:40']
+  - id: G2
+    page: 18
+    service: weekday
+    departures:
+      to-fkt: ['07:15', '07:45', '08:15', '08:45', '09:15', '09:45', '11:50', '12:30', '13:10', '13:50', '14:30', '16:30', '17:10', '17:50', '18:30']
+      to-ktr: ['07:30', '08:00', '08:30', '09:00', '09:30', '10:00', '11:30', '12:10', '12:50', '13:30', '14:10', '14:50', '16:10', '16:50', '17:30', '18:10', '18:50']

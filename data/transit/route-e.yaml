@@ -1,0 +1,97 @@
+# Route E: KDOJ / KLG / KDSE - CP - Cluster (T02-T08)
+# Source: Jadual-Shuttle-Kampus-Sesi-2025-2026.pdf (UTM Fleet, Jabatan TNC(P)),
+#   page(s) 9, 10, 11, 12, 13, 14, 21, 22. Effective from 2025-10-06. Times are Asia/Kuala_Lumpur.
+# Each bus lists its departure times from the first stop of each pattern, exactly as in the PDF.
+# driveSecs: driving time per hop, from v1 Backend/data/route_durations.json (measured),
+#   or estimated from the shape length where v1 had no measurement (marked "estimated").
+# shape: the v1 route line (route_geometries.json), Google encoded polyline, precision 5.
+id: E
+name: Route E
+color: '#AA44AA'
+patterns:
+  to-t02-via-n24:
+    headsign: To Cluster (T02) via N24
+    stops: [KDOJ_XB2, KDOJ, KLG_E, KDSE_E, PKU_E, K6, KTF, H01, CP, PGT, N24, P19, P19A2, UI, KTC_B1E, T02]
+    driveSecs: [26, 58, 148, 96, 37, 24, 17, 69, 67, 95, 108, 78, 42, 40, 240]
+    shape: 'csrHu|lwRaBwCUiAAo@HU\c@h@[ZIp@CvAGRCZMTWZENF^Iz@OhAa@h@W^WVw@Hg@Ao@Se@uAwBQMl@o@`AaA|@g@dAMdBGhBEjCItBEz@IpBy@nAuAVaARgBJqAb@cB`@iA|@{A`@i@j@QfAIlAP~@`@xBtCjAnAzAf@xAX`B\t@FfBB~@AjAYlKoCzBmAx@}@t@kCf@k@bEuCtAaAcHmKkBgD]oAGgC@wB^{CPeAQmBcBHmC@eDiAyAs@cAw@_A}@]c@i@uA_@qAGaBF}ARuARgA\aBNgAZ_Ad@eAx@aBr@w@dAm@pAWvAElAFtBhAtA~@~A`Ap@XT{@jAmDd@iAZu@\a@~@a@bAWvCe@lG_A`@OUqAq@gAe@{@u@{Ae@m@]k@Sw@FgALi@Hm@Ni@nBcIZwC@GaCm@iCPkBBHaCCkIGqAIq@s@iB_BeBiDsA_Ck@mE}@_Cm@aGoAOC]|@kBxAyBv@y@r@D`@WnAo@jAa@R}@Cc@[Wm@Gw@Jg@Ta@JO'
+  to-t02-via-ja:
+    headsign: To Cluster (T02) via Jalan Amal
+    stops: [KDOJ_XB2, KDOJ, KLG_E, KDSE_E, PKU_E, K6, KTF, H01, CP, JA1, JA2, JA3, JA4, P19A2, UI, KTC_B1E, T02]
+    driveSecs: [26, 58, 148, 96, 37, 24, 17, 69, 52, 17, 20, 18, 83, 42, 40, 240]
+    shape: '}qrH{zlwRoBgDa@}@IcBXq@j@]p@OhAEbAIZQNQTKTDT@d@Mt@Ox@[j@U^YP]Rm@?g@Os@]k@Q]Wa@WYMO`AiAl@g@j@c@t@OtBI~BEbCGzBEx@Or@UbA_@x@w@Xq@PeALwBNmAXy@\}@t@{A^g@h@[z@SbAD|@TlAfAzCrDr@XpFlApAFnA?bAEfAUbCo@~DgAzAi@fAg@x@s@f@_AXgA^cAlBkAx@o@rBwANQiB}B}@_Bo@kAyAcCoAsB[y@M}@GaELwA\kCF{@OkAEO_BLaC?gAU?uAK{@g@yAg@mB_A_DIo@Ju@v@{BJu@T}@Xy@L[pAo@j@SrA]tAa@nBm@f@?bAf@DBb@uAdAiDp@}Ab@i@b@[|Co@~@QXExCg@pCc@DK_@sAkAsBu@uAeAgBQg@Am@Fm@L_@Fa@Ha@bA_E\yARcANy@LaByA]cAQoCXw@AQAFuB@_ECkBCuBQoAa@cAaAmAu@o@kAm@qA]wA]iCg@{Aa@iD{@gB_@mCk@u@fBaBt@qBv@s@r@@r@[bAo@fA]Pm@Cq@]Se@Ms@Hm@Xk@FK'
+  to-kdoj:
+    headsign: To KDOJ
+    stops: [T02, KLUSTER_BN, T06, T08, KTC_B2W, KTC_B1W, P19A, AM, KRP, PKU_W, KDSE_W, K11, KLG_W, KDOJ, KDOJ_XB2]
+    driveSecs: [63, 42, 59, 144, 18, 78, 91, 42, 43, 99, 34, 103, 52, 26]
+    shape: 'oppHoxswR\Sr@Mj@Bd@J^Gj@_@x@[v@Yr@Yb@]Tk@Po@wA_@_FmAgAMa@MPU`EbA`@i@bA{ApAoBj@}@`Ai@~@W~@@t@Xh@h@d@hATbAHjAApCGnAMl@~Dx@rBj@nBb@|Ad@jAp@bBtBj@zAPvB?tLf@f@x@CvAMj@?zBn@_@tDuApFe@lBQdAMdAXbAdB|CrBxDDt@{OpCgAr@g@fAaCjHlBfAdA~@~@xBTnAI~Cc@bCyBtD_BjBkCxBy@^RhBSvBWzAEvB@tBHbAv@fB~HrMn@p@}GpEm@jBa@xAcAfAeD~AqJbC}APoCGaACuD}@yAe@gDyDkAkAoBM}@Ng@ZoAvB{@zBOhBOjBg@`BmAfA}An@mBVeBAmBDsCLuBLu@VsA`Aw@|@rAdB`@dAK`Bq@bA{Bv@eA\QLGX]LUI]GoCLm@F{@h@Up@HnAHZj@hAh@z@R^'
+  to-cp:
+    headsign: To Centre Point (CP)
+    stops: [KDOJ_XB2, KDOJ, KLG_E, KDSE_E, PKU_E, K6, KTF, H01, CP]
+    driveSecs: [26, 58, 148, 96, 37, 24, 17, 69]
+    shape: 'esrHw|lwR_@k@IKc@_A[k@Ea@CYC_@DYBEHSLOPMh@Uz@GbBGPGVO??@IDGFGHCN?RHp@Kj@MjAa@v@_@V[Tw@Fc@Ea@Og@Yi@iAcBX[n@q@h@e@h@[n@Ov@ErEKlBExAEp@CXCf@OREVMRIRKVQd@c@\q@Nm@Hc@Hw@D{@Hy@Pm@XaAb@_A^o@Zk@TU\MZILEp@BD?d@DTDd@PJFNLz@bAj@r@n@v@Z`@TPZLv@TrAZjAX\Fb@Dl@@j@Bj@?^?f@E`@M|@S~@Uv@St@St@Qp@Uv@UbAa@^Ql@]\[V]R[J[TcA\u@RKFEJIjGkEe@e@SWMQ_@k@KSc@s@yAeCi@y@Sa@g@}@Wc@]k@Qe@KYAAEYAgA?o@?}@?e@@M?G?EJu@Fi@DUHm@Hm@?O?_@MkAUBUBu@B'
+  cp-to-kdoj:
+    headsign: To KDOJ
+    stops: [CP, JA1, JA2, JA3, JA4, P19A, AM, KRP, PKU_W, KDSE_W, K11, KLG_W, KDOJ, KDOJ_XB2]
+    driveSecs: [52, 17, 20, 18, 22, 91, 42, 43, 99, 34, 103, 52, 26]
+    shape: 'esoH{dpwR}@B{AE}@QAO@{AEWqCuJIiA`AsCRsAt@}Bx@g@lA_@`HuB~DjBpAhAp@jAj@zB?jBYrCy@rBwBzCcAfAi@l@qBpAa@ZLjA?^?NIl@Il@ETGh@Kt@?D?FAL?d@?|@?n@@fADX@@JXPd@\j@Vb@f@|@R`@h@x@xAdCb@r@JR^j@LPRVd@d@kGjEKHGDSJ]t@UbAKZSZW\]Zm@\_@PcA`@w@Tq@Tu@Pu@Rw@R_AT}@Ra@Lg@D_@?k@?k@Cm@Ac@E]GkAYsA[w@U[MUQ[a@o@w@k@s@{@cAOMKGe@QUEe@EE?q@CMD[H]LUT[j@_@n@c@~@Y`AQl@Ix@Ez@Iv@Ib@Ol@]p@e@b@WPSJSHWLSDg@NYBq@ByADmBDsEJw@Do@Ni@Zi@d@o@p@YZhAbBXh@Nf@D`@Gb@Uv@WZw@^kA`@k@Lq@JSIO?IBGFEFAH??WNQFcBF{@Fi@TQLMNIRCDEXB^BXD`@Zj@b@~@HJ^j@'
+  to-k910:
+    headsign: To Kolej 9/10
+    stops: [KDOJ_XB2, KDOJ, KLG_E, KDSE_E, PKU_E, K6, KTF, H01, CP, PGT, N24, P19, P19A, UI, KTC_B1E, K9, K10]
+    driveSecs: [26, 58, 148, 96, 37, 24, 17, 69, 67, 95, 108, 64, 96, 40, 112, 31]
+    shape: '}rrHm|lwRS_@i@{@k@iAI[IoATq@z@i@l@GnCM\FTH\MFYPMdA]zBw@p@cAJaBa@eAsAeBv@}@rAaAt@WtBMrCMlBEdB@lBW|Ao@lAgAf@aBNkBNiBz@{BnAwBf@[|@OnBLjAjAfDxDxAd@tD|@`ABnCF|AQpJcCdD_BbAgA`@yAl@kB|GqEo@q@_IsMw@gBIcAAuBDwBV{ARwBSiBeBPiB@cB]{D_BuCiCkAwCSuDv@uE~@oEjByDtAwAbEe@nALrAp@nChBvBbA`CkHf@gAfAs@zOqCEu@sByDeB}CYcALeAPeAd@mBtAqF^uD{Bo@k@?wALy@B_FGgEWgCAwEhAoBB'
+  k910-to-kdoj:
+    headsign: To KDOJ
+    stops: [K9, K10, KTC_B2W, KTC_B1W, P19A, AM, KRP, PKU_W, KDSE_W, K11, KLG_W, KDOJ, KDOJ_XB2]
+    driveSecs: [31, 116, 18, 78, 91, 42, 43, 99, 34, 103, 52, 26]
+    shape: 'gyoH_|rwRnBCvEiAfC@fEV~EFx@CvAMj@?zBn@_@tDuApFe@lBQdAMdAXbAdB|CrBxDDt@{OpCgAr@g@fAaCjHlBfAdA~@~@xBTnAI~Cc@bCyBtD_BjBkCxBy@^RhBSvBWzAEvB@tBHbAv@fB~HrMn@p@}GpEm@jBa@xAcAfAeD~AqJbC}APoCGaACuD}@yAe@gDyDkAkAoBM}@Ng@ZoAvB{@zBOhBOjBg@`BmAfA}An@mBVeBAmBDsCLuBLu@VsA`Aw@|@rAdB`@dAK`Bq@bA{Bv@eA\QLGX]LUI]GoCLm@F{@h@Up@HnAHZj@hAh@z@R^'
+buses:
+  - id: E1
+    page: 9
+    service: weekday
+    departures:
+      to-t02-via-n24: ['07:00', '08:00', '09:00', '11:00', '12:00', '13:00', '14:00', '16:30', '17:30']
+      to-kdoj: ['07:30', '08:30', '09:30', '11:30', '12:30', '13:30', '14:30', '16:00', '17:00', '18:00']
+  - id: E2
+    page: 10
+    service: weekday
+    departures:
+      to-t02-via-ja: ['07:15', '08:15', '09:15', '11:15', '12:15', '13:15', '14:15', '16:45', '17:45']
+      to-kdoj: ['07:45', '08:45', '09:45', '11:45', '12:45', '13:45', '14:45', '16:15', '17:15', '18:15']
+  - id: E3
+    page: 11
+    service: weekday
+    departures:
+      to-t02-via-n24: ['07:30', '08:30', '09:30', '11:30', '12:30', '13:30', '14:30', '17:00', '18:00']
+      to-kdoj: ['08:00', '09:00', '10:00', '12:00', '13:00', '14:00', '15:00', '16:30', '17:30', '18:30']
+  - id: E4
+    page: 12
+    service: weekday
+    departures:
+      to-t02-via-ja: ['07:45', '08:45', '09:45', '11:45', '12:45', '13:45', '14:45', '17:15', '18:15']
+      to-kdoj: ['08:15', '09:15', '10:15', '12:15', '13:15', '14:15', '15:15', '16:45', '17:45', '18:45']
+  - id: E5
+    page: 13
+    service: weekday
+    departures:
+      to-t02-via-n24: ['07:00', '08:00', '10:00', '11:00', '15:15', '16:15', '17:30']
+      to-kdoj: ['07:30', '08:30', '10:30', '11:30', '15:45', '17:00', '18:00']
+  - id: E6
+    page: 14
+    service: weekday
+    departures:
+      to-t02-via-ja: ['07:00', '08:00', '10:30', '15:00', '16:00', '17:30']
+      to-kdoj: ['07:30', '08:30', '10:00', '11:00', '15:30', '17:00', '18:00']
+      to-cp: ['19:45', '20:15']
+      cp-to-kdoj: ['20:00', '22:00', '23:00']
+  - id: E1
+    page: 21
+    service: weekend
+    departures:
+      to-k910: ['07:30', '09:00', '11:00', '13:00', '15:00', '17:00']
+      k910-to-kdoj: ['08:00', '09:30', '11:30', '13:30', '15:30', '17:30']
+  - id: E2
+    page: 22
+    service: weekend
+    departures:
+      to-k910: ['08:00', '10:00', '12:00', '14:00', '16:00', '18:00']
+      k910-to-kdoj: ['08:30', '10:30', '12:30', '14:30', '16:30', '18:30']

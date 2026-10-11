@@ -1,0 +1,40 @@
+# Route C: K9/10 - KTC - CP - Jalan Amal - KTC - K9/10
+# Source: Jadual-Shuttle-Kampus-Sesi-2025-2026.pdf (UTM Fleet, Jabatan TNC(P)),
+#   page(s) 5, 6, 7. Effective from 2025-10-06. Times are Asia/Kuala_Lumpur.
+# Each bus lists its departure times from the first stop of each pattern, exactly as in the PDF.
+# driveSecs: driving time per hop, from v1 Backend/data/route_durations.json (measured),
+#   or estimated from the shape length where v1 had no measurement (marked "estimated").
+# shape: the v1 route line (route_geometries.json), Google encoded polyline, precision 5.
+id: C
+name: Route C
+color: '#4444FF'
+patterns:
+  to-cp:
+    headsign: To Centre Point (CP)
+    stops: [K9, K10, KTC_B2W, UI, P19A, CP]
+    driveSecs: [31, 116, 62, 34, 77]
+    shape: 'myoHa|rwR~A@pAYxBk@fBGhBBhCRnEHzBEvAOlCp@m@zEkBpH]nB?z@l@pA~DlHHz@yNfCmAd@w@bAmChI~BnAdAlAr@nBPdBg@fFm@pAgCzDaAbA{@r@qAz@{@XoAJ'
+  to-k910:
+    headsign: To Kolej 9/10
+    stops: [CP, JA1, JA2, JA3, JA4, UI, KTC_B1E, K9, K10]
+    driveSecs: [52, 17, 20, 18, 55, 40, 112, 31]
+    shape: 'ksoH{dpwRoCCaAU@aBg@wBi@kBgAsDC_A\mA`@qATuAb@sA\o@dAa@rA_@jCw@pA_@^QbBt@h@cBz@iClAkCt@i@vBi@rASfBYxAUzB[ZGG{@y@{Ai@aAs@sAo@oAe@m@G}@TsAPgA^uAl@uBj@uCZqCoCo@yAPgCBsEMgBKcCGoA@eBb@gBd@{A?'
+buses:
+  - id: C1
+    page: 5
+    service: weekday
+    departures:
+      to-cp: ['07:00', '07:30', '08:00', '08:30', '09:00', '09:30', '11:35', '12:15', '12:55', '13:35', '14:15', '16:20', '17:00', '17:40', '18:20']
+      to-k910: ['07:15', '07:45', '08:15', '08:45', '09:15', '09:45', '11:15', '11:55', '12:35', '13:15', '13:55', '14:35', '16:00', '16:40', '17:20', '18:00', '18:40']
+  - id: C2
+    page: 6
+    service: weekday
+    departures:
+      to-cp: ['07:10', '07:40', '08:10', '08:40', '09:10', '09:40', '11:45', '12:25', '13:05', '13:45', '14:25', '16:30', '17:10', '17:50', '19:45', '20:15']
+      to-k910: ['07:25', '07:55', '08:25', '08:55', '09:25', '09:55', '11:25', '12:05', '12:45', '13:25', '14:05', '14:45', '16:10', '16:50', '17:30', '20:00', '22:00', '23:00']
+  - id: C3
+    page: 7
+    service: weekday
+    departures:
+      to-cp: ['07:20', '07:50', '08:20', '08:50', '09:20', '09:50', '12:00', '12:40', '13:20', '14:00', '14:40', '16:45', '17:25', '18:05', '18:40']
+      to-k910: ['07:35', '08:05', '08:35', '09:05', '09:35', '10:05', '11:40', '12:20', '13:00', '13:40', '14:20', '15:00', '16:25', '17:05', '17:45', '18:25', '19:00']
