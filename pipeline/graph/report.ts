@@ -5,7 +5,7 @@ import type { BuildReport } from './build.ts'
 
 const COLORS: Record<string, string> = {
   road: '#888', footway: '#2a7', path: '#7a2', steps: '#e33', covered: '#27c', indoor: '#a3c',
-  shortcut: '#f80', door: '#c0a', crossing: '#0bb', ramp: '#995',
+  shortcut: '#f80', door: '#c0a', crossing: '#0bb', ramp: '#995', connector: '#f0f',
 }
 
 export function graphReport(g: GraphInput, r: BuildReport, stops: { id: string; location: LatLon }[]): string {

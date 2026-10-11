@@ -173,6 +173,8 @@ export function planTrip(g: Graph, data: TransitData, req: PlanRequest): Plan {
         if (!journey.legs.some((l) => l.kind === 'ride')) continue
         const first = journey.legs[0]
         const last = journey.legs[journey.legs.length - 1]
+        // A transfer walk at either end is the access/egress walk in two pieces (and slips past the cap). Journeys to the stop we walk from or to already exist.
+        if (first.kind === 'walk' || last.kind === 'walk') continue
         const fromStop = data.stops.findIndex((x) => x.id === first.from)
         const toStop = data.stops.findIndex((x) => x.id === last.to)
         const a = accessS[fromStop]

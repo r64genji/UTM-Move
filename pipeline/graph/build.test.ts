@@ -130,3 +130,44 @@ describe('merging shortcuts, indoor links and doors', () => {
     expect(input.edges.some((e) => e.from === n || e.to === n)).toBe(true)
   })
 })
+
+describe('closing mapping gaps', () => {
+  const flat = { west: 103.6, north: 1.57, dLon: 0.001, dLat: 0.001, cols: 4, rows: 4, dm: Buffer.from(new Int16Array(16).fill(100).buffer).toString('base64') }
+  const way = (a: number[], b: number[]) => ({ geometry: { type: 'LineString', coordinates: [a, b] }, properties: { kind: 'footway', stepFree: true } })
+  const ring = (kind: string, c: number[][]) => ({ geometry: { type: 'LineString', coordinates: c }, properties: { kind } })
+  // A long road along lat 1.5680 and a footway that ends 0.00007 deg (~8 m) short of it. A second road runs behind the footway.
+  const mk = (extra: Partial<BuildInputs> = {}): BuildInputs => ({
+    ways: [way([103.601, 1.568], [103.604, 1.568]), way([103.6025, 1.5688], [103.6025, 1.56807]), way([103.601, 1.5688], [103.6025, 1.5688])],
+    dem: flat, landmarks: [], stops: [], entrances: [], shortcuts: [], indoor: [],
+    ...extra,
+  })
+  const connectors = (b: BuildInputs) => buildGraph(b).input.edges.filter((e) => e.kind === 'connector')
+
+  test('a dangling end 8 m from another way gets one connector, and the report counts it', () => {
+    const { input, report } = buildGraph(mk())
+    expect(input.edges.filter((e) => e.kind === 'connector').map((e) => e.lengthM)).toEqual([7.8])
+    expect(report.gaps).toHaveLength(1)
+  })
+
+  test('a building between the end and the way blocks it', () => {
+    const wall = ring('building', [[103.6024, 1.56803], [103.6026, 1.56803], [103.6026, 1.56805], [103.6024, 1.56805], [103.6024, 1.56803]])
+    expect(connectors(mk({ obstacles: [wall] }))).toHaveLength(0)
+  })
+
+  test('water between the end and the way blocks it', () => {
+    expect(connectors(mk({ obstacles: [ring('water', [[103.6024, 1.56804], [103.6026, 1.56804]])] }))).toHaveLength(0)
+  })
+
+  test('an end 25 m from the nearest way is a real dead end', () => {
+    const b = mk()
+    expect(connectors({ ...b, ways: [b.ways[0], way([103.6025, 1.5688], [103.6025, 1.56825]), b.ways[2]] })).toHaveLength(0)
+  })
+
+  test('the real campus: library road end and covered footway are joined, the walk is no longer a loop', () => {
+    const gap = built.report.gaps.find((x) => Math.abs(x.from.lat - 1.559338) < 1e-5 && Math.abs(x.from.lon - 103.637289) < 1e-5)!
+    expect(gap.lengthM).toBeCloseTo(17.6, 1)
+    const road = snapToNode(g, { lat: 1.55923, lon: 103.63717 })
+    const walkway = snapToNode(g, { lat: 1.55974, lon: 103.63742 })
+    expect(route(g, road, walkway, { profile: 'fastest', at: MON_10AM })!.distanceM).toBeLessThan(80)
+  })
+})

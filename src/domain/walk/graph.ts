@@ -20,6 +20,7 @@ export const EDGE_KINDS = [
   'door',
   'crossing',
   'ramp',
+  'connector',
 ] as const
 export type EdgeKind = (typeof EDGE_KINDS)[number]
 

@@ -42,6 +42,7 @@ describe('golden trips', () => {
       expect(walk.walkM / straightLineM(t)).toBeLessThanOrEqual(t.maxDetour ?? MAX_DETOUR)
       for (const o of now) {
         let clock = 0
+        expect(o.legs.some((l, i) => i > 0 && l.kind === 'walk' && o.legs[i - 1].kind === 'walk')).toBe(false)
         for (const l of o.legs) {
           expect(Date.parse(l.departAt)).toBeGreaterThanOrEqual(clock)
           expect(Date.parse(l.arriveAt)).toBeGreaterThanOrEqual(Date.parse(l.departAt))
