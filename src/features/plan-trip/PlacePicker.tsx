@@ -1,10 +1,12 @@
 // One end of a trip: shows the chosen place and opens a search to change it.
-// Today it searches stops and (if /data/places.json exists) places. Ticket #26 replaces the search internals only.
+// Searches places and stops with the same offline index as /search.
 import { useEffect, useId, useState } from 'react'
 import { z } from 'zod'
 import { dataUrl } from '../../dataUrl.ts'
 import { Place } from '../../domain/schemas.ts'
+import { search } from '../../domain/search.ts'
 import { useAppStore } from '../app/store.ts'
+import { useSearchIndex } from '../places/useSearch.ts'
 import { useMap } from '../map/MapContext.tsx'
 import { useTransit } from '../transit/useTransit.ts'
 import type { Endpoint } from './tripParams.ts'
@@ -43,29 +45,19 @@ export function useEndpointName(e: Endpoint | null): string | null {
 
 type Hit = { key: string; name: string; hint: string; endpoint: Endpoint }
 
-const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
-
 export function PlacePicker({ label, value, onChange }: { label: string; value: Endpoint | null; onChange: (e: Endpoint) => void }) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
-  const { data } = useTransit()
-  const places = usePlaces()
+  const index = useSearchIndex()
   const map = useMap()
   const setSheet = useAppStore((s) => s.setSheet)
   const name = useEndpointName(value)
   const listId = useId()
 
-  const q = norm(query)
-  const hits: Hit[] = q
-    ? [
-        ...places
-          .filter((p) => [p.name, ...p.aliases, p.blockCode ?? ''].some((t) => norm(t).includes(q)))
-          .map((p) => ({ key: `place:${p.id}`, name: p.name, hint: p.blockCode ?? 'Place', endpoint: { kind: 'place', id: p.id } as Endpoint })),
-        ...(data?.stops ?? [])
-          .filter((s) => norm(`${s.name} ${s.id}`).includes(q))
-          .map((s) => ({ key: `stop:${s.id}`, name: s.name, hint: 'Bus stop', endpoint: { kind: 'stop', id: s.id } as Endpoint })),
-      ].slice(0, 8)
-    : []
+  const q = query.trim()
+  const hits: Hit[] = !q || !index ? [] : search(index, q, null, 8).map((h) => ({
+    key: h.id, name: h.name, hint: h.code || h.category, endpoint: { kind: h.kind, id: h.ref },
+  }))
 
   const choose = (e: Endpoint) => {
     onChange(e)
