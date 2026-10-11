@@ -88,10 +88,23 @@ export const WalkEdge = z.object({
 /** verified: used. likely: used with a label. guess: never used. */
 export const ShortcutLevel = z.enum(['verified', 'likely', 'guess'])
 
+export const ShortcutKind = z.enum(['footpath', 'covered-walkway', 'stairs', 'through-building', 'bridge'])
+
+/** A possible shortcut, before scoring. `from`/`to` are free-text place hints. */
+export const ShortcutCandidate = z.object({
+  id: Id,
+  geometry: Line,
+  kind: ShortcutKind,
+  from: z.string().optional(),
+  to: z.string().optional(),
+  note: z.string().optional(),
+})
+
 export const Shortcut = z.object({
   id: Id,
   geometry: Line,
   level: ShortcutLevel,
+  kind: ShortcutKind.optional(),
   evidenceIds: z.array(Id).default([]),
   indoor: z.boolean().default(false),
   covered: z.boolean().default(false),
@@ -115,6 +128,12 @@ export const Evidence = z.object({
   summary: z.string().min(1, 'summary must not be empty'),
   url: z.url().optional(),
   observedAt: ISODate,
+  /** Stable id of the thing observed (trace id, reporter hash, page, tile). Repeats count once. */
+  ref: z.string().min(1).optional(),
+  /** 0..1. Records below 0.5 do not count when scoring. Missing means 1. */
+  confidence: z.number().min(0).max(1).optional(),
+  /** Which imagery a `satellite` record was seen on. */
+  imagery: z.enum(['esri', 'bing']).optional(),
 })
 
 export const Stop = z.object({
@@ -160,6 +179,8 @@ export type Building = z.infer<typeof Building>
 export type Door = z.infer<typeof Door>
 export type WalkEdge = z.infer<typeof WalkEdge>
 export type ShortcutLevel = z.infer<typeof ShortcutLevel>
+export type ShortcutKind = z.infer<typeof ShortcutKind>
+export type ShortcutCandidate = z.infer<typeof ShortcutCandidate>
 export type Shortcut = z.infer<typeof Shortcut>
 export type Evidence = z.infer<typeof Evidence>
 export type Stop = z.infer<typeof Stop>
