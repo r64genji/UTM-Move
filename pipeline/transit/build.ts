@@ -132,13 +132,17 @@ export function buildTransit(src: TransitSources): TransitData {
         for (const time of times) {
           const dep = toMin(time)
           const inGap = days.includes('fri') && dep >= toMin(gap.from) && dep < toMin(gap.to)
+          // Whole minutes, and never two stops in the same minute: a hop under 30 s still takes 1 min.
+          // Later stops slip a minute rather than earlier ones moving, so nobody misses a bus.
+          const mins: number[] = []
+          offsets.forEach((o, i) => mins.push(Math.max(dep + Math.round(o / 60), i ? mins[i - 1] + 1 : 0)))
           trips.push({
             id: `${r.id}:${bus.id}:${bus.service}:${pid}:${time.replace(':', '')}`,
             routeId: r.id,
             calendarId: inGap ? noFriday(bus.service) : bus.service,
             headsign: p.headsign,
             patternId: `${r.id}:${pid}`,
-            stopTimes: p.stops.map((stopId, i) => ({ stopId, time: toHHMM(dep + Math.round(offsets[i] / 60)) })),
+            stopTimes: p.stops.map((stopId, i) => ({ stopId, time: toHHMM(mins[i]) })),
           })
         }
       }

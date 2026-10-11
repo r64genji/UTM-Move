@@ -1,0 +1,72 @@
+{
+ "stops": [
+  {
+   "id": "S1",
+   "name": "Gate Stop",
+   "location": {
+    "lat": 1.561,
+    "lon": 103.6356
+   }
+  },
+  {
+   "id": "S2",
+   "name": "Library Stop",
+   "location": {
+    "lat": 1.561,
+    "lon": 103.6364
+   }
+  }
+ ],
+ "routes": [
+  {
+   "id": "A",
+   "name": "Route A",
+   "color": "#ff0000"
+  }
+ ],
+ "patterns": [
+  {
+   "id": "A:out",
+   "routeId": "A",
+   "headsign": "Library",
+   "stopIds": [
+    "S1",
+    "S2"
+   ],
+   "shape": "_p~iF~ps|U_ulLnnqC"
+  }
+ ],
+ "calendars": [
+  {
+   "id": "weekday",
+   "days": [
+    "mon",
+    "tue",
+    "wed",
+    "thu",
+    "fri"
+   ],
+   "startDate": "2026-01-01",
+   "endDate": "2026-12-31",
+   "exceptions": []
+  }
+ ],
+ "trips": [
+  {
+   "id": "A:1",
+   "routeId": "A",
+   "calendarId": "weekday",
+   "patternId": "A:out",
+   "stopTimes": [
+    {
+     "stopId": "S1",
+     "time": "08:00"
+    },
+    {
+     "stopId": "S9",
+     "time": "08:05"
+    }
+   ]
+  }
+ ]
+}
