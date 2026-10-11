@@ -20,7 +20,7 @@ test('a block code finds that block first', () => {
 
 test('Malay and English category words find the same places', () => {
   expect(first('perpus')).toBe('place:osm-w207409194 Perpustakaan Sultanah Zanariah')
-  expect(first('library')).toBe('place:g-7c130c4447 Library, FKE')
+  expect(first('library')).toBe('place:osm-w207409194 Perpustakaan Sultanah Zanariah')
   expect(search(index, 'library').map((h) => h.id)).toContain('place:osm-w207409194')
   expect(first('masjid')).toBe('place:osm-w207409192 Masjid Sultan Ismail')
 })

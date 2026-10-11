@@ -49,7 +49,7 @@ function graphStats() {
 const bestS = (o: { durationS: number }[]) => Math.min(...o.map((x) => x.durationS))
 
 // 0. Baseline build from the committed data, so the report can compare graph size.
-run('baseline build', ['sh', '-c', 'npm run build:transit && npm run build:graph'])
+run('baseline build', npm('build:data'))
 const before = snapshot()
 const graphBefore = graphStats()
 
@@ -68,9 +68,7 @@ run('refresh OSM GPS traces', npm('gps:shortcuts'))
 // 3. Re-score (drops candidates OSM now has), OSM checklist, rebuild.
 run('re-score evidence', npm('score:shortcuts'))
 run('OSM checklist', npm('export:osm'))
-run('build transit', npm('build:transit'))
-run('build graph', npm('build:graph'))
-run('build places', ['npm', 'run', 'build:places', '--if-present'])
+run('build data', npm('build:data'))
 
 // 4. Checks. Failures go in the report; the PR still opens so a human sees them.
 run('validate', npm('validate'), { fatal: false })

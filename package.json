@@ -4,9 +4,10 @@
   "version": "2.0.0",
   "type": "module",
   "scripts": {
-    "predev": "npm run build:transit && npm run build:places -- --curated && npm run build:search && npm run build:graph",
+    "predev": "npm run build:data",
     "dev": "vite",
-    "prebuild": "npm run build:transit && npm run build:places -- --curated && npm run build:search && npm run build:graph",
+    "prebuild": "npm run build:data",
+    "build:data": "npm run build:transit && npm run build:places -- --curated && npm run build:search && npm run build:graph",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "typecheck": "tsc -b",

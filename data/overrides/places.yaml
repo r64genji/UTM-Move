@@ -842,3 +842,8 @@ osm-w686136014:
   action: drop
   by: agent
   note: OSM outline sits on open ground and trees; no building visible, and the bare code gives no context.
+osm-w207409194:
+  action: fix
+  aliases: [PSZ, Sultanah Zanariah Library, Library, Main Library, UTM Library, Perpus]
+  by: agent
+  note: Main campus library. A search for "library" must find it first, not a faculty library.
