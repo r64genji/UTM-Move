@@ -108,3 +108,12 @@ Writes:
   (green verified, amber likely, red guess). Click a line for its reasons and evidence ids.
 
 Evidence for an unknown `shortcutId` is reported as a warning and ignored.
+
+## Research (ticket #14)
+
+`npm run research:shortcuts` runs one Hermes one-shot job (`hermes -p researcher -z`, Gemini through OmniRoute) for each of 50 campus areas
+(k-means clusters of `public/data/places.json`), max 4 at once. Hermes replies and fetched pages are cached under `data/raw/cache/research/`,
+so a re-run only does new work. Outputs in `data/research/`: `areas.jsonl` (one record per area, also `nothing-found`), `claims.jsonl`
+(every claim has a URL the script fetched, `quoteVerified` says the quote was found in the page text), `floorplans.jsonl` (for #16).
+Only quote-verified claims whose two places both resolve to `places.json` become a candidate (straight line between nearest entrances,
+confidence 0.5) plus `research` evidence. Research alone scores `guess`.
