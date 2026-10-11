@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
+import { dataUrl } from '../../dataUrl.ts'
 import { TransitData } from '../../domain/schemas.ts'
 
 let cached: Promise<TransitData> | null = null
 
 /** Fetch and validate `/data/transit.json` once. Pages and the worker share the same promise. */
-export function loadTransit(url = '/data/transit.json'): Promise<TransitData> {
+export function loadTransit(url = dataUrl('transit.json')): Promise<TransitData> {
   cached ??= fetch(url)
     .then((r) => {
       if (!r.ok) throw new Error(`transit.json: HTTP ${r.status}`)

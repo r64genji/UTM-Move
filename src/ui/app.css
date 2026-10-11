@@ -814,3 +814,19 @@ a {
   color: var(--ink-2);
   font-size: var(--text-sm);
 }
+
+.update-toast {
+  position: fixed;
+  z-index: 10;
+  top: max(0.75rem, env(safe-area-inset-top));
+  left: 50%;
+  translate: -50% 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.5rem 0.5rem 1rem;
+  border-radius: 999px;
+  background: var(--maroon-wash);
+  border: 1px solid var(--maroon);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.18);
+}
