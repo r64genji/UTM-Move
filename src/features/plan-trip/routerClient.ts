@@ -2,6 +2,7 @@ import * as Comlink from 'comlink'
 import type { Plan } from '../../domain/router/planTrip.ts'
 import type { RouterApi } from '../../workers/router.worker.ts'
 import type { Spot } from '../../workers/routerApi.ts'
+import { dataUrl } from '../../dataUrl.ts'
 import { loadPlaces } from './PlacePicker.tsx'
 import type { Endpoint, Trip } from './tripParams.ts'
 
@@ -25,7 +26,7 @@ export async function planFor(trip: Trip, start: { lat: number; lon: number } | 
   if (Number.isNaN(at.getTime())) throw new Error('That time is not valid.')
   const router = getRouter()
   const hasPlaces = (await loadPlaces()).length > 0
-  await router.init(hasPlaces ? '/data/places.json' : undefined)
+  await router.init(hasPlaces ? dataUrl('places.json') : undefined)
   const plan = await router.planTrip({
     from: spot(trip.from!),
     to: spot(trip.to!),

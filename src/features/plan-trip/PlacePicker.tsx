@@ -2,6 +2,7 @@
 // Today it searches stops and (if /data/places.json exists) places. Ticket #26 replaces the search internals only.
 import { useEffect, useId, useState } from 'react'
 import { z } from 'zod'
+import { dataUrl } from '../../dataUrl.ts'
 import { Place } from '../../domain/schemas.ts'
 import { useAppStore } from '../app/store.ts'
 import { useMap } from '../map/MapContext.tsx'
@@ -12,7 +13,7 @@ let placesPromise: Promise<Place[]> | null = null
 
 /** /data/places.json, or an empty list while that file does not exist yet. */
 export function loadPlaces(): Promise<Place[]> {
-  placesPromise ??= fetch('/data/places.json')
+  placesPromise ??= fetch(dataUrl('places.json'))
     .then((r) => (r.ok ? r.json() : []))
     .then((json) => z.array(Place).parse(json))
     .catch(() => [])
