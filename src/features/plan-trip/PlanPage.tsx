@@ -1,15 +1,18 @@
 import { useEffect, useState } from 'react'
+import { DESKTOP, useMedia } from '../../ui/hooks.ts'
 import { Link, useSearchParams } from 'react-router'
 import type { Plan } from '../../domain/router/planTrip.ts'
 import { klDateTime, tripsOn } from '../../domain/transit/departures.ts'
-import { Page } from '../../ui/Page.tsx'
+import { BottomSheet } from '../../ui/BottomSheet.tsx'
+import { Icon } from '../../ui/icons.tsx'
 import { useAppStore } from '../app/store.ts'
 import { LocationControl } from '../location/LocationControl.tsx'
+import { useGrantedLocation } from '../location/useUserLocation.ts'
 import { MarkerLayer, RouteLayer } from '../map/layers.tsx'
 import { FitTo } from '../transit/parts.tsx'
 import { useTransit } from '../transit/useTransit.ts'
-import { PlacePicker } from './PlacePicker.tsx'
-import { OptionDetail, OptionList, optionToRoute } from './TripOptions.tsx'
+import { PlacePicker, useEndpointName } from './PlacePicker.tsx'
+import { OptionDetail, OptionList, optionToRoute, RouteBadge, routes, Summary } from './TripOptions.tsx'
 import { planFor } from './routerClient.ts'
 import { parseTrip, tripSearch, type Profile, type Trip } from './tripParams.ts'
 
@@ -31,12 +34,17 @@ export const NO_BUS_NOTE = 'No campus bus today. Showing walking routes.'
 
 export function PlanPage() {
   const [params, setParams] = useSearchParams()
-  const trip = parseTrip(params)
+  // Directions start from where you are unless the link says otherwise.
+  const parsed = parseTrip(params)
+  const trip = { ...parsed, from: parsed.from ?? ({ kind: 'me' } as const) }
   const start = useAppStore((s) => s.start)
   const { data: transit } = useTransit()
   const [result, setResult] = useState<Result | null>(null)
   const [selected, setSelected] = useState(0)
   const [detail, setDetail] = useState(false)
+  const toName = useEndpointName(trip.to)
+  const desktop = useMedia(DESKTOP)
+  useGrantedLocation()
 
   const update = (patch: Partial<Trip>) => {
     setSelected(0)
@@ -78,30 +86,8 @@ export function PlanPage() {
 
   const ends = option && [option.legs[0].from.location, option.legs[option.legs.length - 1].to.location]
 
-  return (
-    <Page title="Plan a trip">
-      {option && <RouteLayer legs={optionToRoute(option)} />}
-      {ends && (
-        <>
-          <MarkerLayer markers={[{ id: 'from', kind: 'place', position: ends[0], selected: true }, { id: 'to', kind: 'place', position: ends[1], selected: true }]} />
-          <FitTo points={option.legs.flatMap((l) => l.geometry)} maxZoom={18} />
-        </>
-      )}
-
-      <div className="trip-form">
-        <div className="trip-pickers">
-          <PlacePicker label="From" value={trip.from} onChange={(from) => update({ from })} />
-          <PlacePicker label="To" value={trip.to} onChange={(to) => update({ to })} />
-        </div>
-        <button type="button" className="icon-btn swap" onClick={swap} aria-label="Swap from and to">
-          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-            <path d="M8 4v16M8 20l-4-4M8 20l4-4M16 20V4M16 4l-4 4M16 4l4 4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
-      </div>
-
-      {needsStart && <LocationControl />}
-
+  const controls = (
+    <>
       <div className="segmented" role="radiogroup" aria-label="When">
         {WHEN.map((w) => (
           <button key={w.id} type="button" role="radio" aria-checked={when.type === w.id} onClick={() => setWhen(w.id)}>
@@ -118,7 +104,6 @@ export function PlanPage() {
           onChange={(e) => e.target.value && update({ when: { type: when.type as 'depart' | 'arrive', time: e.target.value } })}
         />
       )}
-
       <div className="segmented" role="radiogroup" aria-label="Route type">
         {PROFILES.map((p) => (
           <button key={p.id} type="button" role="radio" aria-checked={trip.profile === p.id} onClick={() => update({ profile: p.id })}>
@@ -126,53 +111,101 @@ export function PlanPage() {
           </button>
         ))}
       </div>
+    </>
+  )
 
-      {!ready && !needsStart && <p className="pending">Choose where you are going from and to.</p>}
-      {ready && !current && (
-        <p className="pending" role="status">
-          Finding routes…
-        </p>
-      )}
-      {current?.error && (
-        <p className="no-service" role="alert">
-          <strong>Could not plan this trip.</strong> {current.error}
-        </p>
-      )}
-      {plan && plan.options.length === 0 && (
-        <p className="no-service" role="status">
-          <strong>No route found.</strong> Try a different start or end, or another route type.
-        </p>
-      )}
-      {transit?.timetableNote && plan?.options.some((o) => o.kind === 'bus') && <p className="note">{transit.timetableNote}</p>}
-      {noBusToday && (
-        <p className="no-service" role="status">
-          {NO_BUS_NOTE}
-        </p>
-      )}
-      {plan && option && (
+  return (
+    <article className="plan">
+      {option && <RouteLayer legs={optionToRoute(option)} />}
+      {ends && (
         <>
-          {detail ? (
-            <>
-              <button type="button" className="btn btn-quiet" onClick={() => setDetail(false)}>
-                All options
-              </button>
-              <OptionDetail option={option} />
-            </>
-          ) : (
-            <OptionList options={plan.options} selected={selected} onSelect={setSelected} />
-          )}
-          <div className="actions">
-            {!detail && (
-              <button type="button" className="btn btn-quiet" onClick={() => setDetail(true)}>
-                Details
-              </button>
-            )}
-            <Link to={{ pathname: '/navigate', search: `${tripSearch(trip)}&opt=${selected}` }} className="btn btn-primary">
-              Start
-            </Link>
-          </div>
+          <MarkerLayer
+            markers={[
+              { id: 'from', kind: 'place', position: ends[0], selected: true, color: '#22c55e' },
+              { id: 'to', kind: 'place', position: ends[1], selected: true, color: '#ef4444' },
+            ]}
+          />
+          <FitTo points={option.legs.flatMap((l) => l.geometry)} maxZoom={18} />
         </>
       )}
-    </Page>
+
+      <header className="plan-top">
+        <h1 className="side-title">Find location</h1>
+        <div className="trip-form">
+          <div className="trip-pickers">
+            <PlacePicker label="From" value={trip.from} onChange={(from) => update({ from })} />
+            <PlacePicker label="To" value={trip.to} onChange={(to) => update({ to })} />
+          </div>
+          <button type="button" className="icon-btn swap" onClick={swap} aria-label="Swap from and to">
+            <Icon name="swap" size={22} />
+          </button>
+        </div>
+        {desktop && controls}
+      </header>
+
+      {(ready || needsStart) && (
+        <BottomSheet label="Trip">
+          {needsStart && <LocationControl />}
+          {ready && (
+            <>
+              <header className="sheet-head">
+                <h2>{toName ?? 'Trip'}</h2>
+                {option && routes(option).map((r, i) => <RouteBadge key={i} route={r} />)}
+                <Link to="/" className="icon-btn" aria-label="Close directions">
+                  <Icon name="close" size={22} />
+                </Link>
+              </header>
+              {!current && (
+                <p className="pending" role="status">
+                  Finding routes…
+                </p>
+              )}
+              {current?.error && (
+                <p className="notice notice-error" role="alert">
+                  <strong>Could not plan this trip.</strong> {current.error}
+                </p>
+              )}
+              {plan && plan.options.length === 0 && (
+                <p className="notice" role="status">
+                  <strong>No route found.</strong> Try a different start or end, or another route type.
+                </p>
+              )}
+              {noBusToday && (
+                <p className="notice" role="status">
+                  {NO_BUS_NOTE}
+                </p>
+              )}
+              {plan && option && (
+                <>
+                  <Summary option={option} />
+                  <div className="actions">
+                    {!detail && (
+                      <button type="button" className="btn btn-quiet" onClick={() => setDetail(true)}>
+                        Details
+                      </button>
+                    )}
+                    <Link to={{ pathname: '/navigate', search: `${tripSearch(trip)}&opt=${selected}` }} className="btn btn-primary">
+                      Start
+                    </Link>
+                  </div>
+                  {detail ? (
+                    <>
+                      <button type="button" className="btn btn-quiet" onClick={() => setDetail(false)}>
+                        All options
+                      </button>
+                      <OptionDetail option={option} />
+                    </>
+                  ) : (
+                    <OptionList options={plan.options} selected={selected} onSelect={setSelected} />
+                  )}
+                  {transit?.timetableNote && plan.options.some((o) => o.kind === 'bus') && <p className="note">{transit.timetableNote}</p>}
+                </>
+              )}
+            </>
+          )}
+          {!desktop && controls}
+        </BottomSheet>
+      )}
+    </article>
   )
 }

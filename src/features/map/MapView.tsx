@@ -5,7 +5,8 @@ import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import { Protocol } from 'pmtiles'
 import { useEffect, useRef, useState } from 'react'
 import { useSetMap } from './MapContext.tsx'
-import { buildStyle, CAMPUS_BOUNDS, IMAGERY_ATTRIBUTION, TILE_BOUNDS } from './style.ts'
+import { IMAGERY_ATTRIBUTION } from './credits.ts'
+import { addArrowImage, buildStyle, CAMPUS_BOUNDS, TILE_BOUNDS } from './style.ts'
 
 let protocolAdded = false
 
@@ -39,9 +40,12 @@ export default function MapView() {
       queueMicrotask(() => setError(true))
       return
     }
-    map.addControl(new AttributionControl({ compact: true, customAttribution: IMAGERY_ATTRIBUTION }), 'top-right')
-    map.addControl(new NavigationControl({ visualizePitch: false }), 'top-right')
-    map.on('load', () => setMap(map))
+    map.addControl(new AttributionControl({ compact: true, customAttribution: IMAGERY_ATTRIBUTION }), 'bottom-right')
+    map.addControl(new NavigationControl({ visualizePitch: false, showCompass: false }), 'top-right')
+    map.on('load', () => {
+      addArrowImage(map)
+      setMap(map)
+    })
     return () => {
       setMap(null)
       map.remove()

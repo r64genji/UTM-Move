@@ -8,7 +8,7 @@ type Ok = { latitude: number; longitude: number; accuracy: number }
 let respond: (ok?: Ok, errorCode?: number) => void
 
 beforeEach(() => {
-  useAppStore.setState({ location: { status: 'idle' }, start: null, picking: false, sheet: 'half' })
+  useAppStore.setState({ location: { status: 'idle' }, start: null, picking: false })
   Object.defineProperty(navigator, 'geolocation', {
     configurable: true,
     value: {
@@ -99,10 +99,10 @@ test('pick on map: shows the prompt, Cancel returns', () => {
   render(<LocationControl />)
   fireEvent.click(screen.getByRole('button', { name: 'Pick on map' }))
   expect(status()).toBe('Tap the map where you are starting.')
-  expect(useAppStore.getState().sheet).toBe('peek')
+  expect(useAppStore.getState().picking).toBe(true)
   fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
   expect(status()).toBe('We only ask for your location when you tap.')
-  expect(useAppStore.getState().sheet).toBe('half')
+  expect(useAppStore.getState().picking).toBe(false)
 })
 
 test('a hand-placed start is announced', () => {
