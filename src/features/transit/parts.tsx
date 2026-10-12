@@ -40,7 +40,9 @@ export function FitTo({ points, maxZoom = 17 }: { points: LatLon[]; maxZoom?: nu
       const lats = points.map((p) => p.lat)
       const sw = toLngLat({ lat: Math.min(...lats), lon: Math.min(...lons) })
       const ne = toLngLat({ lat: Math.max(...lats), lon: Math.max(...lons) })
-      map.fitBounds([sw, ne], { padding: { top: desktop ? 80 : 190, right: 64, bottom: 48, left: 48 }, maxZoom, duration: 400 })
+      // Clear of whatever floats on top of the map on phones (search bar, directions card).
+      const covered = desktop ? 0 : (document.querySelector('.map-top, .map-bar, .plan-top, .nav-top')?.getBoundingClientRect().bottom ?? 0)
+      map.fitBounds([sw, ne], { padding: { top: Math.max(80, covered + 24), right: 64, bottom: 48, left: 48 }, maxZoom, duration: 400 })
     }, 350)
     return () => clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps

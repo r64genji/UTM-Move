@@ -8,11 +8,11 @@ export type Endpoint =
 
 export type When = { type: 'now' } | { type: 'depart' | 'arrive'; time: string } // time: 'YYYY-MM-DDTHH:MM', Asia/Kuala_Lumpur
 
-export type Profile = 'fastest' | 'sheltered' | 'no-stairs'
+export type Profile = 'fastest' | 'least-walk' | 'sheltered' | 'no-stairs'
 
 export type Trip = { from: Endpoint | null; to: Endpoint | null; when: When; profile: Profile }
 
-const PROFILES: Profile[] = ['fastest', 'sheltered', 'no-stairs']
+const PROFILES: Profile[] = ['fastest', 'least-walk', 'sheltered', 'no-stairs']
 
 export function parseEndpoint(s: string | null): Endpoint | null {
   if (!s) return null

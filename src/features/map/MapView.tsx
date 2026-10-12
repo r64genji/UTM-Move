@@ -6,7 +6,7 @@ import { Protocol } from 'pmtiles'
 import { useEffect, useRef, useState } from 'react'
 import { useSetMap } from './MapContext.tsx'
 import { IMAGERY_ATTRIBUTION } from './credits.ts'
-import { addArrowImage, buildStyle, CAMPUS_BOUNDS, TILE_BOUNDS } from './style.ts'
+import { addArrowImage, buildStyle, CAMPUS_BOUNDS, PAN_BOUNDS } from './style.ts'
 
 let protocolAdded = false
 
@@ -29,7 +29,7 @@ export default function MapView() {
         style: buildStyle(window.location.origin),
         bounds: CAMPUS_BOUNDS,
         fitBoundsOptions: { padding: 24 },
-        maxBounds: TILE_BOUNDS,
+        maxBounds: PAN_BOUNDS,
         minZoom: 13,
         maxZoom: 19,
         attributionControl: false,

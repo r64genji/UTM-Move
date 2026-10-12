@@ -18,6 +18,11 @@ export const TRANSFER_CAP_S = 5 * 60
 export const MIN_SAVING_S = 2 * 60
 /** Flat-ground walking speed, m/s. Median of the GPS tracks (data/walk-speeds.json: 1.396). Same default as the walk router. */
 export const WALK_SPEED = 1.4
+/** Least walking: a bus that saves walking may arrive up to this much later than walking there. */
+export const LEAST_WALK_SLACK_S = 30 * 60
+
+/** A walking profile, or 'least-walk': fastest paths, then the bus options that walk least, even when slower. */
+export type TripProfile = Profile | 'least-walk'
 
 export interface Place {
   name: string
@@ -32,7 +37,7 @@ export interface PlanRequest {
   /** depart: leave at `at`. arrive: be there by `at`. */
   mode: 'depart' | 'arrive'
   at: Date
-  profile?: Profile
+  profile?: TripProfile
   /** Flat-ground walking speed, m/s. */
   walkSpeed?: number
 }
@@ -117,7 +122,8 @@ const key = (c: Candidate) => c.journey.legs.map((l) => (l.kind === 'ride' ? `${
 
 /** Plan walk-only plus up to two bus options. */
 export function planTrip(g: Graph, data: TransitData, req: PlanRequest): Plan {
-  const profile = req.profile ?? 'fastest'
+  const leastWalking = req.profile === 'least-walk'
+  const profile: Profile = req.profile === 'least-walk' || !req.profile ? 'fastest' : req.profile
   const { date } = klDateTime(req.at)
   const dayStart = Date.parse(`${date}T00:00:00+08:00`)
   const q = (req.at.getTime() - dayStart) / 1000
@@ -204,7 +210,10 @@ export function planTrip(g: Graph, data: TransitData, req: PlanRequest): Plan {
   // Worth it: beats walking by MIN_SAVING_S.
   const rank = (c: { departS: number; arriveS: number }) => (req.mode === 'depart' ? c.arriveS : -c.departS)
   const walkRank = req.mode === 'depart' ? q + walkT : -(q - walkT)
-  const worth = [...candidates.values()].filter((c) => rank(c) <= walkRank - MIN_SAVING_S || !direct)
+  // Least walking: worth it when it saves real walking and is not far slower.
+  const worth = [...candidates.values()].filter((c) =>
+    !direct || (leastWalking ? c.walkS <= walkT - MIN_SAVING_S && rank(c) <= walkRank + LEAST_WALK_SLACK_S : rank(c) <= walkRank - MIN_SAVING_S),
+  )
   const byRank = (a: Candidate, b: Candidate) => rank(a) - rank(b) || a.walkS - b.walkS
   const rides = (c: Candidate) => c.journey.rides
   const fastest = [...worth].sort(byRank)[0]
@@ -213,7 +222,8 @@ export function planTrip(g: Graph, data: TransitData, req: PlanRequest): Plan {
   const picks = [...new Set([fastest, leastWalk, fewest].filter(Boolean))]
   // Drop an option when another is no slower and walks no more.
   const kept = picks.filter((c) => !picks.some((o) => o !== c && rank(o) <= rank(c) && o.walkS <= c.walkS && (rank(o) < rank(c) || o.walkS < c.walkS)))
-  const chosen = kept.sort(byRank).slice(0, 2)
+  const byWalk = (a: Candidate, b: Candidate) => a.walkS - b.walkS || byRank(a, b)
+  const chosen = kept.sort(leastWalking ? byWalk : byRank).slice(0, 2)
 
   for (const c of chosen) options.push(busOption(c))
   return { options }

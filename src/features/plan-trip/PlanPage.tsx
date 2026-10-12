@@ -17,6 +17,7 @@ import { parseTrip, tripSearch, type Profile, type Trip } from './tripParams.ts'
 
 const PROFILES: { id: Profile; label: string }[] = [
   { id: 'fastest', label: 'Fastest' },
+  { id: 'least-walk', label: 'Least walking' },
   { id: 'sheltered', label: 'Sheltered' },
   { id: 'no-stairs', label: 'No stairs' },
 ]

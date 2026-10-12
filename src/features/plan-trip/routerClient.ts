@@ -1,5 +1,5 @@
 import * as Comlink from 'comlink'
-import type { Plan } from '../../domain/router/planTrip.ts'
+import type { Plan, TripOption } from '../../domain/router/planTrip.ts'
 import type { RouterApi } from '../../workers/router.worker.ts'
 import type { Spot } from '../../workers/routerApi.ts'
 import { dataUrl } from '../../dataUrl.ts'
@@ -33,5 +33,6 @@ export async function planFor(trip: Trip, start: { lat: number; lon: number } | 
     when: { type: trip.when.type === 'arrive' ? 'arrive' : 'depart', at: at.toISOString() },
     profile: trip.profile,
   })
-  return { options: [...plan.options].sort((a, b) => a.durationS - b.durationS) }
+  const order = trip.profile === 'least-walk' ? (a: TripOption, b: TripOption) => a.walkS - b.walkS || a.durationS - b.durationS : (a: TripOption, b: TripOption) => a.durationS - b.durationS
+  return { options: [...plan.options].sort(order) }
 }

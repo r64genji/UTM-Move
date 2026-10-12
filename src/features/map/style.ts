@@ -7,6 +7,11 @@ import boundaryRaw from '../../../data/campus-boundary.geojson?raw'
 export const CAMPUS_BOUNDS: [number, number, number, number] = [103.6156, 1.5478, 103.6603, 1.5765]
 /** Extent of public/basemap/campus.pmtiles. The camera cannot leave it. */
 export const TILE_BOUNDS: [number, number, number, number] = [103.608, 1.54, 103.668, 1.584]
+/**
+ * How far the camera may go: the tiles plus room for the cards that float over the map on phones
+ * (search and directions on top, the sheet below), so the campus edge can be dragged clear of them.
+ */
+export const PAN_BOUNDS: [number, number, number, number] = [TILE_BOUNDS[0] - 0.01, TILE_BOUNDS[1] - 0.02, TILE_BOUNDS[2] + 0.01, TILE_BOUNDS[3] + 0.025]
 
 export const COLORS = {
   walk: '#1a73e8', // blue dots: the walking line every map app uses, never a bus colour

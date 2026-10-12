@@ -2,9 +2,8 @@
 // router.worker.ts wraps them with Comlink.
 import { z } from 'zod'
 import { Place, type LatLon, type TransitData } from '../domain/schemas.ts'
-import { planTrip, type Plan, type PlanRequest } from '../domain/router/planTrip.ts'
+import { planTrip, type Plan, type PlanRequest, type TripProfile } from '../domain/router/planTrip.ts'
 import type { Graph } from '../domain/walk/graph.ts'
-import type { Profile } from '../domain/walk/router.ts'
 
 export type Spot = LatLon | { placeId: string } | { stopId: string }
 
@@ -12,7 +11,7 @@ export interface TripQuery {
   from: Spot
   to: Spot
   when: { type: 'now' | 'depart' | 'arrive'; /** ISO 8601 with offset. Defaults to now. */ at?: string }
-  profile: Profile
+  profile: TripProfile
   /** Flat-ground walking speed, m/s. Default 1.4. */
   walkSpeed?: number
 }
