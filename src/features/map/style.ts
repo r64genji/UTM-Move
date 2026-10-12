@@ -9,12 +9,30 @@ export const CAMPUS_BOUNDS: [number, number, number, number] = [103.6156, 1.5478
 export const TILE_BOUNDS: [number, number, number, number] = [103.608, 1.54, 103.668, 1.584]
 
 export const COLORS = {
-  walk: '#7a1f33', // UTM maroon
+  walk: '#ec4899', // bright pink, as the walking line in the old app
   covered: '#e3c27a', // roof band under covered walkways
-  place: '#7a1f33',
-  stop: '#1f2a37',
+  place: '#ef4444',
+  stop: '#1d6fe8',
   user: '#2563c9',
   casing: '#fffdf8',
+}
+
+/** Name of the arrowhead image drawn along routes (see addArrowImage). */
+export const ARROW = 'utm-arrow'
+
+/** A right-pointing triangle, tinted per feature through `icon-color`. */
+export function addArrowImage(map: { addImage: (id: string, image: ImageData, options: { sdf: boolean }) => void }) {
+  const size = 48
+  const ctx = Object.assign(document.createElement('canvas'), { width: size, height: size }).getContext('2d')!
+  ctx.fillStyle = '#000'
+  ctx.beginPath()
+  ctx.moveTo(8, 6)
+  ctx.lineTo(42, 24)
+  ctx.lineTo(8, 42)
+  ctx.lineTo(18, 24)
+  ctx.closePath()
+  ctx.fill()
+  map.addImage(ARROW, ctx.getImageData(0, 0, size, size), { sdf: true })
 }
 
 export const ATTRIBUTION = [
@@ -22,8 +40,6 @@ export const ATTRIBUTION = [
   '<a href="https://protomaps.com" target="_blank" rel="noopener">Protomaps</a>',
 ].join(' · ')
 
-// Placeholder until the satellite layer lands. Esri + Bing only (never Google).
-export const IMAGERY_ATTRIBUTION = 'Imagery © Esri, Microsoft Bing'
 
 const boundary = JSON.parse(boundaryRaw) as FeatureCollection<Polygon>
 const world: [number, number][] = [[-180, -85], [180, -85], [180, 85], [-180, 85], [-180, -85]]
@@ -65,7 +81,7 @@ const overlay: LayerSpecification[] = [
     type: 'line',
     source: 'utm-route',
     layout: { 'line-cap': 'round', 'line-join': 'round' },
-    paint: { 'line-color': COLORS.casing, 'line-width': ['interpolate', ['linear'], ['zoom'], 14, 6, 18, 13] },
+    paint: { 'line-color': COLORS.casing, 'line-width': ['interpolate', ['linear'], ['zoom'], 14, 7, 18, 16] },
   },
   {
     id: 'utm-route-bus',
@@ -73,7 +89,7 @@ const overlay: LayerSpecification[] = [
     source: 'utm-route',
     filter: ['==', ['get', 'mode'], 'bus'],
     layout: { 'line-cap': 'round', 'line-join': 'round' },
-    paint: { 'line-color': ['get', 'color'], 'line-width': ['interpolate', ['linear'], ['zoom'], 14, 4, 18, 9] },
+    paint: { 'line-color': ['get', 'color'], 'line-width': ['interpolate', ['linear'], ['zoom'], 14, 4, 18, 10] },
   },
   {
     id: 'utm-route-walk',
@@ -81,7 +97,7 @@ const overlay: LayerSpecification[] = [
     source: 'utm-route',
     filter: ['all', ['==', ['get', 'mode'], 'walk'], ['!=', ['get', 'style'], 'likely']],
     layout: { 'line-cap': 'round', 'line-join': 'round' },
-    paint: { 'line-color': COLORS.walk, 'line-width': ['interpolate', ['linear'], ['zoom'], 14, 3, 18, 7] },
+    paint: { 'line-color': COLORS.walk, 'line-width': ['interpolate', ['linear'], ['zoom'], 14, 4, 18, 10] },
   },
   {
     id: 'utm-route-walk-likely',
@@ -91,9 +107,24 @@ const overlay: LayerSpecification[] = [
     layout: { 'line-join': 'round' },
     paint: {
       'line-color': COLORS.walk,
-      'line-width': ['interpolate', ['linear'], ['zoom'], 14, 3, 18, 7],
+      'line-width': ['interpolate', ['linear'], ['zoom'], 14, 4, 18, 10],
       'line-dasharray': [1.4, 1],
     },
+  },
+  {
+    id: 'utm-route-arrows',
+    type: 'symbol',
+    source: 'utm-route',
+    filter: ['==', ['get', 'arrows'], true],
+    layout: {
+      'symbol-placement': 'line',
+      'symbol-spacing': ['interpolate', ['linear'], ['zoom'], 14, 40, 18, 90],
+      'icon-image': ARROW,
+      'icon-size': ['interpolate', ['linear'], ['zoom'], 14, 0.28, 18, 0.55],
+      'icon-allow-overlap': true,
+      'icon-ignore-placement': true,
+    },
+    paint: { 'icon-color': ['case', ['==', ['get', 'mode'], 'bus'], ['get', 'color'], COLORS.walk] },
   },
   {
     id: 'utm-user-accuracy',
@@ -121,7 +152,7 @@ const overlay: LayerSpecification[] = [
     filter: ['==', ['get', 'kind'], 'place'],
     paint: {
       'circle-radius': ['case', ['get', 'selected'], 10, 7],
-      'circle-color': COLORS.place,
+      'circle-color': ['coalesce', ['get', 'color'], COLORS.place],
       'circle-stroke-color': COLORS.casing,
       'circle-stroke-width': 2.5,
     },

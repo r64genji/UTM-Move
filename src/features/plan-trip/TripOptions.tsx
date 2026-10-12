@@ -1,7 +1,9 @@
 // The option cards and the leg-by-leg detail for a planned trip. Pure: give it a Plan, it renders it.
 import type { Leg, TripOption } from '../../domain/router/planTrip.ts'
 import { klDateTime } from '../../domain/transit/departures.ts'
+import { distanceM } from '../../domain/walk/geo.ts'
 import type { RouteLeg } from '../map/layers.tsx'
+import { routeColor } from '../transit/palette.ts'
 
 const minutes = (s: number) => Math.max(1, Math.round(s / 60))
 const clock = (d: Date) => klDateTime(d).time
@@ -9,14 +11,14 @@ const clock = (d: Date) => klDateTime(d).time
 /** Every distinct note on the trip's legs, in order. */
 export const optionLabels = (o: TripOption) => [...new Set(o.legs.flatMap((l) => l.labels.map((x) => x.text)))]
 
-const routes = (o: TripOption) => o.legs.filter((l) => l.kind === 'bus').map((l) => l.route!)
+export const routes = (o: TripOption) => o.legs.filter((l) => l.kind === 'bus').map((l) => l.route!)
 
 /** What the map draws for one option: walk solid, unverified shortcut dashed, covered highlighted, bus in route colour. */
 export function optionToRoute(o: TripOption): RouteLeg[] {
   const out: RouteLeg[] = []
   for (const leg of o.legs) {
     if (leg.kind === 'bus') {
-      out.push({ mode: 'bus', path: leg.geometry, color: leg.route?.color ?? '#701a2c', routeId: leg.route?.id ?? '' })
+      out.push({ mode: 'bus', path: leg.geometry, color: routeColor(leg.route?.id ?? '', leg.route?.color ?? '#701a2c'), routeId: leg.route?.id ?? '' })
       continue
     }
     let at = 0
@@ -33,9 +35,37 @@ export function optionToRoute(o: TripOption): RouteLeg[] {
   return out
 }
 
+/** Metres walked over the whole trip, along the drawn path. */
+export const walkDistanceM = (o: TripOption) =>
+  o.legs.filter((l) => l.kind === 'walk').reduce((sum, l) => sum + l.geometry.slice(1).reduce((d, p, i) => d + distanceM(l.geometry[i], p), 0), 0)
+
+export const metres = (m: number) => (m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`)
+
+/** Journey time, walking and arrival for one option. */
+export function Summary({ option }: { option: TripOption }) {
+  return (
+    <dl className="stats">
+      <div>
+        <dt>Journey time</dt>
+        <dd>~{minutes(option.durationS)} min</dd>
+      </div>
+      <div>
+        <dt>Walking</dt>
+        <dd className="muted-strong">
+          {metres(walkDistanceM(option))} {option.walkS >= 30 && <small>~{minutes(option.walkS)} min</small>}
+        </dd>
+      </div>
+      <div>
+        <dt>Arrival</dt>
+        <dd className="accent">{clock(option.arriveAt)}</dd>
+      </div>
+    </dl>
+  )
+}
+
 export function RouteBadge({ route }: { route: { id: string; color?: string } }) {
   return (
-    <span className="route-chip" style={{ background: route.color }}>
+    <span className="route-chip" style={{ background: routeColor(route.id, route.color) }}>
       {route.id}
     </span>
   )

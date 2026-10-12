@@ -6,10 +6,10 @@ import { outDir, record, slug } from './lib/run.ts'
 import { FIXED_TIME } from './lib/viewports.ts'
 
 const GOALS: { name: string; goal: string; now?: boolean }[] = [
-  { name: 'search KTDI', goal: 'Search for "KTDI" and open the place page for the matching residential college (Kolej Tun Dr Ismail).' },
+  { name: 'search KTDI', goal: 'Search for "KTDI" and open directions to the matching residential college (Kolej Tun Dr Ismail). The directions screen must name that college as the destination.' },
   { name: 'plan to N28', goal: 'Plan a trip from my current location to "N28 Faculty of Computing" and read the trip options (durations and whether there is a bus option).' },
   { name: 'plan Kolej 9/10 to Centre Point', goal: 'Plan a trip from Kolej 9/10 to Centre Point, leaving at 08:00 (on 17 March 2026). Then pick a bus option and open its details.' },
-  { name: 'bus stop departures', goal: 'Open a bus stop page and read the next departures (route and time).' },
+  { name: 'bus stop departures', goal: 'Open the departures for a bus stop (for example Centre Point) and read the next buses (route and time).' },
   { name: 'start navigation', goal: 'Plan any trip between two campus places, then start turn-by-turn navigation on one option and check that a navigation screen appears.' },
   { name: 'now: plan to N28', goal: 'Plan a trip from my current location to "N28 Faculty of Computing" for leaving now and read the options.', now: true },
 ]

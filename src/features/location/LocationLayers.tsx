@@ -12,7 +12,6 @@ export function LocationLayers() {
   const picking = useAppStore((s) => s.picking)
   const setStart = useAppStore((s) => s.setStart)
   const setPicking = useAppStore((s) => s.setPicking)
-  const setSheet = useAppStore((s) => s.setSheet)
 
   // The draggable start pin.
   const lat = start?.lat
@@ -39,12 +38,11 @@ export function LocationLayers() {
     map.once('click', (e) => {
       setStart({ lat: e.lngLat.lat, lon: e.lngLat.lng, source: 'map' })
       setPicking(false)
-      setSheet('half')
     })
     return () => {
       canvas.style.cursor = ''
     }
-  }, [map, picking, setStart, setPicking, setSheet])
+  }, [map, picking, setStart, setPicking])
 
   return <UserLocationLayer fix={'fix' in location ? location.fix : null} />
 }

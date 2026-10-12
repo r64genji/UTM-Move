@@ -6,10 +6,8 @@ test('fake GPS, search a place (with a typo), plan a trip, navigate and watch th
   await page.clock.install({ time: new Date('2026-03-17T08:00:00+08:00') })
   await page.goto('/plan')
 
-  // From: my location (fake GPS on campus).
-  await page.getByRole('button', { name: /^From:/ }).click()
-  await page.getByRole('button', { name: 'My location' }).click()
-  await page.getByRole('button', { name: 'Use my location' }).click()
+  // From: Your Location (fake GPS on campus). The device already allows it, so the fix arrives without a tap.
+  await expect(page.getByRole('button', { name: 'From: Your Location' })).toBeVisible()
   await expect(page.getByRole('img', { name: /Your start point/ })).toBeVisible()
 
   // To: search a place by name (offline index).
@@ -33,4 +31,23 @@ test('fake GPS, search a place (with a typo), plan a trip, navigate and watch th
     await page.waitForTimeout(500)
   }
   await expect(now).not.toHaveText('Head south')
+})
+
+test('home: greeting, the nearest stop with its next buses, and a route filter', async ({ page }, info) => {
+  await page.clock.install({ time: new Date('2026-03-17T08:00:00+08:00') })
+  await page.goto('/')
+  if (info.project.name === 'desktop') {
+    await expect(page.getByRole('heading', { name: 'Select a route' })).toBeVisible()
+    await expect(page.getByRole('link', { name: /^Route F/ })).toBeVisible()
+    await page.getByRole('button', { name: 'Show All Stops' }).click()
+    await expect(page.getByRole('button', { name: 'Hide All Stops' })).toBeVisible()
+    return
+  }
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Good Morning, Student')
+  const nearest = page.getByRole('region', { name: 'Nearest stop' })
+  await expect(nearest.getByRole('heading', { name: 'Jalan Amal 1' })).toBeVisible()
+  await expect(nearest.getByText(/: \d+ min/).first()).toBeVisible()
+  await page.getByRole('button', { name: 'Route F' }).click()
+  await expect(page.getByRole('button', { name: 'Route F' })).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByRole('button', { name: 'All Routes' })).toHaveAttribute('aria-pressed', 'false')
 })

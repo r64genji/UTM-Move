@@ -5,9 +5,7 @@ import { z } from 'zod'
 import { dataUrl } from '../../dataUrl.ts'
 import { Place } from '../../domain/schemas.ts'
 import { search } from '../../domain/search.ts'
-import { useAppStore } from '../app/store.ts'
 import { useSearchIndex } from '../places/useSearch.ts'
-import { useMap } from '../map/MapContext.tsx'
 import { useTransit } from '../transit/useTransit.ts'
 import type { Endpoint } from './tripParams.ts'
 
@@ -37,7 +35,7 @@ export function useEndpointName(e: Endpoint | null): string | null {
   const { data } = useTransit()
   const places = usePlaces()
   if (!e) return null
-  if (e.kind === 'me') return 'My location'
+  if (e.kind === 'me') return 'Your Location'
   if (e.kind === 'point') return 'Dropped pin'
   if (e.kind === 'stop') return data?.stops.find((s) => s.id === e.id)?.name ?? `Stop ${e.id}`
   return places.find((p) => p.id === e.id)?.name ?? `Place ${e.id}`
@@ -45,12 +43,10 @@ export function useEndpointName(e: Endpoint | null): string | null {
 
 type Hit = { key: string; name: string; hint: string; endpoint: Endpoint }
 
-export function PlacePicker({ label, value, onChange }: { label: string; value: Endpoint | null; onChange: (e: Endpoint) => void }) {
+export function PlacePicker({ label, value, onChange }: { label: 'From' | 'To'; value: Endpoint | null; onChange: (e: Endpoint) => void }) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const index = useSearchIndex()
-  const map = useMap()
-  const setSheet = useAppStore((s) => s.setSheet)
   const name = useEndpointName(value)
   const listId = useId()
 
@@ -65,23 +61,12 @@ export function PlacePicker({ label, value, onChange }: { label: string; value: 
     setQuery('')
   }
 
-  const pickOnMap = () => {
-    if (!map) return
-    setOpen(false)
-    setSheet('peek')
-    map.getCanvas().style.cursor = 'crosshair'
-    map.once('click', (ev) => {
-      map.getCanvas().style.cursor = ''
-      setSheet('half')
-      onChange({ kind: 'point', lat: ev.lngLat.lat, lon: ev.lngLat.lng })
-    })
-  }
-
   return (
-    <div className="picker">
+    <div className="picker" data-end={label}>
       <button type="button" className="picker-value" aria-expanded={open} aria-label={`${label}: ${name ?? 'not set'}`} onClick={() => setOpen(!open)}>
-        <span className="picker-label">{label}</span>
-        <span className={name ? 'picker-name' : 'picker-name picker-empty'}>{name ?? 'Choose a place'}</span>
+        <span className="picker-dot" aria-hidden="true" />
+        <span className="picker-label">{label}:</span>
+        <span className={name ? 'picker-name' : 'picker-name picker-empty'}>{name ?? (label === 'To' ? 'Where to?' : 'Choose a place')}</span>
       </button>
       {open && (
         <div className="picker-panel">
@@ -97,10 +82,7 @@ export function PlacePicker({ label, value, onChange }: { label: string; value: 
           />
           <ul id={listId} className="list picker-list">
             <li>
-              <button type="button" onClick={() => choose({ kind: 'me' })}>My location</button>
-            </li>
-            <li>
-              <button type="button" onClick={pickOnMap} disabled={!map}>Pick on map</button>
+              <button type="button" onClick={() => choose({ kind: 'me' })}>Your Location</button>
             </li>
             {hits.map((h) => (
               <li key={h.key}>

@@ -1,31 +1,38 @@
 import type { ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router'
+import { Icon } from './icons.tsx'
 
-/** Standard page frame inside the panel: back button, one h1, content. */
-export function Page({ title, kicker, children }: { title: string; kicker?: string; children?: ReactNode }) {
+/** Back one step, or home when the page was opened from a shared link (no history). */
+export function useBack() {
   const navigate = useNavigate()
   const location = useLocation()
-  // location.key is 'default' on a fresh load (shared link): there is no history to go back to.
-  const back = () => (location.key === 'default' ? navigate('/') : navigate(-1))
+  return () => (location.key === 'default' ? navigate('/') : navigate(-1))
+}
+
+export function BackButton() {
+  const back = useBack()
   return (
-    <article className="page">
-      <header className="page-head">
-        <button type="button" className="icon-btn" onClick={back} aria-label="Back">
-          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-            <path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
-        <div>
-          {kicker && <p className="kicker">{kicker}</p>}
-          <h1>{title}</h1>
-        </div>
+    <button type="button" className="icon-btn" onClick={back} aria-label="Back">
+      <Icon name="back" />
+    </button>
+  )
+}
+
+/** A full-height page: top bar with a centred title (the one h1), then the content. On desktop it fills the sidebar. */
+export function Page({ title, back = true, action, children }: { title: string; back?: boolean; action?: ReactNode; children?: ReactNode }) {
+  return (
+    <article className="page-full">
+      <header className="bar">
+        {back ? <BackButton /> : <span className="bar-gap" />}
+        <h1>{title}</h1>
+        {action ?? <span className="bar-gap" />}
       </header>
-      {children}
+      <div className="page-body">{children}</div>
     </article>
   )
 }
 
-/** A quiet note for a section another ticket will fill. */
+/** A quiet note while something loads or is missing. */
 export function Pending({ children }: { children: ReactNode }) {
   return <p className="pending">{children}</p>
 }

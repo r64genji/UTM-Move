@@ -1,8 +1,9 @@
+import { useEffect } from 'react'
 import type { Fix } from '../../domain/navigate/follow.ts'
 import { useAppStore } from '../app/store.ts'
 import { classifyError, classifyFix } from './state.ts'
 
-/** Ask the browser for one position fix. Only ever called from a tap. */
+/** Ask the browser for one position fix. Called from a tap, or on load when the permission is already granted (no prompt). */
 export function requestLocation() {
   const { setLocation, setStart } = useAppStore.getState()
   if (!('geolocation' in navigator)) return setLocation({ status: 'unavailable' })
@@ -44,20 +45,25 @@ export function useUserLocation() {
   const start = useAppStore((s) => s.start)
   const picking = useAppStore((s) => s.picking)
   const setPicking = useAppStore((s) => s.setPicking)
-  const setSheet = useAppStore((s) => s.setSheet)
   return {
     location,
     start,
     picking,
     request: requestLocation,
-    /** Next map tap sets the start. The sheet shrinks so the map is reachable on a phone. */
-    pickOnMap: () => {
-      setPicking(true)
-      setSheet('peek')
-    },
-    cancelPick: () => {
-      setPicking(false)
-      setSheet('half')
-    },
+    /** Next map tap sets the start. The shell hides the panel meanwhile so the map is reachable. */
+    pickOnMap: () => setPicking(true),
+    cancelPick: () => setPicking(false),
   }
+}
+
+/** When the device already allows location, ask at once (no prompt appears). Otherwise wait for a tap. */
+export function useGrantedLocation() {
+  const status = useAppStore((s) => s.location.status)
+  useEffect(() => {
+    if (status !== 'idle') return
+    navigator.permissions?.query({ name: 'geolocation' }).then(
+      (p) => p.state === 'granted' && useAppStore.getState().location.status === 'idle' && requestLocation(),
+      () => {},
+    )
+  }, [status])
 }

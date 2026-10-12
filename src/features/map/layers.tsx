@@ -11,7 +11,7 @@ export type RouteLeg =
   | { mode: 'walk'; path: LatLon[]; style?: 'normal' | 'likely' | 'covered' }
   | { mode: 'bus'; path: LatLon[]; color: string; routeId: string }
 
-export type MapMarker = { id: string; kind: 'place' | 'stop'; position: LatLon; label?: string; selected?: boolean }
+export type MapMarker = { id: string; kind: 'place' | 'stop'; position: LatLon; label?: string; selected?: boolean; color?: string }
 
 export type UserFix = LatLon & { accuracy: number }
 
@@ -27,11 +27,12 @@ function useSourceData(id: string, data: FeatureCollection) {
   }, [map, id, data])
 }
 
-export function RouteLayer({ legs }: { legs: RouteLeg[] }) {
+/** `arrows` draws direction arrowheads along the lines. The all-routes overview turns them off. */
+export function RouteLayer({ legs, arrows = true }: { legs: RouteLeg[]; arrows?: boolean }) {
   const data = fc(
     legs.map((leg) => ({
       type: 'Feature',
-      properties: leg.mode === 'bus' ? { mode: 'bus', color: leg.color, routeId: leg.routeId } : { mode: 'walk', style: leg.style ?? 'normal' },
+      properties: leg.mode === 'bus' ? { mode: 'bus', color: leg.color, routeId: leg.routeId, arrows } : { mode: 'walk', style: leg.style ?? 'normal', arrows },
       geometry: { type: 'LineString', coordinates: leg.path.map(toLngLat) },
     })),
   )
@@ -44,7 +45,7 @@ export function MarkerLayer({ markers, onSelect }: { markers: MapMarker[]; onSel
   const data = fc(
     markers.map((m) => ({
       type: 'Feature',
-      properties: { id: m.id, kind: m.kind, label: m.label ?? '', selected: !!m.selected },
+      properties: { id: m.id, kind: m.kind, label: m.label ?? '', selected: !!m.selected, color: m.color ?? null },
       geometry: { type: 'Point', coordinates: toLngLat(m.position) },
     })),
   )

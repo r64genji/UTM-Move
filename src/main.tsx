@@ -1,4 +1,5 @@
-import '@fontsource-variable/atkinson-hyperlegible-next'
+import '@fontsource-variable/inter'
+import '@fontsource-variable/lexend'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createBrowserRouter, RouterProvider } from 'react-router'

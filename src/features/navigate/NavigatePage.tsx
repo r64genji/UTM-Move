@@ -3,7 +3,8 @@ import { Link, useSearchParams } from 'react-router'
 import { createNavigation, follow, startState, view, type Fix, type NavState, type Navigation, type View } from '../../domain/navigate/follow.ts'
 import type { TripOption } from '../../domain/router/planTrip.ts'
 import { klDateTime } from '../../domain/transit/departures.ts'
-import { Page } from '../../ui/Page.tsx'
+import { BottomSheet } from '../../ui/BottomSheet.tsx'
+import { Icon } from '../../ui/icons.tsx'
 import { watchLocation } from '../location/useUserLocation.ts'
 import { useMap } from '../map/MapContext.tsx'
 import { MarkerLayer, RouteLayer } from '../map/layers.tsx'
@@ -14,12 +15,12 @@ import { parseTrip, tripSearch } from '../plan-trip/tripParams.ts'
 
 const metres = (m: number) => (m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m / 10) * 10 || Math.round(m)} m`)
 
-/** The current instruction, what follows, bus warning, progress. Pure: give it a View. */
+/** The current instruction, what follows and the bus warning. Pure: give it a View. */
 export function Guidance({ v, rerouting }: { v: View; rerouting?: boolean }) {
   return (
     <section className="guidance" aria-label="Guidance">
       {rerouting && (
-        <p className="no-service" role="status">
+        <p className="notice" role="status">
           Re-routing…
         </p>
       )}
@@ -29,14 +30,10 @@ export function Guidance({ v, rerouting }: { v: View; rerouting?: boolean }) {
       </p>
       {v.then && <p className="guide-then">Then: {v.then.text}</p>}
       {v.busWarning && (
-        <p className={v.busWarning.late ? 'no-service' : 'pending'} role="status">
+        <p className={v.busWarning.late ? 'notice notice-error' : 'notice'} role="status">
           {v.busWarning.text}
         </p>
       )}
-      <progress max={1} value={v.progress} aria-label="Progress along the route" />
-      <p className="list-code">
-        {metres(v.remainingM)} left · Arrive {klDateTime(v.eta).time}
-      </p>
     </section>
   )
 }
@@ -148,35 +145,70 @@ export function NavigatePage() {
   const v = nav ? view(nav, state, now) : null
   const last = nav?.option.legs[nav.option.legs.length - 1]
 
+  const stop = (
+    <Link to={{ pathname: '/plan', search: tripKey }} className="btn btn-quiet">
+      End navigation
+    </Link>
+  )
+
   return (
-    <Page title="Navigate">
+    <article className="navigating">
       {nav && <RouteLayer legs={optionToRoute(nav.option)} />}
-      {nav && last && <MarkerLayer markers={[{ id: 'to', kind: 'place', position: last.to.location, selected: true }]} />}
-
-      {status === 'waiting' && needsFix && <p className="pending" role="status">Waiting for your location…</p>}
-      {!trip.from || !trip.to ? (
-        <p className="no-service" role="alert">
-          <strong>No trip to follow.</strong> <Link to="/plan">Plan a trip</Link> first.
-        </p>
-      ) : null}
-      {status === 'planning' && <p className="pending" role="status">Finding your route…</p>}
-      {status === 'error' && (
-        <p className="no-service" role="alert">
-          <strong>Navigation stopped.</strong> {error}
-        </p>
-      )}
-      {v && !state.arrived && <Guidance v={v} rerouting={status === 'rerouting'} />}
-      {free && !state.arrived && (
-        <button type="button" className="btn btn-quiet" onClick={recentre}>
-          Re-centre
-        </button>
-      )}
-
-      {state.arrived && nav && (
-        <section className="guidance" aria-label="Arrived">
-          <p className="guide-now">You have arrived at {last!.to.name}.</p>
-        </section>
-      )}
-    </Page>
+      {nav && last && <MarkerLayer markers={[{ id: 'to', kind: 'place', position: last.to.location, selected: true, color: '#ef4444' }]} />}
+      <header className="nav-top">
+        {status === 'waiting' && needsFix && (
+          <p className="pending" role="status">
+            Waiting for your location…
+          </p>
+        )}
+        {!trip.from || !trip.to ? (
+          <p className="notice notice-error" role="alert">
+            <strong>No trip to follow.</strong> <Link to="/plan">Plan a trip</Link> first.
+          </p>
+        ) : null}
+        {status === 'planning' && (
+          <p className="pending" role="status">
+            Finding your route…
+          </p>
+        )}
+        {status === 'error' && (
+          <p className="notice notice-error" role="alert">
+            <strong>Navigation stopped.</strong> {error}
+          </p>
+        )}
+        {v && !state.arrived && <Guidance v={v} rerouting={status === 'rerouting'} />}
+        {state.arrived && nav && (
+          <section className="guidance" aria-label="Arrived">
+            <p className="guide-now">You have arrived at {last!.to.name}.</p>
+          </section>
+        )}
+      </header>
+      <BottomSheet label="Trip progress">
+        {v && !state.arrived && (
+          <>
+            <dl className="stats">
+              <div>
+                <dt>Remaining</dt>
+                <dd>{metres(v.remainingM)}</dd>
+              </div>
+              <div>
+                <dt>Arrival</dt>
+                <dd className="accent">{klDateTime(v.eta).time}</dd>
+              </div>
+            </dl>
+            <progress max={1} value={v.progress} aria-label="Progress along the route" />
+          </>
+        )}
+        <div className="actions">
+          {free && !state.arrived && (
+            <button type="button" className="btn btn-quiet" onClick={recentre}>
+              <Icon name="locate" size={18} />
+              Re-centre
+            </button>
+          )}
+          {stop}
+        </div>
+      </BottomSheet>
+    </article>
   )
 }
