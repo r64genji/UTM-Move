@@ -20,7 +20,7 @@ function Sidebar() {
     <>
       <header className="side-head">
         <p className="brand">
-          <Icon name="bus" size={22} />
+          <img src="/favicon.svg" alt="" width="32" height="32" />
           UTM Move
         </p>
       </header>
@@ -53,9 +53,11 @@ function PickBanner() {
 export function Shell() {
   const desktop = useMedia(DESKTOP)
   const picking = useAppStore((s) => s.picking)
+  // Live navigation takes the whole screen, like a car sat-nav: no tab bar.
+  const navigating = useLocation().pathname.startsWith('/navigate')
   return (
     <MapProvider>
-      <div className="shell" data-picking={picking || undefined}>
+      <div className="shell" data-picking={picking || undefined} data-navigating={navigating || undefined}>
         <Suspense fallback={<div className="map" />}>
           <MapView />
         </Suspense>
@@ -74,7 +76,7 @@ export function Shell() {
             </footer>
           )}
         </div>
-        {!desktop && <TabBar />}
+        {!desktop && !navigating && <TabBar />}
         {picking && <PickBanner />}
         <UpdateToast />
       </div>

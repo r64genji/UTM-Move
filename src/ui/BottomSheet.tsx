@@ -16,12 +16,19 @@ export function BottomSheet({ children, label }: { children: ReactNode; label: s
   useEffect(() => {
     if (!map || !el.current) return
     const node = el.current
-    const pad = () => map.easeTo({ padding: { top: 0, left: 0, right: 0, bottom: desktop ? 0 : node.offsetHeight }, duration: 250 })
+    const root = document.documentElement.style
+    const pad = () => {
+      const bottom = desktop ? 0 : node.offsetHeight
+      // The map buttons sit just above the sheet.
+      root.setProperty('--sheet-h', `${bottom}px`)
+      map.easeTo({ padding: { top: 0, left: 0, right: 0, bottom }, duration: 250 })
+    }
     pad()
     const watch = new ResizeObserver(pad)
     watch.observe(node)
     return () => {
       watch.disconnect()
+      root.removeProperty('--sheet-h')
       map.easeTo({ padding: { top: 0, left: 0, right: 0, bottom: 0 }, duration: 0 })
     }
   }, [map, desktop])

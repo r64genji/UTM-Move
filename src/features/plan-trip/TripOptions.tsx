@@ -1,17 +1,17 @@
 // The option cards and the leg-by-leg detail for a planned trip. Pure: give it a Plan, it renders it.
+import type { CSSProperties } from 'react'
 import type { Leg, TripOption } from '../../domain/router/planTrip.ts'
 import { klDateTime } from '../../domain/transit/departures.ts'
 import { distanceM } from '../../domain/walk/geo.ts'
 import type { RouteLeg } from '../map/layers.tsx'
 import { routeColor } from '../transit/palette.ts'
+import { Icon } from '../../ui/icons.tsx'
 
 const minutes = (s: number) => Math.max(1, Math.round(s / 60))
 const clock = (d: Date) => klDateTime(d).time
 
 /** Every distinct note on the trip's legs, in order. */
 export const optionLabels = (o: TripOption) => [...new Set(o.legs.flatMap((l) => l.labels.map((x) => x.text)))]
-
-export const routes = (o: TripOption) => o.legs.filter((l) => l.kind === 'bus').map((l) => l.route!)
 
 /** What the map draws for one option: walk solid, unverified shortcut dashed, covered highlighted, bus in route colour. */
 export function optionToRoute(o: TripOption): RouteLeg[] {
@@ -41,28 +41,6 @@ export const walkDistanceM = (o: TripOption) =>
 
 export const metres = (m: number) => (m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`)
 
-/** Journey time, walking and arrival for one option. */
-export function Summary({ option }: { option: TripOption }) {
-  return (
-    <dl className="stats">
-      <div>
-        <dt>Journey time</dt>
-        <dd>~{minutes(option.durationS)} min</dd>
-      </div>
-      <div>
-        <dt>Walking</dt>
-        <dd className="muted-strong">
-          {metres(walkDistanceM(option))} {option.walkS >= 30 && <small>~{minutes(option.walkS)} min</small>}
-        </dd>
-      </div>
-      <div>
-        <dt>Arrival</dt>
-        <dd className="accent">{clock(option.arriveAt)}</dd>
-      </div>
-    </dl>
-  )
-}
-
 export function RouteBadge({ route }: { route: { id: string; color?: string } }) {
   return (
     <span className="route-chip" style={{ background: routeColor(route.id, route.color) }}>
@@ -76,12 +54,28 @@ export function OptionCard({ option, selected, onSelect }: { option: TripOption;
   return (
     <button type="button" role="radio" aria-checked={selected} className="option" onClick={onSelect}>
       <span className="option-main">
+        <span className="option-legs">
+          {option.kind === 'walk' ? (
+            <>
+              <Icon name="walk" size={18} />
+              Walk only
+            </>
+          ) : (
+            option.legs.map((l, i) => (
+              <span key={i} className="option-leg">
+                {i > 0 && <Icon name="chevron" size={14} className="option-sep" />}
+                {l.kind === 'bus' ? <RouteBadge route={l.route!} /> : <Icon name="walk" size={18} />}
+              </span>
+            ))
+          )}
+        </span>
         <span className="option-time">{minutes(option.durationS)} min</span>
-        <span className="option-arrive">Arrive {clock(option.arriveAt)}</span>
       </span>
       <span className="option-meta">
-        {option.kind === 'walk' ? 'Walk only' : routes(option).map((r, i) => <RouteBadge key={i} route={r} />)}
-        <span>Walk {walkMin} min</span>
+        <span>Arrive {clock(option.arriveAt)}</span>
+        <span>
+          Walk {walkMin} min · {metres(walkDistanceM(option))}
+        </span>
       </span>
       {optionLabels(option).length > 0 && (
         <ul className="option-labels">
@@ -107,7 +101,7 @@ export function OptionList({ options, selected, onSelect }: { options: TripOptio
 function LegDetail({ leg }: { leg: Leg }) {
   if (leg.kind === 'bus') {
     return (
-      <li className="leg">
+      <li className="leg" data-kind="bus" style={{ '--leg': routeColor(leg.route!.id, leg.route!.color) } as CSSProperties}>
         <div className="leg-head">
           <RouteBadge route={leg.route!} />
           <strong>{leg.headsign ?? `Route ${leg.route!.id}`}</strong>
@@ -127,6 +121,7 @@ function LegDetail({ leg }: { leg: Leg }) {
   return (
     <li className="leg">
       <div className="leg-head">
+        <Icon name="walk" size={22} className="leg-icon" />
         <strong>Walk {minutes(leg.durationS)} min</strong>
         <time>{clock(leg.departAt)}</time>
       </div>

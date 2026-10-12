@@ -43,6 +43,8 @@ export default function MapView() {
     map.addControl(new AttributionControl({ compact: true, customAttribution: IMAGERY_ATTRIBUTION }), 'bottom-right')
     map.addControl(new NavigationControl({ visualizePitch: false, showCompass: false }), 'top-right')
     map.on('load', () => {
+      // MapLibre opens the compact credits on load; start closed so they do not cover the map. The (i) button opens them.
+      el.current?.querySelector('.maplibregl-ctrl-attrib')?.classList.remove('maplibregl-compact-show')
       addArrowImage(map)
       setMap(map)
     })

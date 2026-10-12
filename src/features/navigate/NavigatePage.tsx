@@ -3,8 +3,8 @@ import { Link, useSearchParams } from 'react-router'
 import { createNavigation, follow, startState, view, type Fix, type NavState, type Navigation, type View } from '../../domain/navigate/follow.ts'
 import type { TripOption } from '../../domain/router/planTrip.ts'
 import { klDateTime } from '../../domain/transit/departures.ts'
-import { BottomSheet } from '../../ui/BottomSheet.tsx'
-import { Icon } from '../../ui/icons.tsx'
+import { DESKTOP, useMedia } from '../../ui/hooks.ts'
+import { Icon, type IconName } from '../../ui/icons.tsx'
 import { watchLocation } from '../location/useUserLocation.ts'
 import { useMap } from '../map/MapContext.tsx'
 import { MarkerLayer, RouteLayer } from '../map/layers.tsx'
@@ -15,22 +15,36 @@ import { parseTrip, tripSearch } from '../plan-trip/tripParams.ts'
 
 const metres = (m: number) => (m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m / 10) * 10 || Math.round(m)} m`)
 
+/** The arrow for an instruction. The text is all a maneuver carries. */
+const turnIcon = (text = ''): IconName =>
+  /^Arrive/.test(text) ? 'flag' : /^(Board|Get off)/.test(text) ? 'bus' : /left/i.test(text) ? 'turnLeft' : /right/i.test(text) ? 'turnRight' : /stairs/i.test(text) ? 'stairs' : 'straight'
+
 /** The current instruction, what follows and the bus warning. Pure: give it a View. */
 export function Guidance({ v, rerouting }: { v: View; rerouting?: boolean }) {
   return (
     <section className="guidance" aria-label="Guidance">
+      <div className="guide-main">
+        <Icon name={v.next ? turnIcon(v.next.text) : 'flag'} size={40} className="guide-icon" />
+        <div>
+          <p className="guide-dist">{v.distanceToNextM < 10 ? 'Now' : `In ${metres(v.distanceToNextM)}`}</p>
+          <p className="guide-now" aria-live="polite">
+            {v.next?.text ?? 'Arrived'}
+          </p>
+        </div>
+      </div>
+      {v.then && (
+        <p className="guide-then">
+          <Icon name={turnIcon(v.then.text)} size={18} />
+          Then: {v.then.text}
+        </p>
+      )}
       {rerouting && (
-        <p className="notice" role="status">
+        <p className="guide-alert" role="status">
           Re-routing…
         </p>
       )}
-      <p className="guide-dist">{v.distanceToNextM < 10 ? 'Now' : `In ${metres(v.distanceToNextM)}`}</p>
-      <p className="guide-now" aria-live="polite">
-        {v.next?.text ?? 'Arrived'}
-      </p>
-      {v.then && <p className="guide-then">Then: {v.then.text}</p>}
       {v.busWarning && (
-        <p className={v.busWarning.late ? 'notice notice-error' : 'notice'} role="status">
+        <p className="guide-alert" data-late={v.busWarning.late || undefined} role="status">
           {v.busWarning.text}
         </p>
       )}
@@ -48,11 +62,17 @@ function useFollowMap(fix: Fix | null) {
     map.on('dragstart', drag)
     return () => void map.off('dragstart', drag)
   }, [map])
+  const desktop = useMedia(DESKTOP)
+  useEffect(() => {
+    if (!map || desktop) return
+    map.easeTo({ padding: { top: 160, bottom: 96, left: 0, right: 0 }, duration: 0 })
+    return () => void map.easeTo({ padding: { top: 0, bottom: 0, left: 0, right: 0 }, duration: 0 })
+  }, [map, desktop])
   const lat = fix?.lat
   const lon = fix?.lon
   useEffect(() => {
     if (map && !free && lat !== undefined && lon !== undefined) {
-      map.easeTo({ center: toLngLat({ lat, lon }), zoom: Math.max(map.getZoom(), 17), duration: 600 })
+      map.easeTo({ center: toLngLat({ lat, lon }), zoom: Math.max(map.getZoom(), 17.5), duration: 600 })
     }
   }, [map, free, lat, lon])
   return { free, recentre: () => setFree(false) }
@@ -144,33 +164,18 @@ export function NavigatePage() {
   const { free, recentre } = useFollowMap(fix)
   const v = nav ? view(nav, state, now) : null
   const last = nav?.option.legs[nav.option.legs.length - 1]
-
-  const stop = (
-    <Link to={{ pathname: '/plan', search: tripKey }} className="btn btn-quiet">
-      End navigation
-    </Link>
-  )
+  const minutesLeft = v && Math.max(1, Math.round((v.eta.getTime() - now.getTime()) / 60_000))
 
   return (
     <article className="navigating">
       {nav && <RouteLayer legs={optionToRoute(nav.option)} />}
       {nav && last && <MarkerLayer markers={[{ id: 'to', kind: 'place', position: last.to.location, selected: true, color: '#ef4444' }]} />}
       <header className="nav-top">
-        {status === 'waiting' && needsFix && (
-          <p className="pending" role="status">
-            Waiting for your location…
-          </p>
-        )}
         {!trip.from || !trip.to ? (
           <p className="notice notice-error" role="alert">
             <strong>No trip to follow.</strong> <Link to="/plan">Plan a trip</Link> first.
           </p>
         ) : null}
-        {status === 'planning' && (
-          <p className="pending" role="status">
-            Finding your route…
-          </p>
-        )}
         {status === 'error' && (
           <p className="notice notice-error" role="alert">
             <strong>Navigation stopped.</strong> {error}
@@ -179,36 +184,39 @@ export function NavigatePage() {
         {v && !state.arrived && <Guidance v={v} rerouting={status === 'rerouting'} />}
         {state.arrived && nav && (
           <section className="guidance" aria-label="Arrived">
-            <p className="guide-now">You have arrived at {last!.to.name}.</p>
+            <div className="guide-main">
+              <Icon name="flag" size={40} className="guide-icon" />
+              <p className="guide-now">You have arrived at {last!.to.name}.</p>
+            </div>
           </section>
         )}
       </header>
-      <BottomSheet label="Trip progress">
-        {v && !state.arrived && (
-          <>
-            <dl className="stats">
-              <div>
-                <dt>Remaining</dt>
-                <dd>{metres(v.remainingM)}</dd>
-              </div>
-              <div>
-                <dt>Arrival</dt>
-                <dd className="accent">{klDateTime(v.eta).time}</dd>
-              </div>
-            </dl>
-            <progress max={1} value={v.progress} aria-label="Progress along the route" />
-          </>
+      <footer className="nav-bar">
+        {free && !state.arrived && (
+          <button type="button" className="btn nav-recentre" onClick={recentre}>
+            <Icon name="navigate" size={18} />
+            Re-centre
+          </button>
         )}
-        <div className="actions">
-          {free && !state.arrived && (
-            <button type="button" className="btn btn-quiet" onClick={recentre}>
-              <Icon name="locate" size={18} />
-              Re-centre
-            </button>
+        {v && !state.arrived && <progress max={1} value={v.progress} aria-label="Progress along the route" />}
+        <div className="nav-eta">
+          {v && !state.arrived ? (
+            <>
+              <p className="nav-min">{minutesLeft} min</p>
+              <p className="muted">
+                {metres(v.remainingM)} · Arrive {klDateTime(v.eta).time}
+              </p>
+            </>
+          ) : (
+            <p className="muted" role="status">
+              {state.arrived ? 'Trip complete.' : status === 'planning' ? 'Finding your route…' : needsFix && status === 'waiting' ? 'Waiting for your location…' : ''}
+            </p>
           )}
-          {stop}
         </div>
-      </BottomSheet>
+        <Link to={{ pathname: '/plan', search: tripKey }} className="btn btn-exit">
+          {state.arrived ? 'Done' : 'Exit'}
+        </Link>
+      </footer>
     </article>
   )
 }

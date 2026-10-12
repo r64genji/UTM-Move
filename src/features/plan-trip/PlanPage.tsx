@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { DESKTOP, useMedia } from '../../ui/hooks.ts'
 import { Link, useSearchParams } from 'react-router'
 import type { Plan } from '../../domain/router/planTrip.ts'
 import { klDateTime, tripsOn } from '../../domain/transit/departures.ts'
@@ -12,7 +11,7 @@ import { MarkerLayer, RouteLayer } from '../map/layers.tsx'
 import { FitTo } from '../transit/parts.tsx'
 import { useTransit } from '../transit/useTransit.ts'
 import { PlacePicker, useEndpointName } from './PlacePicker.tsx'
-import { OptionDetail, OptionList, optionToRoute, RouteBadge, routes, Summary } from './TripOptions.tsx'
+import { OptionDetail, OptionList, optionToRoute } from './TripOptions.tsx'
 import { planFor } from './routerClient.ts'
 import { parseTrip, tripSearch, type Profile, type Trip } from './tripParams.ts'
 
@@ -43,7 +42,6 @@ export function PlanPage() {
   const [selected, setSelected] = useState(0)
   const [detail, setDetail] = useState(false)
   const toName = useEndpointName(trip.to)
-  const desktop = useMedia(DESKTOP)
   useGrantedLocation()
 
   const update = (patch: Partial<Trip>) => {
@@ -88,29 +86,31 @@ export function PlanPage() {
 
   const controls = (
     <>
-      <div className="segmented" role="radiogroup" aria-label="When">
-        {WHEN.map((w) => (
-          <button key={w.id} type="button" role="radio" aria-checked={when.type === w.id} onClick={() => setWhen(w.id)}>
-            {w.label}
-          </button>
-        ))}
+      <div className="chips plan-chips">
+        <div className="chip-group" role="radiogroup" aria-label="When">
+          {WHEN.map((w) => (
+            <button key={w.id} type="button" className="chip" role="radio" aria-checked={when.type === w.id} onClick={() => setWhen(w.id)}>
+              {w.label}
+            </button>
+          ))}
+        </div>
+        <div className="chip-group" role="radiogroup" aria-label="Route type">
+          {PROFILES.map((p) => (
+            <button key={p.id} type="button" className="chip" role="radio" aria-checked={trip.profile === p.id} onClick={() => update({ profile: p.id })}>
+              {p.label}
+            </button>
+          ))}
+        </div>
       </div>
       {when.type !== 'now' && (
         <input
-          className="field"
+          className="field when-field"
           type="datetime-local"
           aria-label={when.type === 'arrive' ? 'Arrive by (Malaysia time)' : 'Depart at (Malaysia time)'}
           value={when.time}
           onChange={(e) => e.target.value && update({ when: { type: when.type as 'depart' | 'arrive', time: e.target.value } })}
         />
       )}
-      <div className="segmented" role="radiogroup" aria-label="Route type">
-        {PROFILES.map((p) => (
-          <button key={p.id} type="button" role="radio" aria-checked={trip.profile === p.id} onClick={() => update({ profile: p.id })}>
-            {p.label}
-          </button>
-        ))}
-      </div>
     </>
   )
 
@@ -130,17 +130,20 @@ export function PlanPage() {
       )}
 
       <header className="plan-top">
-        <h1 className="side-title">Find location</h1>
-        <div className="trip-form">
+        <h1 className="side-title">Directions</h1>
+        <div className="trip-card">
+          <Link to="/" className="icon-btn" aria-label="Close directions">
+            <Icon name="back" size={22} />
+          </Link>
           <div className="trip-pickers">
             <PlacePicker label="From" value={trip.from} onChange={(from) => update({ from })} />
             <PlacePicker label="To" value={trip.to} onChange={(to) => update({ to })} />
           </div>
-          <button type="button" className="icon-btn swap" onClick={swap} aria-label="Swap from and to">
+          <button type="button" className="icon-btn" onClick={swap} aria-label="Swap from and to">
             <Icon name="swap" size={22} />
           </button>
         </div>
-        {desktop && controls}
+        {controls}
       </header>
 
       {(ready || needsStart) && (
@@ -148,13 +151,6 @@ export function PlanPage() {
           {needsStart && <LocationControl />}
           {ready && (
             <>
-              <header className="sheet-head">
-                <h2>{toName ?? 'Trip'}</h2>
-                {option && routes(option).map((r, i) => <RouteBadge key={i} route={r} />)}
-                <Link to="/" className="icon-btn" aria-label="Close directions">
-                  <Icon name="close" size={22} />
-                </Link>
-              </header>
               {!current && (
                 <p className="pending" role="status">
                   Finding routes…
@@ -177,33 +173,38 @@ export function PlanPage() {
               )}
               {plan && option && (
                 <>
-                  <Summary option={option} />
-                  <div className="actions">
-                    {!detail && (
-                      <button type="button" className="btn btn-quiet" onClick={() => setDetail(true)}>
-                        Details
-                      </button>
-                    )}
-                    <Link to={{ pathname: '/navigate', search: `${tripSearch(trip)}&opt=${selected}` }} className="btn btn-primary">
-                      Start
-                    </Link>
-                  </div>
                   {detail ? (
                     <>
-                      <button type="button" className="btn btn-quiet" onClick={() => setDetail(false)}>
-                        All options
-                      </button>
+                      <header className="sheet-head">
+                        <button type="button" className="icon-btn" onClick={() => setDetail(false)} aria-label="All options">
+                          <Icon name="back" size={22} />
+                        </button>
+                        <h2>To {toName ?? 'your destination'}</h2>
+                      </header>
                       <OptionDetail option={option} />
                     </>
                   ) : (
-                    <OptionList options={plan.options} selected={selected} onSelect={setSelected} />
+                    <>
+                      <h2 className="sheet-title">To {toName ?? 'your destination'}</h2>
+                      <OptionList options={plan.options} selected={selected} onSelect={setSelected} />
+                    </>
                   )}
                   {transit?.timetableNote && plan.options.some((o) => o.kind === 'bus') && <p className="note">{transit.timetableNote}</p>}
+                  <div className="sheet-actions">
+                    {!detail && (
+                      <button type="button" className="btn btn-quiet" onClick={() => setDetail(true)}>
+                        Steps
+                      </button>
+                    )}
+                    <Link to={{ pathname: '/navigate', search: `${tripSearch(trip)}&opt=${selected}` }} className="btn btn-primary">
+                      <Icon name="navigate" size={20} />
+                      Start
+                    </Link>
+                  </div>
                 </>
               )}
             </>
           )}
-          {!desktop && controls}
         </BottomSheet>
       )}
     </article>

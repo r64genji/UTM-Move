@@ -12,7 +12,7 @@ export const COLORS = {
   walk: '#ec4899', // bright pink, as the walking line in the old app
   covered: '#e3c27a', // roof band under covered walkways
   place: '#ef4444',
-  stop: '#1d6fe8',
+  stop: '#7a1f33', // UTM maroon
   user: '#2563c9',
   casing: '#fffdf8',
 }

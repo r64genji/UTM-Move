@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type CSSProperties } from 'react'
 import { Link } from 'react-router'
 import { decodePolyline } from '../../domain/transit/polyline.ts'
+import { BottomSheet } from '../../ui/BottomSheet.tsx'
 import { Icon } from '../../ui/icons.tsx'
 import { DESKTOP, useMedia } from '../../ui/hooks.ts'
 import { useAppStore } from '../app/store.ts'
@@ -24,35 +25,39 @@ function NearestStopCard() {
   const etas = nextPerRoute(data, near.stop.id, now)
   return (
     <section className="nearest" aria-label="Nearest stop">
-      <span className="nearest-icon">
-        <Icon name="pin" size={20} />
-      </span>
-      <div className="nearest-body">
-        <p className="eyebrow">Nearest Stop</p>
-        <h2>
-          <Link to={`/stop/${encodeURIComponent(near.stop.id)}`}>{near.stop.name}</Link>
-        </h2>
-        {etas.length ? (
-          <ul className="etas">
-            {etas.map((e) => (
-              <li key={e.routeId}>
-                <span className="eta-route" style={{ color: routeColor(e.routeId), background: `${routeColor(e.routeId)}20`, borderColor: `${routeColor(e.routeId)}40` }}>
-                  {e.routeId}
-                </span>
-                {e.headsign && <span className="eta-to">{e.headsign}</span>}
-                <span>: {e.minutes} min</span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="muted">
-            {Math.round(near.distanceM)} m, about {walkMinutes(near.distanceM)} min walk. No more buses today.
+      <div className="nearest-head">
+        <span className="nearest-icon">
+          <Icon name="bus" size={20} />
+        </span>
+        <div className="nearest-body">
+          <p className="eyebrow">
+            Nearest stop · {walkMinutes(near.distanceM)} min walk
           </p>
-        )}
+          <h2>
+            <Link to={`/stop/${encodeURIComponent(near.stop.id)}`}>{near.stop.name}</Link>
+          </h2>
+        </div>
+        <Link to={`/plan?from=me&to=stop:${encodeURIComponent(near.stop.id)}`} className="go-btn" aria-label={`Directions to ${near.stop.name}`}>
+          <Icon name="go" size={20} />
+        </Link>
       </div>
-      <Link to={`/plan?from=me&to=stop:${encodeURIComponent(near.stop.id)}`} className="go-btn" aria-label={`Directions to ${near.stop.name}`}>
-        <Icon name="go" size={18} />
-      </Link>
+      {etas.length ? (
+        <ul className="etas">
+          {etas.map((e) => (
+            <li key={e.routeId}>
+              <span className="route-chip" style={{ background: routeColor(e.routeId) }}>
+                {e.routeId}
+              </span>
+              <span className="eta-to">{e.headsign ?? `Route ${e.routeId}`}</span>
+              <span className="eta-min">: {e.minutes} min</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="muted">
+          {Math.round(near.distanceM)} m away. No more buses today.
+        </p>
+      )}
     </section>
   )
 }
@@ -107,33 +112,36 @@ export function HomePage() {
         </>
       ) : (
         <>
-          <header className="home-head">
-            <h1>{greeting(now)}, Student</h1>
-            <p>Where do you want to go today?</p>
-            <Link to="/search" className="home-search">
-              <Icon name="search" size={20} />
-              Find stop or location...
+          <header className="map-top">
+            <h1 className="sr-only">{greeting(now)}, Student</h1>
+            <Link to="/search" className="search-pill">
+              <img src="/favicon.svg" alt="" width="30" height="30" />
+              <span>Find stop or location...</span>
+              <Icon name="search" size={22} />
             </Link>
-          </header>
-          <NearestStopCard />
-          <div className="chips" role="group" aria-label="Show routes on the map">
-            {showStopsButton}
-            <button type="button" className="chip chip-all" aria-pressed={filter === null} onClick={() => setFilter(null)}>
-              All Routes
-            </button>
-            {data?.routes.map((r) => (
-              <button
-                key={r.id}
-                type="button"
-                className="chip"
-                aria-pressed={filter === r.id}
-                style={filter === r.id ? { background: routeColor(r.id), borderColor: routeColor(r.id) } : undefined}
-                onClick={() => setFilter(r.id)}
-              >
-                {r.name}
+            <div className="chips" role="group" aria-label="Show routes on the map">
+              {showStopsButton}
+              <button type="button" className="chip chip-all" aria-pressed={filter === null} onClick={() => setFilter(null)}>
+                All Routes
               </button>
-            ))}
-          </div>
+              {data?.routes.map((r) => (
+                <button
+                  key={r.id}
+                  type="button"
+                  className="chip chip-route"
+                  aria-pressed={filter === r.id}
+                  style={{ '--route': routeColor(r.id) } as CSSProperties}
+                  onClick={() => setFilter(filter === r.id ? null : r.id)}
+                >
+                  <i aria-hidden="true" />
+                  {r.name}
+                </button>
+              ))}
+            </div>
+          </header>
+          <BottomSheet label="Near you">
+            <NearestStopCard />
+          </BottomSheet>
         </>
       )}
     </article>

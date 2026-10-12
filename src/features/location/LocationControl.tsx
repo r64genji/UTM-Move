@@ -1,3 +1,4 @@
+import { Icon } from '../../ui/icons.tsx'
 import { useUserLocation } from './useUserLocation.ts'
 
 const HOW_TO_ENABLE = (
@@ -36,31 +37,29 @@ export function LocationControl() {
 
   return (
     <section className="loc" aria-label="Your location">
-      <button type="button" className="btn btn-primary loc-main" onClick={request} disabled={status === 'asking'}>
-        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-          <circle cx="12" cy="12" r="4" fill="currentColor" />
-          <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" strokeWidth="2" />
-        </svg>
-        {label}
-      </button>
       <p className="loc-msg" role="status" data-status={picking ? 'picking' : status}>
         {message}
       </p>
       {status === 'denied' && !picking && HOW_TO_ENABLE}
       {handPlaced && <p className="loc-msg">Starting from the pin you placed. Drag it to adjust.</p>}
-      {picking ? (
-        <div className="actions">
+      <div className="actions">
+        {picking ? (
           <button type="button" className="btn btn-quiet" onClick={cancelPick}>
             Cancel
           </button>
-        </div>
-      ) : (
-        <div className="actions">
-          <button type="button" className="btn btn-quiet" onClick={pickOnMap}>
-            Pick on map
-          </button>
-        </div>
-      )}
+        ) : (
+          <>
+            <button type="button" className="btn btn-primary" onClick={request} disabled={status === 'asking'}>
+              <Icon name="locate" size={18} />
+              {label}
+            </button>
+            <button type="button" className="btn btn-quiet" onClick={pickOnMap}>
+              <Icon name="pin" size={18} />
+              Pick on map
+            </button>
+          </>
+        )}
+      </div>
     </section>
   )
 }

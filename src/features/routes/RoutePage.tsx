@@ -28,11 +28,13 @@ export function RoutePage() {
   const [picked, setPicked] = useState<{ pattern?: string; trip?: string }>({})
   const [schedule, setSchedule] = useState(false)
   const route = data?.routes.find((r) => r.id === id)
-  const head = (title: string) => (
-    <header className="bar bar-map">
+  const head = (title: string, color?: string) => (
+    <header className="map-bar">
       <BackButton />
-      <h1>{title}</h1>
-      <span className="bar-gap" />
+      <h1>
+        {color && <i style={{ background: color }} aria-hidden="true" />}
+        {title}
+      </h1>
     </header>
   )
 
@@ -70,7 +72,7 @@ export function RoutePage() {
       <RouteLayer legs={[{ mode: 'bus', path: line, color, routeId: id }]} />
       <StopMarkers stops={patternStops} />
       <FitTo points={line} maxZoom={16} />
-      {head(route.name)}
+      {head(route.name, color)}
       <BottomSheet label={`${route.name} timetable`}>
         {patterns.length > 1 && (
           <div className="segmented segmented-scroll" role="radiogroup" aria-label="Direction">
@@ -88,7 +90,7 @@ export function RoutePage() {
                 {trip === next ? 'Next bus' : 'Selected trip'}
                 {remaining.length === 0 && <span className="status" data-status="Service Ended">No more buses</span>}
               </p>
-              <p className="next-time" style={{ color }}>
+              <p className="next-time">
                 <time>{first(trip)}</time>
                 <span className="muted">Departing · {trip.stopTimes.length} stops</span>
               </p>
@@ -98,7 +100,7 @@ export function RoutePage() {
                 <strong>{today.length ? 'No more buses today.' : 'No service on this route today.'}</strong> Next service: {formatDate(shownDate)}.
               </p>
             )}
-            <button type="button" className="btn btn-primary btn-wide" aria-expanded={schedule} onClick={() => setSchedule(!schedule)}>
+            <button type="button" className="btn btn-quiet btn-wide" aria-expanded={schedule} onClick={() => setSchedule(!schedule)}>
               {schedule ? 'Hide Full Schedule' : 'View Full Schedule'}
             </button>
             {schedule && (
