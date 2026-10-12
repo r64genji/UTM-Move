@@ -9,7 +9,8 @@ export const CAMPUS_BOUNDS: [number, number, number, number] = [103.6156, 1.5478
 export const TILE_BOUNDS: [number, number, number, number] = [103.608, 1.54, 103.668, 1.584]
 
 export const COLORS = {
-  walk: '#ec4899', // bright pink, as the walking line in the old app
+  walk: '#1a73e8', // blue dots: the walking line every map app uses, never a bus colour
+  boundary: '#7a1f33',
   covered: '#e3c27a', // roof band under covered walkways
   place: '#ef4444',
   stop: '#7a1f33', // UTM maroon
@@ -66,7 +67,7 @@ const overlay: LayerSpecification[] = [
     id: 'utm-boundary',
     type: 'line',
     source: 'utm-campus',
-    paint: { 'line-color': COLORS.walk, 'line-opacity': 0.35, 'line-width': 1.5, 'line-dasharray': [3, 2] },
+    paint: { 'line-color': COLORS.boundary, 'line-opacity': 0.3, 'line-width': 1.5, 'line-dasharray': [3, 2] },
   },
   {
     id: 'utm-route-covered',
@@ -80,6 +81,7 @@ const overlay: LayerSpecification[] = [
     id: 'utm-route-casing',
     type: 'line',
     source: 'utm-route',
+    filter: ['==', ['get', 'mode'], 'bus'],
     layout: { 'line-cap': 'round', 'line-join': 'round' },
     paint: { 'line-color': COLORS.casing, 'line-width': ['interpolate', ['linear'], ['zoom'], 14, 7, 18, 16] },
   },
@@ -92,30 +94,25 @@ const overlay: LayerSpecification[] = [
     paint: { 'line-color': ['get', 'color'], 'line-width': ['interpolate', ['linear'], ['zoom'], 14, 4, 18, 10] },
   },
   {
+    // Round dots: a zero-length dash with a round cap draws a circle.
     id: 'utm-route-walk',
     type: 'line',
     source: 'utm-route',
-    filter: ['all', ['==', ['get', 'mode'], 'walk'], ['!=', ['get', 'style'], 'likely']],
+    filter: ['==', ['get', 'mode'], 'walk'],
     layout: { 'line-cap': 'round', 'line-join': 'round' },
-    paint: { 'line-color': COLORS.walk, 'line-width': ['interpolate', ['linear'], ['zoom'], 14, 4, 18, 10] },
-  },
-  {
-    id: 'utm-route-walk-likely',
-    type: 'line',
-    source: 'utm-route',
-    filter: ['==', ['get', 'style'], 'likely'],
-    layout: { 'line-join': 'round' },
     paint: {
       'line-color': COLORS.walk,
-      'line-width': ['interpolate', ['linear'], ['zoom'], 14, 4, 18, 10],
-      'line-dasharray': [1.4, 1],
+      // An unverified shortcut is the same dots, faded.
+      'line-opacity': ['case', ['==', ['get', 'style'], 'likely'], 0.45, 1],
+      'line-width': ['interpolate', ['linear'], ['zoom'], 14, 5, 18, 11],
+      'line-dasharray': [0, 1.8],
     },
   },
   {
     id: 'utm-route-arrows',
     type: 'symbol',
     source: 'utm-route',
-    filter: ['==', ['get', 'arrows'], true],
+    filter: ['all', ['==', ['get', 'arrows'], true], ['==', ['get', 'mode'], 'bus']],
     layout: {
       'symbol-placement': 'line',
       'symbol-spacing': ['interpolate', ['linear'], ['zoom'], 14, 40, 18, 90],
@@ -124,7 +121,7 @@ const overlay: LayerSpecification[] = [
       'icon-allow-overlap': true,
       'icon-ignore-placement': true,
     },
-    paint: { 'icon-color': ['case', ['==', ['get', 'mode'], 'bus'], ['get', 'color'], COLORS.walk] },
+    paint: { 'icon-color': ['get', 'color'] },
   },
   {
     id: 'utm-user-accuracy',

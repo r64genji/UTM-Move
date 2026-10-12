@@ -92,7 +92,8 @@ export function createNavigation(option: TripOption): Navigation {
     const lo = legIdx[i]
     const hi = i === last ? path.length - 1 : legIdx[i + 1]
     if (leg.kind === 'bus') {
-      const to = leg.headsign ?? leg.to.name
+      // Headsigns often start with "To" already ("To Cluster (T02)"); do not say "to To".
+      const to = (leg.headsign ?? leg.to.name).replace(/^to /i, '')
       maneuvers.push({ text: `Board route ${leg.route?.id} to ${to}`, at: legAt[i], location: leg.from.location })
       maneuvers.push({ text: `Get off at ${leg.to.name}`, at: legAt[i + 1], location: leg.to.location })
       return

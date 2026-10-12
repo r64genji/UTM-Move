@@ -4,7 +4,7 @@ import { MemoryRouter, useLocation } from 'react-router'
 import { afterEach, expect, test } from 'vitest'
 import type { Leg, Plan } from '../../domain/router/planTrip.ts'
 import { PlanPage } from './PlanPage.tsx'
-import { OptionDetail, OptionList, optionToRoute } from './TripOptions.tsx'
+import { OptionList, optionToRoute, TripSteps } from './TripOptions.tsx'
 
 afterEach(cleanup)
 
@@ -52,12 +52,14 @@ test('option cards show total time, arrival, walking and the domain labels', () 
   expect(bus1.getAttribute('aria-checked')).toBe('true')
 })
 
-test('detail lists the legs and the walking steps', () => {
-  render(<OptionDetail option={plan.options[0]} />)
-  expect(screen.getByText('Walk 5 min')).toBeTruthy()
-  expect(screen.getByText('Head north')).toBeTruthy()
-  expect(screen.getByText('Centre Point')).toBeTruthy()
-  expect(screen.getByText('Board at Stop A, get off at Stop B (08:20).')).toBeTruthy()
+test('steps: a walk is one line, the bus says where to board, which route, and where to get off', () => {
+  render(<TripSteps option={plan.options[0]} />)
+  expect(screen.getByText(/^Walk 5 min · \d+ m$/)).toBeTruthy()
+  expect(screen.queryByText('Head north')).toBeNull()
+  expect(screen.getByText(/Board route P10 to Centre Point/)).toBeTruthy()
+  expect(screen.getByText('08:09')).toBeTruthy()
+  expect(screen.getByText('Stop B')).toBeTruthy()
+  expect(screen.getByText('Get off here')).toBeTruthy()
 })
 
 test('the map gets a solid walk, a highlighted covered run and a bus in its colour', () => {

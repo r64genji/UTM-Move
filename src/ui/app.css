@@ -1613,58 +1613,160 @@ button {
   font-size: 0.8125rem;
 }
 
-.legs {
+/* Trip steps: time | line | what happens. Bus legs are a solid line in the route colour, walks the blue dots of the map. */
+.journey {
+  --walk: #1a73e8;
   display: flex;
   flex-direction: column;
-  gap: 14px;
 }
 
-/* Each leg hangs off a coloured line: dotted for walking, the route colour for the bus. */
-.leg {
-  padding: 2px 0 2px 14px;
-  border-left: 4px dotted #a39a9c;
+.journey > li {
+  display: grid;
+  grid-template-columns: 44px 22px 1fr;
+  column-gap: 10px;
 }
 
-.leg[data-kind='bus'] {
-  border-left: 4px solid var(--leg);
+.journey time {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
-.leg-head {
+.j-point {
+  align-items: start;
+}
+
+.j-point time {
+  padding-top: 1px;
+}
+
+.j-dot {
+  justify-self: center;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  background: var(--bg);
+  border: 3px solid var(--leg, var(--walk));
+  border-radius: 50%;
+}
+
+.j-point[data-bus] .j-dot {
+  width: 20px;
+  height: 20px;
+  margin-top: 0;
+  border-width: 4px;
+}
+
+.j-end .j-dot {
+  background: var(--red);
+  border-color: var(--red);
+}
+
+.j-text {
+  min-width: 0;
+}
+
+.j-text strong {
+  display: block;
+  font-size: 1rem;
+  line-height: 1.3;
+}
+
+.j-text p {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.j-text .j-board {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 4px;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.j-leg {
+  min-height: 44px;
+}
+
+.j-leg > .j-text {
+  grid-column: 3;
+  padding: 8px 0 10px;
+}
+
+.j-line {
+  grid-column: 2;
+  justify-self: center;
+  width: 6px;
+  margin: 3px 0;
+  background: var(--leg);
+  border-radius: 3px;
+}
+
+.j-leg[data-kind='walk'] .j-line {
+  background: radial-gradient(circle, var(--walk) 2.6px, transparent 3.2px) center top / 6px 10px repeat-y;
+}
+
+.j-leg[data-current] > .j-text {
+  margin-left: -6px;
+  padding-left: 6px;
+  background: var(--brand-soft);
+  border-radius: 8px;
+}
+
+.j-leg[data-current] .j-what::after {
+  content: 'You are here';
+  margin-left: auto;
+  padding: 1px 8px;
+  color: #fff;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  background: var(--brand);
+  border-radius: 999px;
+}
+
+.j-text .j-what {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  padding-right: 6px;
+  color: var(--text);
+  font-weight: 500;
 }
 
-.leg-icon {
+.j-what svg {
   flex: none;
   color: var(--muted);
 }
 
-.leg-head strong {
-  flex: 1;
+.j-text .j-label {
+  color: #8a5a00;
+  font-size: 0.8125rem;
 }
 
-.leg p,
-.leg-label {
+.j-stops summary {
   margin-top: 4px;
+  color: var(--brand);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.j-stops ol {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.j-stops li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
   color: var(--muted);
   font-size: 0.875rem;
-}
-
-.steps {
-  margin-top: 8px;
-  padding-left: 20px;
-  list-style: decimal;
-  font-size: 0.875rem;
-}
-
-.steps li {
-  padding: 3px 0;
-}
-
-.steps .list-code {
-  margin-left: 8px;
-  color: var(--muted);
 }
 
 /* ── Live navigation ───────────────────────────────────── */
@@ -1743,9 +1845,9 @@ button {
   position: relative;
   display: grid;
   flex: none;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 1fr auto auto;
   align-items: center;
-  gap: 10px 12px;
+  gap: 10px 8px;
   margin-top: auto;
   padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
   background: var(--bg);
@@ -1774,6 +1876,17 @@ button {
 
 .nav-bar progress::-moz-progress-bar {
   background: var(--green);
+}
+
+.nav-steps {
+  grid-column: 1 / -1;
+  max-height: 45vh;
+  padding-top: 4px;
+  overflow-y: auto;
+}
+
+.nav-bar > .btn-quiet {
+  min-height: 48px;
 }
 
 .nav-min {
@@ -2111,6 +2224,10 @@ button {
 
   .nav-bar {
     padding: 16px 0;
+  }
+
+  .nav-steps {
+    max-height: none;
   }
 
   .nav-recentre {

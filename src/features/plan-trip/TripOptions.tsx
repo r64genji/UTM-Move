@@ -1,5 +1,5 @@
 // The option cards and the leg-by-leg detail for a planned trip. Pure: give it a Plan, it renders it.
-import type { CSSProperties } from 'react'
+import { Fragment, type CSSProperties } from 'react'
 import type { Leg, TripOption } from '../../domain/router/planTrip.ts'
 import { klDateTime } from '../../domain/transit/departures.ts'
 import { distanceM } from '../../domain/walk/geo.ts'
@@ -36,8 +36,9 @@ export function optionToRoute(o: TripOption): RouteLeg[] {
 }
 
 /** Metres walked over the whole trip, along the drawn path. */
-export const walkDistanceM = (o: TripOption) =>
-  o.legs.filter((l) => l.kind === 'walk').reduce((sum, l) => sum + l.geometry.slice(1).reduce((d, p, i) => d + distanceM(l.geometry[i], p), 0), 0)
+const walkedM = (l: Leg) => l.geometry.slice(1).reduce((d, p, i) => d + distanceM(l.geometry[i], p), 0)
+
+export const walkDistanceM = (o: TripOption) => o.legs.filter((l) => l.kind === 'walk').reduce((sum, l) => sum + walkedM(l), 0)
 
 export const metres = (m: number) => (m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`)
 
@@ -98,61 +99,96 @@ export function OptionList({ options, selected, onSelect }: { options: TripOptio
   )
 }
 
-function LegDetail({ leg }: { leg: Leg }) {
-  if (leg.kind === 'bus') {
-    return (
-      <li className="leg" data-kind="bus" style={{ '--leg': routeColor(leg.route!.id, leg.route!.color) } as CSSProperties}>
-        <div className="leg-head">
-          <RouteBadge route={leg.route!} />
-          <strong>{leg.headsign ?? `Route ${leg.route!.id}`}</strong>
-          <time>{clock(leg.departAt)}</time>
-        </div>
-        <p>
-          Board at {leg.from.name}, get off at {leg.to.name} ({clock(leg.arriveAt)}).
-        </p>
-        {leg.labels.map((l) => (
-          <p key={l.text} className="leg-label">
-            {l.text}
-          </p>
-        ))}
-      </li>
-    )
-  }
+/** Bus lines get their route colour; walking is the blue dots of the map. */
+const legStyle = (leg: Leg) => ({ '--leg': leg.kind === 'bus' ? routeColor(leg.route!.id, leg.route!.color) : undefined }) as CSSProperties
+
+/** What happens at the point between two legs (or at the start). */
+function Point({ prev, next }: { prev?: Leg; next: Leg }) {
+  const bus = next.kind === 'bus'
   return (
-    <li className="leg">
-      <div className="leg-head">
-        <Icon name="walk" size={22} className="leg-icon" />
-        <strong>Walk {minutes(leg.durationS)} min</strong>
-        <time>{clock(leg.departAt)}</time>
+    <li className="j-point" data-bus={bus || prev?.kind === 'bus' || undefined}>
+      <time>{clock(bus || !prev ? next.departAt : prev.arriveAt)}</time>
+      <span className="j-dot" style={legStyle(bus ? next : (prev ?? next))} />
+      <div className="j-text">
+        <strong>{next.from.name}</strong>
+        {bus && (
+          <p className="j-board">
+            <RouteBadge route={next.route!} />
+            <span>
+              Board route {next.route!.id} to {(next.headsign ?? next.to.name).replace(/^to /i, '')}
+            </span>
+          </p>
+        )}
+        {!bus && prev?.kind === 'bus' && <p>Get off here</p>}
       </div>
-      <p>
-        {leg.from.name} to {leg.to.name}
-      </p>
-      {leg.labels.map((l) => (
-        <p key={l.text} className="leg-label">
-          {l.text}
-        </p>
-      ))}
-      {!!leg.steps?.length && (
-        <ol className="steps">
-          {leg.steps.map((s, i) => (
-            <li key={i}>
-              {s.instruction}
-              {s.distanceM > 0 && <span className="list-code">{Math.round(s.distanceM)} m</span>}
-            </li>
-          ))}
-        </ol>
-      )}
     </li>
   )
 }
 
-export function OptionDetail({ option }: { option: TripOption }) {
+/** The leg itself: one line for a walk, the ride (with its stops on request) for a bus. */
+function Segment({ leg, current }: { leg: Leg; current?: boolean }) {
+  const rides = Math.max(1, (leg.stops?.length ?? 2) - 1)
   return (
-    <ol className="legs" aria-label="Legs">
-      {option.legs.map((l, i) => (
-        <LegDetail key={i} leg={l} />
+    <li className="j-leg" data-kind={leg.kind} data-current={current || undefined} style={legStyle(leg)}>
+      <span className="j-line" />
+      <div className="j-text">
+        {leg.kind === 'walk' ? (
+          <p className="j-what">
+            <Icon name="walk" size={18} />
+            Walk {minutes(leg.durationS)} min · {metres(walkedM(leg))}
+          </p>
+        ) : (
+          <p className="j-what">
+            <Icon name="bus" size={18} />
+            Ride {rides} {rides === 1 ? 'stop' : 'stops'} · {minutes(leg.durationS)} min
+          </p>
+        )}
+        {leg.labels.map((l) => (
+          <p key={l.text} className="j-label">
+            {l.text}
+          </p>
+        ))}
+        {leg.kind === 'bus' && leg.stops && leg.stops.length > 2 && (
+          <details className="j-stops">
+            <summary>Show stops</summary>
+            <ol>
+              {leg.stops.slice(1, -1).map((st) => (
+                <li key={st.id}>
+                  <span>{st.name}</span>
+                  <time>{clock(st.at)}</time>
+                </li>
+              ))}
+            </ol>
+          </details>
+        )}
+      </div>
+    </li>
+  )
+}
+
+/** The whole trip at a glance: where you get on, which bus, where you get off. Walks are one line each. `current` marks the leg you are on. */
+export function TripSteps({ option, current }: { option: TripOption; current?: number }) {
+  // A walk of a few metres (stepping off the bus at the destination) is noise, not a step.
+  const shown = option.legs.map((leg, i) => ({ leg, i })).filter(({ leg }) => leg.kind === 'bus' || walkedM(leg) >= 10)
+  const legs = shown.length ? shown.map((x) => x.leg) : option.legs
+  const here = current === undefined ? undefined : shown.findIndex((x) => x.i === current)
+  const last = legs[legs.length - 1]
+  return (
+    <ol className="journey" aria-label="Trip steps">
+      {legs.map((leg, i) => (
+        <Fragment key={i}>
+          <Point prev={legs[i - 1]} next={leg} />
+          <Segment leg={leg} current={here === i} />
+        </Fragment>
       ))}
+      <li className="j-point j-end">
+        <time>{clock(last.arriveAt)}</time>
+        <span className="j-dot" />
+        <div className="j-text">
+          <strong>{last.to.name}</strong>
+          <p>{last.kind === 'bus' ? 'Get off here' : 'Arrive'}</p>
+        </div>
+      </li>
     </ol>
   )
 }

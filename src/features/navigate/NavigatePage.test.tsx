@@ -39,3 +39,10 @@ test('guidance shows the stop to get off at while riding', () => {
   expect(screen.getByText(/^In \d/)).toBeTruthy()
   expect(screen.queryByText(/Bus leaves/)).toBeNull()
 })
+
+test('a headsign that already starts with "To" is not read as "to To"', () => {
+  const nav = createNavigation({ ...option, legs: [walk, { ...bus, headsign: 'To Library' }] })
+  const { state } = follow(nav, startState, { ...A, accuracy: 5, t: 0 })
+  render(<Guidance v={view(nav, state, at('08:06'))} />)
+  expect(screen.getByText('Then: Board route C to Library')).toBeTruthy()
+})

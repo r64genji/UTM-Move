@@ -9,7 +9,7 @@ import { watchLocation } from '../location/useUserLocation.ts'
 import { useMap } from '../map/MapContext.tsx'
 import { MarkerLayer, RouteLayer } from '../map/layers.tsx'
 import { toLngLat } from '../map/geo.ts'
-import { optionToRoute } from '../plan-trip/TripOptions.tsx'
+import { optionToRoute, TripSteps } from '../plan-trip/TripOptions.tsx'
 import { planFor } from '../plan-trip/routerClient.ts'
 import { parseTrip, tripSearch } from '../plan-trip/tripParams.ts'
 
@@ -165,6 +165,8 @@ export function NavigatePage() {
   const v = nav ? view(nav, state, now) : null
   const last = nav?.option.legs[nav.option.legs.length - 1]
   const minutesLeft = v && Math.max(1, Math.round((v.eta.getTime() - now.getTime()) / 60_000))
+  const [showSteps, setShowSteps] = useState(false)
+  const legNow = nav ? Math.max(0, nav.legAt.findLastIndex((at) => at <= state.alongM)) : 0
 
   return (
     <article className="navigating">
@@ -198,6 +200,11 @@ export function NavigatePage() {
             Re-centre
           </button>
         )}
+        {showSteps && nav && (
+          <div className="nav-steps">
+            <TripSteps option={nav.option} current={state.arrived ? undefined : legNow} />
+          </div>
+        )}
         {v && !state.arrived && <progress max={1} value={v.progress} aria-label="Progress along the route" />}
         <div className="nav-eta">
           {v && !state.arrived ? (
@@ -213,6 +220,11 @@ export function NavigatePage() {
             </p>
           )}
         </div>
+        {nav && (
+          <button type="button" className="btn btn-quiet" aria-expanded={showSteps} onClick={() => setShowSteps(!showSteps)}>
+            {showSteps ? 'Hide steps' : 'Steps'}
+          </button>
+        )}
         <Link to={{ pathname: '/plan', search: tripKey }} className="btn btn-exit">
           {state.arrived ? 'Done' : 'Exit'}
         </Link>

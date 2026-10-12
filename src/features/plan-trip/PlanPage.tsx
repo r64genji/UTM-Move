@@ -11,7 +11,7 @@ import { MarkerLayer, RouteLayer } from '../map/layers.tsx'
 import { FitTo } from '../transit/parts.tsx'
 import { useTransit } from '../transit/useTransit.ts'
 import { PlacePicker, useEndpointName } from './PlacePicker.tsx'
-import { OptionDetail, OptionList, optionToRoute } from './TripOptions.tsx'
+import { OptionList, optionToRoute, TripSteps } from './TripOptions.tsx'
 import { planFor } from './routerClient.ts'
 import { parseTrip, tripSearch, type Profile, type Trip } from './tripParams.ts'
 
@@ -181,7 +181,7 @@ export function PlanPage() {
                         </button>
                         <h2>To {toName ?? 'your destination'}</h2>
                       </header>
-                      <OptionDetail option={option} />
+                      <TripSteps option={option} />
                     </>
                   ) : (
                     <>
