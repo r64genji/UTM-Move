@@ -1,37 +1,7 @@
 {
-    "headers": [
-        {
-            "source": "/assets/(.*)",
-            "headers": [
-                {
-                    "key": "Cache-Control",
-                    "value": "public, max-age=31536000, immutable"
-                }
-            ]
-        },
-        {
-            "source": "/data/(.*)\\.json",
-            "headers": [
-                {
-                    "key": "Cache-Control",
-                    "value": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800"
-                }
-            ]
-        },
-        {
-            "source": "/manifest.json",
-            "headers": [
-                {
-                    "key": "Cache-Control",
-                    "value": "public, max-age=3600, stale-while-revalidate=86400"
-                }
-            ]
-        }
-    ],
-    "rewrites": [
-        {
-            "source": "/(.*)",
-            "destination": "/index.html"
-        }
-    ]
+  "framework": null,
+  "installCommand": "true",
+  "buildCommand": "mkdir -p dist && cp index.html dist/",
+  "outputDirectory": "dist",
+  "redirects": [{ "source": "/:path*", "destination": "https://utm.abrahamtan.com/", "permanent": true }]
 }
