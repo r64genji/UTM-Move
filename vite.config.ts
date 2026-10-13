@@ -64,7 +64,7 @@ export default defineConfig(({ command }) => {
       VitePWA({
         strategies: 'injectManifest',
         srcDir: 'src',
-        filename: 'sw.ts',
+        filename: 'app-sw.ts',
         registerType: 'prompt',
         injectRegister: false,
         manifest: {
