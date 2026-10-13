@@ -1,7 +1,7 @@
 import type { Map, Marker } from 'maplibre-gl'
 import { useEffect, useRef } from 'react'
 import { useAppStore } from '../app/store.ts'
-import { reducedMotion, setInset } from '../map/camera.ts'
+import { EASE_OUT, moveLeft, reducedMotion, setInset } from '../map/camera.ts'
 import { useMap } from '../map/MapContext.tsx'
 import type { UserFix } from '../map/layers.tsx'
 
@@ -37,14 +37,17 @@ function UserDot({ fix, keep }: { fix: UserFix | null; keep: boolean }) {
       d.el.classList.add('in')
       cancelAnimationFrame(d.raf)
       const now = performance.now()
-      const ms = Math.min(1200, Math.max(300, now - d.at))
+      // Mid camera move (the locate button) the dot takes the camera's time and curve, so it stays in the middle of the screen.
+      const steered = moveLeft(map)
+      const ms = steered || Math.min(1200, Math.max(300, now - d.at))
       const from = d.shown
       d.at = now
       // A jump of more than ~150 m is a new place, not a step: no sliding across the campus.
       const far = Math.hypot((to[0] - from[0]) * 111_320 * Math.cos((fix.lat * Math.PI) / 180), (to[1] - from[1]) * 111_320) > 150
       const step = (t: number) => {
         const k = reducedMotion() || far ? 1 : Math.min(1, (t - now) / ms)
-        d.shown = [from[0] + (to[0] - from[0]) * k, from[1] + (to[1] - from[1]) * k]
+        const e = steered ? EASE_OUT(k) : k
+        d.shown = [from[0] + (to[0] - from[0]) * e, from[1] + (to[1] - from[1]) * e]
         d.marker.setLngLat(d.shown)
         if (k < 1) d.raf = requestAnimationFrame(step)
       }

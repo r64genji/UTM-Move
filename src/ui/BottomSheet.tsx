@@ -1,12 +1,13 @@
 import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent, type ReactNode } from 'react'
 import { useLocation } from 'react-router'
-import { setInset } from '../features/map/camera.ts'
+import { setInset, trackSheet } from '../features/map/camera.ts'
 import { useMap } from '../features/map/MapContext.tsx'
 import { DESKTOP, useMedia } from './hooks.ts'
 
 type Size = 'min' | 'mid' | 'full'
-type Drag = { y0: number; h0: number; y: number; t: number; v: number; lo: number; hi: number; to: number; rb: number; moved: boolean; handle: boolean }
+type Drag = { y0: number; h0: number; y: number; t: number; v: number; lo: number; hi: number; to: number; rb: number; moved: boolean }
 const MIN_H = 96
+const MAX_MIN = 140
 const token = (name: string) => getComputedStyle(document.documentElement).getPropertyValue(name).trim()
 /** A duration token in ms. The build minifies `220ms` to `.22s`. */
 const ms = (name: string) => (token(name).endsWith('ms') ? 1 : 1000) * parseFloat(token(name))
@@ -18,11 +19,18 @@ let left: { node: HTMLElement; path: string; at: number; h: number; size: Size }
 /** How far the sheet is drawn below (or above) its resting place right now, counting a glide in progress. */
 const offset = (node: HTMLElement) => new DOMMatrix(getComputedStyle(node).transform).m42
 
-/** The layout is already final; this only moves the sheet from `from` px away to its place. Longer trips take a little longer. */
+/** The buttons that sit on the map just above the sheet. They ride with it. */
+const controls = () => [...document.querySelectorAll<HTMLElement>('.shell .map-locate, .shell .maplibregl-ctrl-bottom-right')]
+
+/** The layout is already final; this only moves the sheet (and the map controls above it) from `from` px away to its place. Longer trips take a little longer. */
 function glide(node: HTMLElement, from: number) {
-  node.getAnimations().forEach((a) => a.cancel())
+  const all = [node, ...controls()]
+  all.forEach((n) => n.getAnimations().forEach((a) => a.cancel()))
   if (!from || matchMedia('(prefers-reduced-motion: reduce)').matches) return
-  node.animate({ transform: [`translateY(${from}px)`, 'translateY(0)'] }, { duration: Math.min(440, ms('--dur') + Math.abs(from) * 0.4), easing: token('--ease-out') })
+  const timing = { duration: Math.min(440, ms('--dur') + Math.abs(from) * 0.4), easing: token('--ease-out') }
+  node.animate({ transform: [`translateY(${from}px)`, 'translateY(0)'] }, timing)
+  // `translate`, not `transform`: the locate button scales on press and when it hides.
+  controls().forEach((c) => c.animate({ translate: [`0 ${from}px`, '0 0'] }, timing))
 }
 
 /** Heights the sheet can rest at. A size that would look the same as the one below it (short content) is left out. */
@@ -34,6 +42,22 @@ function stops(node: HTMLElement, min: number) {
   const out: [Size, number][] = []
   for (const s of all) if (!out.length || s[1] - out[out.length - 1][1] > 24) out.push(s)
   return out
+}
+
+/** The lowest row edge inside `el` that is still above `limit`. Looks inside stacked blocks, never inside a row. */
+function edge(el: Element, limit: number): number {
+  let best = 0
+  for (const c of el.children) {
+    const r = c.getBoundingClientRect()
+    if (!r.height) continue
+    if (r.bottom <= limit) best = r.bottom
+    else {
+      const [a, b] = c.children
+      if (b && b.getBoundingClientRect().top >= a.getBoundingClientRect().bottom - 1) best = Math.max(best, edge(c, limit))
+      break
+    }
+  }
+  return best
 }
 
 /** Past its ends the sheet keeps following the finger, but at half speed and tiring out. */
@@ -54,6 +78,7 @@ export function BottomSheet({ children, label }: { children: ReactNode; label: s
   const [size, setSize] = useState<Size>(() => (left && left.path === pathname && Date.now() - left.at < 400 ? left.size : 'mid'))
   const drag = useRef<Drag | null>(null)
   const last = useRef(0)
+  const dragged = useRef(-1000)
   const minH = useRef(MIN_H)
   const pad = useRef(() => {})
 
@@ -93,7 +118,11 @@ export function BottomSheet({ children, label }: { children: ReactNode; label: s
     body.scrollTop = 0
     const first = [...body.children].find((c) => (c as HTMLElement).offsetHeight > 0 && !c.classList.contains('sheet-actions'))
     const fits = first && !body.querySelector(':scope > .sheet-actions')
-    minH.current = fits ? Math.min(140, Math.max(72, Math.ceil(first.getBoundingClientRect().bottom - node.getBoundingClientRect().top + 8))) : MIN_H
+    const top = node.getBoundingClientRect().top
+    const bottom = first?.getBoundingClientRect().bottom ?? 0
+    // A first line taller than the cap (a card with rows) is cut right under the last row that fits whole.
+    const cut = first && bottom - top + 8 > MAX_MIN ? edge(first, top + MAX_MIN - 3) : 0
+    minH.current = fits ? Math.min(MAX_MIN, Math.max(72, Math.ceil(cut ? cut - top + 3 : bottom - top + 8))) : MIN_H
     node.style.setProperty('--min-h', `${minH.current}px`)
   })
 
@@ -130,7 +159,7 @@ export function BottomSheet({ children, label }: { children: ReactNode; label: s
     // The handle, or the quiet part of the header. Buttons and the scrolling body keep their own taps and swipes.
     const header = !!target.closest('.sheet-head, .sheet-title') && !target.closest('button, a, input, select, textarea')
     if (!node || desktop || e.button > 0 || !(handle || header)) return
-    drag.current = { y0: e.clientY, h0: node.offsetHeight - offset(node), y: e.clientY, t: performance.now(), v: 0, lo: 0, hi: 0, to: 0, rb: 0, moved: false, handle }
+    drag.current = { y0: e.clientY, h0: node.offsetHeight - offset(node), y: e.clientY, t: performance.now(), v: 0, lo: 0, hi: 0, to: 0, rb: 0, moved: false }
   }
 
   const move = (e: PointerEvent<HTMLElement>) => {
@@ -156,20 +185,25 @@ export function BottomSheet({ children, label }: { children: ReactNode; label: s
     d.rb = Math.sign(d.to - h) * rubber(Math.abs(d.to - h))
     node.style.maxHeight = `${h}px`
     node.style.transform = d.rb ? `translateY(${-d.rb}px)` : ''
+    // The map controls follow the sheet's top, band included. The camera still waits for the release.
+    trackSheet(h)
+    controls().forEach((c) => (c.style.translate = d.rb ? `0 ${-d.rb}px` : ''))
   }
 
-  const end = (e: PointerEvent<HTMLElement>) => {
+  const end = () => {
     const d = drag.current
     const node = el.current
     drag.current = null
     if (!d || !node) return
-    if (!d.moved) return d.handle && e.type === 'pointerup' ? step('cycle') : undefined
+    if (!d.moved) return
+    dragged.current = performance.now()
     // Where the sheet would stop if it kept its speed for a moment, then the closest size.
     const [next, h] = stops(node, minH.current).reduce((best, s) => (Math.abs(s[1] - (d.to - d.v * 120)) < Math.abs(best[1] - (d.to - d.v * 120)) ? s : best))
     const from = node.offsetHeight
     node.style.maxHeight = ''
     node.style.transform = ''
     node.removeAttribute('data-drag')
+    controls().forEach((c) => c.style.removeProperty('translate'))
     glide(node, h - from - d.rb)
     last.current = h
     setSize(next)
@@ -184,6 +218,8 @@ export function BottomSheet({ children, label }: { children: ReactNode; label: s
           type="button"
           className="sheet-handle"
           aria-label={size === 'full' ? 'Hide panel' : size === 'min' ? 'Show panel' : 'Expand panel'}
+          // A tap steps through the sizes. Done on the click, not the release, so the click lands on the handle before anything moves under it. The click that ends a drag is no tap.
+          onClick={() => performance.now() - dragged.current > 100 && step('cycle')}
           onKeyDown={(e) => {
             if (e.key === 'ArrowUp') step('up')
             if (e.key === 'ArrowDown') step('down')

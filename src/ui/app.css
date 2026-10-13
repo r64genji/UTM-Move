@@ -15,7 +15,8 @@
   --red: #c5221f;
   --radius: 14px;
   --shadow: 0 1px 3px rgb(0 0 0 / 0.18), 0 2px 8px rgb(0 0 0 / 0.1);
-  --tab: calc(52px + env(safe-area-inset-bottom));
+  --tab-h: calc(52px + env(safe-area-inset-bottom));
+  --tab: var(--tab-h);
   --top: env(safe-area-inset-top);
   --side-w: 400px;
 
@@ -203,10 +204,22 @@ button {
   z-index: 20;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  height: var(--tab);
+  height: var(--tab-h);
   padding-bottom: env(safe-area-inset-bottom);
   background: var(--bg);
   border-top: 1px solid var(--line);
+  transition: transform var(--dur-slow) var(--ease-out);
+}
+
+/* Live navigation takes the whole screen: the bar slips down behind the page and comes back up when you exit. */
+.shell[data-navigating] .tabbar {
+  z-index: 4;
+  transform: translateY(100%);
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    transform var(--dur) var(--ease-in),
+    visibility 0s var(--dur);
 }
 
 .tab {
@@ -298,7 +311,8 @@ button {
   animation: pop-out var(--dur-fast) var(--ease-in) forwards;
 }
 
-/* Map controls. Phones pinch to zoom, so the zoom buttons only show on desktop. */
+/* Map controls. Phones pinch to zoom, so the zoom buttons only show on desktop. The ones above the sheet jump with --sheet-h and
+   BottomSheet.tsx glides them (translate) in step with the sheet, so they have no transition of their own. */
 .shell .maplibregl-ctrl-top-right {
   display: none;
 }
@@ -307,7 +321,6 @@ button {
   right: auto;
   bottom: calc(var(--tab) + var(--sheet-h, 0px));
   left: 0;
-  transition: bottom var(--dur-slow) var(--ease-out);
 }
 
 .maplibregl-ctrl-bottom-right .maplibregl-ctrl {
@@ -341,7 +354,6 @@ button {
   box-shadow: var(--shadow);
   cursor: pointer;
   transition:
-    bottom var(--dur-slow) var(--ease-out),
     opacity var(--dur) var(--ease-out),
     transform var(--dur) var(--ease-out),
     visibility 0s;
@@ -759,6 +771,16 @@ button {
   white-space: nowrap;
 }
 
+/* Two directions share the row and wrap to a second line on a narrow phone instead of being cut. More than two scroll (and fade, below). */
+.segmented-scroll:not(:has(> :nth-child(3))) > button {
+  flex: 1 1 0;
+  min-width: 0;
+  padding-block: 4px;
+  line-height: 1.2;
+  white-space: normal;
+  text-wrap: balance;
+}
+
 /* Chips: one scrolling row that floats over the map. */
 .chips {
   display: flex;
@@ -798,6 +820,7 @@ button {
   }
 
   .chips,
+  .segmented-scroll,
   .when-days {
     mask-image: linear-gradient(90deg, transparent, #000 var(--fade-l), #000 calc(100% - var(--fade-r)), transparent);
     animation: chips-fade linear both;
@@ -1017,6 +1040,17 @@ html[data-nav] :is(.map-top, .map-bar, .plan-top) {
   transform: scale(0.98);
 }
 
+/* Another route type or time is being planned: the options on screen dim (if it takes a moment) until the new ones replace them. */
+.options {
+  transition: opacity var(--dur) var(--ease-out);
+}
+
+.plan[data-stale] .options {
+  opacity: 0.5;
+  pointer-events: none;
+  transition-delay: 150ms;
+}
+
 @media (hover: hover) {
   .card:hover {
     border-color: #d6cdca;
@@ -1064,10 +1098,6 @@ html[data-nav] :is(.map-top, .map-bar, .plan-top) {
 }
 
 @media (max-width: 360px) {
-  .cards {
-    margin-inline: -6px;
-  }
-
   .card {
     gap: 10px;
     padding: 12px;
@@ -3271,6 +3301,12 @@ html[data-nav] :is(.map-top, .map-bar, .plan-top) {
     overflow: visible;
   }
 
+  /* The sidebar is narrower than the four route types: they wrap instead of running off the edge. */
+  .plan-chips .chip-group {
+    flex: 0 1 auto;
+    flex-wrap: wrap;
+  }
+
   .plan-chips .chip,
   .when-field {
     box-shadow: none;
@@ -3321,9 +3357,12 @@ html[data-nav] :is(.map-top, .map-bar, .plan-top) {
     --nav-x: 0px;
   }
 
+  .tabbar,
+  .shell[data-navigating] .tabbar,
   .tab-pill,
   .tab svg,
   .map-locate,
+  :root[data-no-room] .map-locate,
   .shell .maplibregl-ctrl-bottom-right {
     transition: none;
   }

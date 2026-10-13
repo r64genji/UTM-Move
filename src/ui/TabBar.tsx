@@ -9,17 +9,18 @@ const TABS: { to: string; label: string; icon: IconName; own: RegExp }[] = [
   { to: '/contribute', label: 'Contribute', icon: 'contribute', own: /^\/contribute/ },
 ]
 
-// Stops, routes, search and the disclaimer are reached from more than one tab. They keep the tab you came from lit.
-// Opened straight from a link there is no such tab, so each falls back to its usual one.
+// Stops, routes, search and the disclaimer are reached from more than one tab. Each history entry keeps the tab it was opened
+// from, so back and forward light the same tab again. Opened straight from a link there is no such tab, so each falls back to its usual one.
 const SHARED: [RegExp, number][] = [[/^\/stop\//, 0], [/^\/route\//, 1], [/^\/search/, 2], [/^\/info/, 3]]
 
-/** Index of the tab to highlight. Call once, where the app shell lives, so the last tab is remembered across pages. */
+/** Index of the tab to highlight. Call once, where the app shell lives, so each page remembers the tab it came from. */
 export function useActiveTab() {
-  const { pathname } = useLocation()
+  const { pathname, key } = useLocation()
+  const [seen, setSeen] = useState({ shown: -1, tabs: {} as Record<string, number> })
   const own = TABS.findIndex((t) => t.own.test(pathname))
-  const [last, setLast] = useState(() => (own >= 0 ? own : (SHARED.find(([re]) => re.test(pathname))?.[1] ?? 0)))
-  if (own >= 0 && own !== last) setLast(own)
-  return own >= 0 ? own : last
+  const tab = own >= 0 ? own : (seen.tabs[key] ?? (seen.shown >= 0 ? seen.shown : (SHARED.find(([re]) => re.test(pathname))?.[1] ?? 0)))
+  if (seen.shown !== tab || seen.tabs[key] !== tab) setSeen({ shown: tab, tabs: { ...seen.tabs, [key]: tab } })
+  return tab
 }
 
 /** Phone tab bar. The pill under the active icon slides to the tab you pick. */

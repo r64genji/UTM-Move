@@ -30,7 +30,7 @@ const WHEN = [
   { id: 'arrive', label: 'Arrive by' },
 ] as const
 
-type Result = { key: string; error?: string; plan?: Plan; at?: Date }
+type Result = { key: string; ends: string; error?: string; plan?: Plan; at?: Date }
 
 export const NO_BUS_NOTE = 'No campus bus today. Showing walking routes.'
 
@@ -60,6 +60,8 @@ export function PlanPage() {
   const tripKey = tripSearch(trip)
   const startKey = start ? `${start.lat},${start.lon}` : ''
   const key = tripKey + startKey
+  // The same trip with another route type or time: the options on screen stay (dimmed) until the new ones arrive.
+  const ends = tripSearch({ ...trip, profile: 'fastest', when: { type: 'now' } }) + startKey
   useEffect(() => {
     const trip = parseTrip(new URLSearchParams(tripKey))
     if (!trip.from || !trip.to || (needsStart && (trip.from.kind === 'me' || trip.to.kind === 'me'))) return
@@ -67,17 +69,19 @@ export function PlanPage() {
     ;(async () => {
       const at = trip.when.type === 'now' ? new Date() : new Date(`${trip.when.time}:00+08:00`)
       const plan = await planFor(trip, start, at)
-      if (live) setResult({ key, plan, at })
-    })().catch((e: unknown) => live && setResult({ key, error: e instanceof Error ? e.message : 'Planning failed.' }))
+      if (live) setResult({ key, ends, plan, at })
+    })().catch((e: unknown) => live && setResult({ key, ends, error: e instanceof Error ? e.message : 'Planning failed.' }))
     return () => void (live = false)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tripKey, startKey])
 
   const ready = !!trip.from && !!trip.to && !needsStart
   const current = ready && result?.key === key ? result : null
-  const plan = current?.plan ?? null
+  const stale = ready && !current && result?.ends === ends && result.plan?.options.length ? result : null
+  const shown = current ?? stale
+  const plan = shown?.plan ?? null
   const option = plan?.options[selected]
-  const noBusToday = plan && !!transit && !plan!.options.some((o) => o.kind === 'bus') && tripsOn(transit, klDateTime(current!.at!).date).length === 0
+  const noBusToday = plan && !!transit && !plan!.options.some((o) => o.kind === 'bus') && tripsOn(transit, klDateTime(shown!.at!).date).length === 0
 
   const swap = () => update({ from: trip.to, to: trip.from })
   const when = trip.when
@@ -87,7 +91,7 @@ export function PlanPage() {
     update({ when: { type, time: when.type === 'now' ? `${date}T${time}` : when.time } })
   }
 
-  const ends = option && [option.legs[0].from.location, option.legs[option.legs.length - 1].to.location]
+  const endPoints = option && [option.legs[0].from.location, option.legs[option.legs.length - 1].to.location]
 
   const whenControls = (
     <div className="when">
@@ -109,14 +113,14 @@ export function PlanPage() {
   )
 
   return (
-    <article className="plan">
+    <article className="plan" data-stale={stale ? '' : undefined}>
       {option && <RouteLayer legs={optionToRoute(option)} />}
-      {ends && (
+      {endPoints && (
         <>
           <MarkerLayer
             markers={[
-              { id: 'from', kind: 'place', position: ends[0], selected: true, color: '#22c55e' },
-              { id: 'to', kind: 'place', position: ends[1], selected: true, color: '#ef4444' },
+              { id: 'from', kind: 'place', position: endPoints[0], selected: true, color: '#22c55e' },
+              { id: 'to', kind: 'place', position: endPoints[1], selected: true, color: '#ef4444' },
             ]}
           />
           <FitTo points={option.legs.flatMap((l) => l.geometry)} maxZoom={18} />
@@ -154,7 +158,7 @@ export function PlanPage() {
           {ready && (
             <>
               {!detail && whenControls}
-              {!current && (
+              {!shown && (
                 <>
                   <p className="pending" role="status">
                     Finding routes…

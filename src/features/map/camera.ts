@@ -47,6 +47,9 @@ export function go(map: Map, camera: Camera, padding?: PaddingOptions, instant =
   return duration
 }
 
+/** Milliseconds left of a camera move (`go`) in flight. Something that has to stay under the camera's centre takes just as long. */
+export const moveLeft = (map: Map) => Math.max(0, stateOf(map).busyUntil - performance.now())
+
 /** Keep `center` on screen while it moves (a followed dot): one short linear leg per update, so legs join up. */
 export function trackTo(map: Map, center: LngLatLike, ms: number) {
   map.easeTo({ center, padding: paddingOf(stateOf(map)), duration: reducedMotion() ? 0 : ms, easing: (t) => t })
@@ -79,6 +82,14 @@ const schedule = (map: Map) => {
   if (!s.frame) s.frame = requestAnimationFrame(() => apply(map))
 }
 
+/** Where the sheet's top is, for the controls that ride on it. A dragged sheet reports every move; the camera only hears when it lets go. */
+export function trackSheet(h: number) {
+  const root = document.documentElement
+  root.style.setProperty('--sheet-h', `${h}px`)
+  // Not enough map left above the sheet for the locate button: it fades out instead of covering the sheet.
+  root.toggleAttribute('data-no-room', window.innerHeight - h < 300)
+}
+
 /**
  * Tell the camera what covers the map (sheet below, cards above). `ease` settles with one move; `follow` tracks a
  * resizing sheet frame by frame, so the map and the sheet move as one.
@@ -87,10 +98,7 @@ export function setInset(map: Map, patch: Partial<Inset>, how: 'ease' | 'follow'
   const s = stateOf(map)
   const before = paddingOf(s)
   Object.assign(s, patch)
-  const root = document.documentElement
-  root.style.setProperty('--sheet-h', `${bottomOf(s)}px`)
-  // Not enough map left above the sheet for the locate button: it fades out instead of covering the sheet.
-  root.toggleAttribute('data-no-room', window.innerHeight - bottomOf(s) < 300)
+  trackSheet(bottomOf(s))
   const after = paddingOf(s)
   if (before.top === after.top && before.bottom === after.bottom && s.settled) return
   // A fit still in flight keeps going (re-aimed), so the camera lands once.

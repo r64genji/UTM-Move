@@ -65,8 +65,9 @@ export function Shell() {
         <Suspense fallback={<div className="map" />}>
           <MapView />
         </Suspense>
-        <LocationLayers />
+        {/* Before the dot: a new fix starts the camera's move first, and the dot then slides over in the same time. */}
         <LocateButton />
+        <LocationLayers />
         <div className="side">
           {desktop && <Sidebar tab={tab} />}
           <main className="panel">
@@ -80,7 +81,7 @@ export function Shell() {
             </footer>
           )}
         </div>
-        {!desktop && !navigating && <TabBar active={tab} />}
+        {!desktop && <TabBar active={tab} />}
         {banner.mounted && <PickBanner leaving={banner.leaving} />}
         <UpdateToast />
       </div>

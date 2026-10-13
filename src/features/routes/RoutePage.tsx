@@ -89,8 +89,8 @@ export function RoutePage() {
           <div key={pattern.id} className="swap">
             <div className="next-bus">
               <p className="eyebrow">
-                {trip === next ? 'Next bus' : 'Selected trip'}
-                {remaining.length === 0 && <span className="status" data-status="Service Ended">No more buses</span>}
+                {trip !== next ? 'Selected trip' : remaining.length ? 'Next bus' : `Next bus · ${formatDate(shownDate)}`}
+                {remaining.length === 0 && today.length > 0 && <span className="status" data-status="Service Ended">No more buses</span>}
               </p>
               <p className="next-time">
                 <time key={first(trip)} className="num-roll">
