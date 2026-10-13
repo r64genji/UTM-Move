@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
-import { createNavigation, follow, startState, view, type Fix, type NavState, type Navigation, type View } from '../../domain/navigate/follow.ts'
+import { createNavigation, follow, MAX_ACCURACY_M, startState, view, type Fix, type NavState, type Navigation, type View } from '../../domain/navigate/follow.ts'
 import type { TripOption } from '../../domain/router/planTrip.ts'
 import { klDateTime } from '../../domain/transit/departures.ts'
 import { DESKTOP, useMedia } from '../../ui/hooks.ts'
@@ -27,7 +27,10 @@ export function Guidance({ v, rerouting }: { v: View; rerouting?: boolean }) {
       <div className="guide-main">
         <Icon key={v.next?.text} name={v.next ? turnIcon(v.next.text) : 'flag'} size={40} className="guide-icon" />
         <div>
-          <p className="guide-dist">{v.distanceToNextM < 10 ? 'Now' : `In ${metres(v.distanceToNextM)}`}</p>
+          <p className="guide-dist">
+            {v.distanceToNextM >= 10 ? `In ${metres(v.distanceToNextM)}` : v.next?.kind === 'board' ? 'At the stop' : 'Now'}
+            {v.stopsLeft && ` · ${v.stopsLeft === 1 ? 'next stop' : `${v.stopsLeft} stops`}`}
+          </p>
           <p className="guide-now" aria-live="polite">
             <span key={v.next?.text}>{v.next?.text ?? 'Arrived'}</span>
           </p>
@@ -45,9 +48,12 @@ export function Guidance({ v, rerouting }: { v: View; rerouting?: boolean }) {
         </p>
       )}
       {v.busWarning && (
-        <p className="guide-alert" data-late={v.busWarning.late || undefined} role="status">
-          {v.busWarning.text}
-        </p>
+        <>
+          <p className="guide-alert" data-late={v.busWarning.late || undefined} role="status">
+            {v.busWarning.text}
+          </p>
+          <p className="guide-note">Bus times are from the timetable. There is no live bus tracking.</p>
+        </>
       )}
     </section>
   )
@@ -103,6 +109,10 @@ function useFollowMap(fix: Fix | null) {
 
 type Status = 'waiting' | 'planning' | 'ready' | 'rerouting' | 'error'
 
+/** Seconds between re-reading the clock (bus countdown, missed bus) and between tries to plan from off the campus map. */
+const TICK_MS = 5_000
+const OFF_MAP_RETRY_MS = 15_000
+
 export function NavigatePage() {
   const [params] = useSearchParams()
   const trip = parseTrip(params)
@@ -116,6 +126,10 @@ export function NavigatePage() {
   const [state, setState] = useState<NavState>(startState)
   const [fix, setFix] = useState<Fix | null>(null)
   const [now, setNow] = useState(() => new Date())
+  // Your position is off the campus map: nothing to plan from yet.
+  const [offMap, setOffMap] = useState(false)
+  // Said once when the bus was missed and the trip was planned again.
+  const [missed, setMissed] = useState('')
   const live = useRef({ nav: null as Navigation | null, state: startState, rerouting: false })
   const gotFirst = useRef(false)
 
@@ -135,25 +149,52 @@ export function NavigatePage() {
       setNav(n)
       setState(startState)
     }
-    const fail = (e: unknown) => {
+    let fix: Fix | null = null
+    let offMapAt: number | null = null // when planning from your position last failed off the map
+    /** Off the map from your own position: wait and try again. Anything else stops navigation. */
+    const fail = (e: unknown, fromYou: boolean) => {
+      if (fromYou && e instanceof Error && e.name === 'OffMap') {
+        offMapAt = fix?.t ?? Date.now()
+        setOffMap(true)
+        setStatus(live.current.nav ? 'ready' : 'waiting')
+        return
+      }
       setError(e instanceof Error ? e.message : 'Planning failed.')
       setStatus('error')
+    }
+    const ok = (o: TripOption | undefined, msg: string) => {
+      if (!o) throw new Error(msg)
+      offMapAt = null
+      setOffMap(false)
+      install(o)
+      setStatus('ready')
     }
     const plan = (from: Fix | null) => {
       setStatus('planning')
       replan(from)
-        .then((o) => {
-          if (!o) throw new Error('No route found.')
-          install(o)
-          setStatus('ready')
-        })
-        .catch(fail)
+        .then((o) => ok(o, 'No route found.'))
+        .catch((e) => fail(e, !!from && t.from?.kind === 'me'))
+    }
+    /** Same destination and route type, planned from where the user is now. */
+    const reroute = (from: Fix) => {
+      if (live.current.rerouting) return
+      live.current.rerouting = true
+      setStatus('rerouting')
+      planFor({ ...t, from: { kind: 'point', lat: from.lat, lon: from.lon }, when: { type: 'now' } }, null, new Date())
+        // Keep the kind of trip you chose: walking stays walking.
+        .then((p) => ok(p.options.find((o) => o.kind === live.current.nav?.option.kind) ?? p.options[0], 'No route found from here.'))
+        .catch((e) => fail(e, true))
+        .finally(() => (live.current.rerouting = false))
     }
     if (!needsFix && t.from && t.to) plan(null)
 
-    const stop = watchLocation((f) => {
-      setFix(f)
-      setNow(new Date(f.t))
+    const onFix = (f: Fix, now = f.t) => {
+      if (offMapAt !== null && now - offMapAt >= OFF_MAP_RETRY_MS && t.from && t.to) {
+        offMapAt = now
+        if (live.current.nav) reroute(f)
+        else plan(f)
+        return
+      }
       if (!live.current.nav) {
         if (needsFix && !gotFirst.current && t.from && t.to) {
           gotFirst.current = true
@@ -161,26 +202,33 @@ export function NavigatePage() {
         }
         return
       }
-      const r = follow(live.current.nav, live.current.state, f)
+      const r = follow(live.current.nav, live.current.state, f, now)
       live.current.state = r.state
       setState(r.state)
       for (const e of r.events) {
-        if (e.type === 'reroute' && !live.current.rerouting) {
-          // Same destination and route type, planned from where the user is now.
-          live.current.rerouting = true
-          setStatus('rerouting')
-          planFor({ ...t, from: { kind: 'point', lat: e.from.lat, lon: e.from.lon }, when: { type: 'now' } }, null, new Date())
-            .then((p) => {
-              if (!p.options[0]) throw new Error('No route found from here.')
-              install(p.options[0])
-              setStatus('ready')
-            })
-            .catch(fail)
-            .finally(() => (live.current.rerouting = false))
+        if (e.type !== 'reroute' || offMapAt !== null) continue
+        if (e.why === 'missed-bus') {
+          const bus = live.current.nav.option.legs.find((l, i) => l.kind === 'bus' && live.current.state.alongM < live.current.nav!.legAt[i + 1])
+          if (bus) setMissed(`You missed the ${klDateTime(bus.departAt).time} route ${bus.route?.id} bus. Here is the next way there.`)
         }
+        reroute(e.from)
       }
+    }
+    const stop = watchLocation((f) => {
+      fix = f
+      setFix(f)
+      setNow(new Date(f.t))
+      onFix(f)
     })
-    return stop
+    // A phone standing still sends no fixes: keep the clock (bus countdown, missed bus) moving with the last one.
+    const tick = setInterval(() => {
+      setNow(new Date())
+      if (fix) onFix(fix, Date.now())
+    }, TICK_MS)
+    return () => {
+      stop()
+      clearInterval(tick)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tripKey, opt])
 
@@ -190,17 +238,55 @@ export function NavigatePage() {
   const minutesLeft = v && Math.max(1, Math.round((v.eta.getTime() - now.getTime()) / 60_000))
   const [showSteps, setShowSteps] = useState(false)
   const legNow = nav ? Math.max(0, nav.legAt.findLastIndex((at) => at <= state.alongM)) : 0
+  // Buzz once when your stop is the next one: the phone may be in a pocket.
+  const nextStop = v?.stopsLeft === 1
+  useEffect(() => {
+    if (nextStop) navigator.vibrate?.([200, 100, 200])
+  }, [nextStop])
 
   return (
     <article className="navigating">
       {nav && <RouteLayer legs={optionToRoute(nav.option)} />}
-      {nav && last && <MarkerLayer markers={[{ id: 'to', kind: 'place', position: last.to.location, selected: true, color: '#ef4444' }]} />}
+      {nav && last && (
+        <MarkerLayer
+          markers={[
+            // Where to get on and off each bus, named, so the stop can be found on the map.
+            ...nav.option.legs.flatMap((l, i) =>
+              l.kind === 'bus'
+                ? [
+                    { id: `on${i}`, kind: 'stop' as const, position: l.from.location, label: l.from.name, selected: true },
+                    { id: `off${i}`, kind: 'stop' as const, position: l.to.location, label: l.to.name, selected: true },
+                  ]
+                : [],
+            ),
+            { id: 'to', kind: 'place', position: last.to.location, selected: true, color: '#ef4444' },
+          ]}
+        />
+      )}
       <header className="nav-top">
         {!trip.from || !trip.to ? (
           <p className="notice notice-error" role="alert">
             <strong>No trip to follow.</strong> <Link to="/plan">Plan a trip</Link> first.
           </p>
         ) : null}
+        {nav && fix && fix.accuracy > MAX_ACCURACY_M && !state.arrived && (
+          <p className="notice" role="status">
+            <strong>Weak GPS signal.</strong> Guidance waits for a better fix.
+          </p>
+        )}
+        {missed && !state.arrived && (
+          <p className="notice" role="status">
+            <strong>{missed}</strong>{' '}
+            <button type="button" className="btn btn-quiet" onClick={() => setMissed('')}>
+              OK
+            </button>
+          </p>
+        )}
+        {offMap && status !== 'error' && (
+          <p className="notice" role="status">
+            <strong>You are not on campus.</strong> Guidance starts when you reach the campus.
+          </p>
+        )}
         {status === 'error' && (
           <p className="notice notice-error" role="alert">
             <strong>Navigation stopped.</strong> {error}
@@ -233,12 +319,12 @@ export function NavigatePage() {
             <>
               <p className="nav-min">{minutesLeft} min</p>
               <p className="muted">
-                {metres(v.remainingM)} · Arrive {klDateTime(v.eta).time}
+                {metres(v.remainingM)} to go · Arrive {klDateTime(v.eta).time}
               </p>
             </>
           ) : (
             <p className="muted" role="status">
-              {state.arrived ? 'Trip complete.' : status === 'planning' ? 'Finding your route…' : needsFix && status === 'waiting' ? 'Waiting for your location…' : ''}
+              {state.arrived ? 'Trip complete.' : status === 'planning' ? 'Finding your route…' : needsFix && status === 'waiting' && !offMap ? 'Waiting for your location…' : ''}
             </p>
           )}
         </div>

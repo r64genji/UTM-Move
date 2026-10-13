@@ -3,6 +3,7 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import { useAppStore } from '../app/store.ts'
 import { LocationControl } from './LocationControl.tsx'
+import { useGrantedLocation } from './useUserLocation.ts'
 
 type Ok = { latitude: number; longitude: number; accuracy: number }
 let respond: (ok?: Ok, errorCode?: number) => void
@@ -109,4 +110,19 @@ test('a hand-placed start is announced', () => {
   render(<LocationControl />)
   act(() => useAppStore.setState({ start: { lat: 1.56, lon: 103.64, source: 'pin' } }))
   expect(screen.getByText('Starting from the pin you placed. Drag it to adjust.')).toBeTruthy()
+})
+
+// Reported: off campus, then walked onto campus. "You are not on the UTM campus" stayed until "Try again" was tapped.
+test('off campus, then on campus: the start is set without a tap', () => {
+  let move: (p: { coords: Ok }) => void = () => {}
+  Object.defineProperty(navigator, 'geolocation', { configurable: true, value: { watchPosition: (ok: typeof move) => ((move = ok), 1), clearWatch: () => {} } })
+  useAppStore.setState({ location: { status: 'off-campus', fix: { lat: 1.54, lon: 103.627, accuracy: 10 } } })
+  function Page() {
+    useGrantedLocation()
+    return <LocationControl />
+  }
+  render(<Page />)
+  act(() => move({ coords: { ...campus, accuracy: 10 } }))
+  expect(status()).toBe('Found you on campus, accurate to about 10 m.')
+  expect(useAppStore.getState().start).toEqual({ lat: 1.559, lon: 103.638, source: 'gps' })
 })

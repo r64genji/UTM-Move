@@ -7,6 +7,7 @@ import { Place } from '../../domain/schemas.ts'
 import { search } from '../../domain/search.ts'
 import { Icon } from '../../ui/icons.tsx'
 import { useSearchIndex } from '../places/useSearch.ts'
+import { useAppStore } from '../app/store.ts'
 import { useExit } from '../transit/motion.ts'
 import { useTransit } from '../transit/useTransit.ts'
 import type { Endpoint } from './tripParams.ts'
@@ -36,8 +37,10 @@ export function usePlaces(): Place[] {
 export function useEndpointName(e: Endpoint | null): string | null {
   const { data } = useTransit()
   const places = usePlaces()
+  const start = useAppStore((s) => s.start)
   if (!e) return null
-  if (e.kind === 'me') return 'Your Location'
+  // A pin you placed is where the trip starts, so say so.
+  if (e.kind === 'me') return start && start.source !== 'gps' ? 'Your pin' : 'Your Location'
   if (e.kind === 'point') return 'Dropped pin'
   if (e.kind === 'stop') return data?.stops.find((s) => s.id === e.id)?.name ?? `Stop ${e.id}`
   return places.find((p) => p.id === e.id)?.name ?? `Place ${e.id}`

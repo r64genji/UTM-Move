@@ -20,6 +20,20 @@ export const MIN_SAVING_S = 2 * 60
 export const WALK_SPEED = 1.4
 /** Least walking: a bus that saves walking may arrive up to this much later than walking there. */
 export const LEAST_WALK_SLACK_S = 30 * 60
+/** Least time to change buses. Stop times are estimates, so a same-minute change is a guess. */
+export const CHANGE_S = 3 * 60
+/** A change of bus counts as this much extra time when options are ranked. */
+export const TRANSFER_PENALTY_S = 5 * 60
+/** A start or end further than this from any campus path is off the map: there is no walk to plan. */
+export const MAX_OFF_MAP_M = 250
+
+/** The start or the end of a trip is off the campus map. `name` is 'OffMap' so it survives the worker boundary. */
+export class OffMapError extends Error {
+  name = 'OffMap'
+  constructor(end: 'from' | 'to') {
+    super(end === 'from' ? 'Your start is outside the campus map.' : 'Your destination is outside the campus map.')
+  }
+}
 
 /** A walking profile, or 'least-walk': fastest paths, then the bus options that walk least, even when slower. */
 export type TripProfile = Profile | 'least-walk'
@@ -131,8 +145,12 @@ export function planTrip(g: Graph, data: TransitData, req: PlanRequest): Plan {
   const speedMps = req.walkSpeed ?? WALK_SPEED
   const walkOpts = (at: Date) => ({ profile, at, speedMps })
   const endpoint = (p: LatLon): Endpoint => snapToEdge(g, p) ?? snapToNode(g, p)
-  const doors = (p: Place) => (p.entrances?.length ? p.entrances : [p.location]).map(endpoint)
-  const [fromDoors, toDoors] = [doors(req.from), doors(req.to)]
+  const doors = (p: Place, end: 'from' | 'to') => {
+    const pts = p.entrances?.length ? p.entrances : [p.location]
+    if (!pts.some((x) => (snapToEdge(g, x)?.distanceM ?? Infinity) <= MAX_OFF_MAP_M)) throw new OffMapError(end)
+    return pts.map(endpoint)
+  }
+  const [fromDoors, toDoors] = [doors(req.from, 'from'), doors(req.to, 'to')]
   let [origin, dest] = [fromDoors[0], toDoors[0]]
   let direct = route(g, origin, dest, walkOpts(req.at))
   for (const a of fromDoors)
@@ -183,7 +201,7 @@ export function planTrip(g: Graph, data: TransitData, req: PlanRequest): Plan {
       if (Number.isFinite(sourceSide[i]) && near(sourceSide, i)) sources.set(s.id, req.mode === 'depart' ? q + sourceSide[i] : q - sourceSide[i])
     })
     if (!sources.size) continue
-    const result = raptor(data, { date, sources, direction: req.mode === 'depart' ? 'forward' : 'reverse', transfers: info.transfers })
+    const result = raptor(data, { date, sources, direction: req.mode === 'depart' ? 'forward' : 'reverse', transfers: info.transfers, changeS: CHANGE_S })
     data.stops.forEach((s, i) => {
       if (!Number.isFinite(targetSide[i]) || !near(targetSide, i)) return
       for (const journey of result.journeysTo(s.id)) {
@@ -214,14 +232,17 @@ export function planTrip(g: Graph, data: TransitData, req: PlanRequest): Plan {
   const worth = [...candidates.values()].filter((c) =>
     !direct || (leastWalking ? c.walkS <= walkT - MIN_SAVING_S && rank(c) <= walkRank + LEAST_WALK_SLACK_S : rank(c) <= walkRank - MIN_SAVING_S),
   )
-  const byRank = (a: Candidate, b: Candidate) => rank(a) - rank(b) || a.walkS - b.walkS
   const rides = (c: Candidate) => c.journey.rides
+  // Each change of bus costs TRANSFER_PENALTY_S: a route with two changes must be clearly faster to come first.
+  const cost = (c: Candidate) => rank(c) + TRANSFER_PENALTY_S * (rides(c) - 1)
+  const byRank = (a: Candidate, b: Candidate) => cost(a) - cost(b) || a.walkS - b.walkS
   const fastest = [...worth].sort(byRank)[0]
   const leastWalk = [...worth].sort((a, b) => a.walkS - b.walkS || byRank(a, b))[0]
   const fewest = [...worth].sort((a, b) => rides(a) - rides(b) || byRank(a, b))[0]
   const picks = [...new Set([fastest, leastWalk, fewest].filter(Boolean))]
-  // Drop an option when another is no slower and walks no more.
-  const kept = picks.filter((c) => !picks.some((o) => o !== c && rank(o) <= rank(c) && o.walkS <= c.walkS && (rank(o) < rank(c) || o.walkS < c.walkS)))
+  // Drop an option when another is no slower (changes counted), walks no more and changes bus no more often.
+  const noWorse = (o: Candidate, c: Candidate) => cost(o) <= cost(c) && o.walkS <= c.walkS && rides(o) <= rides(c)
+  const kept = picks.filter((c) => !picks.some((o) => o !== c && noWorse(o, c) && !noWorse(c, o)))
   const byWalk = (a: Candidate, b: Candidate) => a.walkS - b.walkS || byRank(a, b)
   const chosen = kept.sort(leastWalking ? byWalk : byRank).slice(0, 2)
 
@@ -255,8 +276,9 @@ export function planTrip(g: Graph, data: TransitData, req: PlanRequest): Plan {
         ? rideGeometry(decodePolyline(pattern.shape), locations(pattern.stopIds), l.boardPos, l.alightPos)
         : locations(stopTimes.map((s) => s.stopId))
       const labels: LegLabel[] = []
-      const waitMin = Math.round((l.depart - (firstRide && req.mode === 'depart' ? q : prevArrive)) / 60)
-      if (firstRide && req.mode === 'depart') labels.push({ text: `Bus in ${waitMin} min` })
+      const waitMin = Math.round((l.depart - prevArrive) / 60)
+      // A clock time, not "in N min": the plan may be for another time than now.
+      if (firstRide && req.mode === 'depart') labels.push({ text: `Bus at ${stopTimes[0].time}` })
       else if (!firstRide && waitMin > 0) labels.push({ text: `Wait ${waitMin} min` })
       legs.push({
         kind: 'bus', from, to, departAt: when(l.depart), arriveAt: when(l.arrive), durationS: l.arrive - l.depart, geometry, labels,

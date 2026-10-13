@@ -26,13 +26,14 @@ export function LocationControl() {
   const { location, start, picking, request, pickOnMap, cancelPick } = useUserLocation()
   const { status } = location
 
+  const handPlaced = !picking && start && start.source !== 'gps'
   let message: string = picking ? 'Tap the map where you are starting.' : ''
-  if (!picking) {
+  // Off campus with a pin placed: the pin line below says what happens, the off-campus advice is done.
+  if (!picking && !(handPlaced && status === 'off-campus')) {
     if (status === 'ok') message = `Found you on campus, accurate to about ${Math.round(location.fix.accuracy)} m.`
     else if (status === 'low-accuracy') message = `Your location is rough, about ${Math.round(location.fix.accuracy)} m. Drag the pin to where you are.`
     else message = MESSAGE[status]
   }
-  const handPlaced = !picking && start && start.source !== 'gps'
   const label = status === 'idle' || status === 'asking' ? 'Use my location' : status === 'ok' ? 'Update my location' : 'Try again'
 
   return (

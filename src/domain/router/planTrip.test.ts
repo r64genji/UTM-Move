@@ -1,8 +1,14 @@
+/// <reference types="node" />
 import { describe, expect, test } from 'vitest'
 import type { LatLon, TransitData } from '../schemas.ts'
 import { distanceM } from '../walk/geo.ts'
 import { decodeGraph, encodeGraph } from '../walk/graph.ts'
-import { planTrip, type Plan, type PlanRequest } from './planTrip.ts'
+import { loadRouterData } from '../../../pipeline/golden/lib.ts'
+import { planQuery } from '../../workers/routerApi.ts'
+import { planTrip, type Plan, type PlanRequest, type TripOption } from './planTrip.ts'
+
+const KLG = { lat: 1.571635, lon: 103.620962 } // KLG Campus Residence
+const T05 = { lat: 1.562482, lon: 103.652496 } // Block T05, Faculty of Science
 
 // Points in metres east of a spot on campus. The whole map is one road along x.
 const P = (x: number): LatLon => ({ lat: 1.56, lon: 103.64 + x / 111_279 })
@@ -84,7 +90,7 @@ describe('planTrip', () => {
     const bus = plan.options[1].legs[1]
     expect(bus.route).toEqual({ id: 'R1', name: 'Route 1', color: '#ff0000' })
     expect(bus.headsign).toBe('To B')
-    expect(bus.labels).toEqual([{ text: 'Bus in 10 min' }])
+    expect(bus.labels).toEqual([{ text: 'Bus at 08:10' }])
     expect(bus.stops!.map((s) => [s.id, hms(s.at)])).toEqual([['A', '08:10:00'], ['B', '08:22:00']])
     // Cut from the line between A and B: starts on A, keeps the vertex at 1000 m, ends on B.
     expect(bus.geometry.map(X)).toEqual([140, 1000, 2900])
@@ -94,7 +100,7 @@ describe('planTrip', () => {
   test('depart at 09:00 boards the 09:10', () => {
     const plan = planTrip(g, direct, req({ at: kl('09:00:00') }))
     expect(summary(plan)[1]).toMatchObject({ depart: '09:08:19', arrive: '09:23:41' })
-    expect(plan.options[1].legs[1].labels).toEqual([{ text: 'Bus in 10 min' }])
+    expect(plan.options[1].legs[1].labels).toEqual([{ text: 'Bus at 09:10' }])
   })
 
   test('arrive by 08:25 takes the 08:10 and leaves as late as possible', () => {
@@ -128,6 +134,15 @@ describe('planTrip', () => {
     expect(planTrip(g, ok, req({})).options.map((o) => o.kind)).toEqual(['walk', 'bus'])
   })
 
+  test('a change of bus needs 3 minutes from getting off to the next bus leaving', () => {
+    // Off R1 at M1 08:05, walk 72 s to M2, R2 leaves 08:07: 2 minutes, too tight. The 08:08 one is fine.
+    const tight = timetable([
+      trip('r1', 'R1', 'R1:short', 'To M1', [['A', '08:02'], ['M1', '08:05']]),
+      trip('r2', 'R2', 'R2:out', 'To B', [['M2', '08:07'], ['B', '08:12']]),
+    ])
+    expect(planTrip(g, tight, req({})).options.map((o) => o.kind)).toEqual(['walk'])
+  })
+
   test('one transfer: footpath between M1 and M2', () => {
     const data = timetable([
       trip('r1', 'R1', 'R1:short', 'To M1', [['A', '08:02'], ['M1', '08:05']]),
@@ -144,5 +159,22 @@ describe('planTrip', () => {
     })
     expect(plan.options[1].legs[3].labels).toEqual([{ text: 'Wait 2 min' }])
     expect(plan.options[1].legs[2].geometry.map(X)).toEqual([1400, 1500])
+  })
+})
+
+describe('on the real campus data', () => {
+  const data = loadRouterData()
+  const tuesday = (hhmm: string) => `2026-10-13T${hhmm}:00+08:00`
+  const rides = (o: TripOption) => o.legs.filter((l) => l.kind === 'bus').map((l) => `${l.route?.id} ${l.from.name}`)
+
+  // Reported: KLG to T05 offered E, C, then B with no time to change, and hid the one E bus that gets there a minute later.
+  test.each(['16:05', '16:10', '11:20', '13:25'])('KLG to Block T05 at %s: one E bus from KLG Eastbound', (hhmm) => {
+    const plan = planQuery(data, { from: KLG, to: T05, when: { type: 'depart', at: tuesday(hhmm) }, profile: 'fastest' })
+    expect(plan.options.filter((o) => o.kind === 'bus').map(rides)).toEqual([['E KLG Campus Residence Eastbound']])
+  })
+
+  test('a start in Johor Bahru is off the campus map, not a 35 min walk', () => {
+    const jb = { lat: 1.4927, lon: 103.7414 }
+    expect(() => planQuery(data, { from: jb, to: T05, when: { type: 'depart', at: tuesday('10:00') }, profile: 'fastest' })).toThrow(expect.objectContaining({ name: 'OffMap' }))
   })
 })

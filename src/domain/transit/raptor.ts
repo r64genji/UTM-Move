@@ -16,6 +16,8 @@ export interface RaptorQuery {
   transfers?: Transfers
   /** Default 2, so up to 3 rides. */
   maxTransfers?: number
+  /** Least seconds between getting off one bus and leaving on the next, walking included. Default 0. */
+  changeS?: number
 }
 
 /** Legs are in travel order. depart/arrive are real seconds after midnight, whatever the direction. */
@@ -94,6 +96,7 @@ export function raptor(data: TransitData, q: RaptorQuery): RaptorResult {
   const n = tt.ids.length
   const rounds = (q.maxTransfers ?? 2) + 1
   const sign = mirror ? -1 : 1
+  const change = q.changeS ?? 0
 
   // Footpaths in search direction. A mirrored search walks them backwards.
   const foot: { to: number; secs: number }[][] = tt.ids.map(() => [])
@@ -109,6 +112,8 @@ export function raptor(data: TransitData, q: RaptorQuery): RaptorResult {
 
   const tau = Array.from({ length: rounds + 1 }, () => new Float64Array(n).fill(Infinity))
   const label: (Label | undefined)[][] = Array.from({ length: rounds + 1 }, () => new Array(n))
+  /** When the last bus was left before reaching each stop in each round (a walk keeps the time of the ride before it). */
+  const off = Array.from({ length: rounds + 1 }, () => new Float64Array(n).fill(-Infinity))
   const best = new Float64Array(n).fill(Infinity)
 
   const walk = (k: number, from: number[]) => {
@@ -119,6 +124,7 @@ export function raptor(data: TransitData, q: RaptorQuery): RaptorResult {
         if (a < best[f.to]) {
           tau[k][f.to] = a
           best[f.to] = a
+          off[k][f.to] = off[k][s]
           label[k][f.to] = { type: 'walk', from: s }
           added.push(f.to)
         }
@@ -150,20 +156,23 @@ export function raptor(data: TransitData, q: RaptorQuery): RaptorResult {
       const p = tt.patterns[pi]
       let trip = -1
       let board = -1
+      let boardPrev = Infinity
       for (let i = start; i < p.stops.length; i++) {
         const s = p.stops[i]
         if (trip >= 0) {
           const a = p.trips[trip].times[i]
           if (a < best[s]) {
-            tau[k][s] = best[s] = a
+            tau[k][s] = best[s] = off[k][s] = a
             label[k][s] = { type: 'ride', pat: pi, trip, board, pos: i }
             rode.push(s)
           }
         }
-        const prev = tau[k - 1][s]
+        // After a ride (round 2 on), the next bus leaves at least `change` after getting off the last one. A walk between them counts.
+        const prev = k > 1 ? Math.max(tau[k - 1][s], off[k - 1][s] + change) : tau[k - 1][s]
         if (prev < Infinity && (trip < 0 || prev <= p.trips[trip].times[i])) {
           const t = firstTrip(p, i, prev)
-          if (t >= 0 && (trip < 0 || t < trip)) { trip = t; board = i }
+          // The same bus is caught here no later than where we boarded it: board here (less walking to the stop, more time to change).
+          if (t >= 0 && (trip < 0 || t < trip || (t === trip && prev <= boardPrev))) { trip = t; board = i; boardPrev = prev }
         }
       }
     }

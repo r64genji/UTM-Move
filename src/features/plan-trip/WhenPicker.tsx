@@ -25,6 +25,12 @@ function Wheel({ count, value, label, onChange }: { count: number; value: number
     el.current!.scrollTop = value * ITEM
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+  /** A tap or a released drag knows its number now: report it before the glide ends, so a quick Done gets it. */
+  const pick = (n: number) => {
+    n = Math.min(count - 1, Math.max(0, n))
+    onChange(n)
+    el.current!.scrollTo({ top: n * ITEM, behavior: 'smooth' })
+  }
   return (
     <div
       ref={el}
@@ -53,7 +59,7 @@ function Wheel({ count, value, label, onChange }: { count: number; value: number
         grab.current = null
         if (!moved) return
         e.currentTarget.style.scrollSnapType = ''
-        e.currentTarget.scrollTo({ top: Math.round(e.currentTarget.scrollTop / ITEM) * ITEM, behavior: 'smooth' })
+        pick(Math.round(e.currentTarget.scrollTop / ITEM))
       }}
       onScroll={(e) => {
         const top = e.currentTarget.scrollTop
@@ -62,7 +68,7 @@ function Wheel({ count, value, label, onChange }: { count: number; value: number
       }}
     >
       {Array.from({ length: count }, (_, n) => (
-        <div key={n} role="option" aria-selected={n === value} className="wheel-item" onClick={() => el.current!.scrollTo({ top: n * ITEM, behavior: 'smooth' })}>
+        <div key={n} role="option" aria-selected={n === value} className="wheel-item" onClick={() => pick(n)}>
           {String(n).padStart(2, '0')}
         </div>
       ))}

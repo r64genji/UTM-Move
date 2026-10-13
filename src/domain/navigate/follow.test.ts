@@ -119,6 +119,49 @@ describe('bus legs', () => {
     expect(nav.maneuvers.map((m) => m.text)).toEqual(['Head east', 'Board route C to Library', 'Get off at Stop B'])
   })
 
+  test('waiting at the stop, the next step is still to board, until the bus moves off with you', () => {
+    let st = follow(nav, startState, { ...A, accuracy: 5, t: at('08:00').getTime() }).state
+    // GPS drifts: standing at the stop reads 15 m down the road the bus takes.
+    for (const t of ['08:05', '08:07', '08:09', '08:10']) st = follow(nav, st, { lat: 1.56, lon: 103.644635, accuracy: 10, t: at(t).getTime() }).state
+    expect(view(nav, st, at('08:09')).next?.text).toBe('Board route C to Library')
+    st = follow(nav, st, { lat: 1.56, lon: 103.6475, accuracy: 5, t: at('08:11').getTime() }).state // 330 m along the bus line
+    expect(view(nav, st, at('08:11')).next?.text).toBe('Get off at Stop B')
+  })
+
+  test('a missed bus is planned again 5 min after it was due, not before', () => {
+    let st = follow(nav, startState, { ...B, accuracy: 5, t: at('08:14').getTime() }).state
+    const early = follow(nav, st, { ...B, accuracy: 5, t: at('08:14').getTime() }, at('08:14:59').getTime())
+    expect(early.events).toEqual([])
+    st = early.state
+    const late = follow(nav, st, { ...B, accuracy: 5, t: at('08:14').getTime() }, at('08:15').getTime())
+    expect(late.events).toEqual([{ type: 'reroute', from: { ...B, accuracy: 5, t: at('08:14').getTime() }, why: 'missed-bus' }])
+  })
+
+  // Reported: "Bus due now. You need 6 min to walk." stayed red for minutes after the bus had gone.
+  test('the bus is due and you are 6 min away: plan again now, even a late bus is gone by then', () => {
+    const r = follow(nav, startState, { ...A, accuracy: 5, t: at('08:10').getTime() + 30_000 })
+    expect(r.events).toContainEqual({ type: 'reroute', from: { ...A, accuracy: 5, t: at('08:10').getTime() + 30_000 }, why: 'missed-bus' })
+  })
+
+  test('on the first bus, the change to the second is not a walk to warn about', () => {
+    const D = { lat: 1.56, lon: 103.67 }
+    const second: Leg = { ...bus, from: { name: 'Stop B', location: C }, to: { name: 'Stop D', location: D }, departAt: at('08:25'), arriveAt: at('08:30'), durationS: 300, geometry: [C, D], route: { id: 'B', name: 'Route B' } }
+    const two = createNavigation({ ...option, arriveAt: at('08:30'), transfers: 1, legs: [walk(A, B), bus, second] })
+    let st = follow(two, startState, { ...B, accuracy: 5, t: at('08:10').getTime() }).state
+    st = follow(two, st, { lat: 1.56, lon: 103.652, accuracy: 5, t: at('08:15').getTime() }).state
+    expect(view(two, st, at('08:15')).busWarning).toBeNull()
+  })
+
+  test('riding, it counts the stops left to yours', () => {
+    const stops = [B, { lat: 1.56, lon: 103.65 }, { lat: 1.56, lon: 103.655 }, C].map((location, i) => ({ id: `s${i}`, name: `S${i}`, location, at: at('08:10') }))
+    const three = createNavigation({ ...option, legs: [walk(A, B), { ...bus, stops }] })
+    let st = follow(three, startState, { ...B, accuracy: 5, t: at('08:10').getTime() }).state
+    st = follow(three, st, { lat: 1.56, lon: 103.647, accuracy: 5, t: at('08:11').getTime() }).state
+    expect(view(three, st, at('08:11')).stopsLeft).toBe(3)
+    st = follow(three, st, { lat: 1.56, lon: 103.656, accuracy: 5, t: at('08:15').getTime() }).state
+    expect(view(three, st, at('08:15')).stopsLeft).toBe(1)
+  })
+
   test('walking too slowly for the bus', () => {
     const r = follow(nav, startState, { ...A, accuracy: 5, t: 0 })
     expect(view(nav, r.state, at('08:06')).busWarning).toEqual({ text: 'Bus leaves in 4 min. You need 6 min to walk.', late: true })

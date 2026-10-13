@@ -88,7 +88,9 @@ export function OptionCard({ option, selected, onSelect }: { option: TripOption;
         <span className="option-time">{minutes(option.durationS)} min</span>
       </span>
       <span className="option-meta">
-        <span>Arrive {clock(option.arriveAt)}</span>
+        <span>
+          Leave {clock(option.departAt)} · Arrive {clock(option.arriveAt)}
+        </span>
         <span>
           Walk {walkMin} min · {metres(walkDistanceM(option))}
         </span>

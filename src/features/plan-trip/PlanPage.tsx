@@ -91,6 +91,10 @@ export function PlanPage() {
     update({ when: { type, time: when.type === 'now' ? `${date}T${time}` : when.time } })
   }
 
+  // A start you placed by hand (pin or map tap) is where navigation starts too, not the GPS.
+  const placed = start && start.source !== 'gps' ? ({ kind: 'point', lat: start.lat, lon: start.lon } as const) : null
+  const navTrip = placed && trip.from.kind === 'me' ? { ...trip, from: placed } : trip
+
   const endPoints = option && [option.legs[0].from.location, option.legs[option.legs.length - 1].to.location]
 
   const whenControls = (
@@ -200,14 +204,14 @@ export function PlanPage() {
                       <OptionList options={plan.options} selected={selected} onSelect={setSelected} />
                     </>
                   )}
-                  {transit?.timetableNote && plan.options.some((o) => o.kind === 'bus') && <p className="note">{transit.timetableNote}</p>}
+                  {transit?.timetableNote && plan.options.some((o) => o.kind === 'bus') && <p className="note">{transit.timetableNote} Bus times are timetable estimates, not live.</p>}
                   <div className="sheet-actions">
                     {!detail && (
                       <button type="button" className="btn btn-quiet" onClick={() => setDetail(true)}>
                         Steps
                       </button>
                     )}
-                    <Link to={{ pathname: '/navigate', search: `${tripSearch(trip)}&opt=${selected}` }} className="btn btn-primary">
+                    <Link to={{ pathname: '/navigate', search: `${tripSearch(navTrip)}&opt=${selected}` }} className="btn btn-primary">
                       <Icon name="navigate" size={20} />
                       Start
                     </Link>

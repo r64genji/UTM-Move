@@ -1,5 +1,5 @@
 import * as Comlink from 'comlink'
-import type { Plan, TripOption } from '../../domain/router/planTrip.ts'
+import { TRANSFER_PENALTY_S, type Plan, type TripOption } from '../../domain/router/planTrip.ts'
 import type { RouterApi } from '../../workers/router.worker.ts'
 import type { Spot } from '../../workers/routerApi.ts'
 import { dataUrl } from '../../dataUrl.ts'
@@ -16,7 +16,7 @@ export function getRouter(): Comlink.Remote<RouterApi> {
 
 export type { TripQuery, Spot } from '../../workers/routerApi.ts'
 
-/** Plan a trip from its URL form. `me` is `start`. Options come back fastest first. */
+/** Plan a trip from its URL form. `me` is `start`. Options come back fastest first, each change of bus counted as TRANSFER_PENALTY_S. */
 export async function planFor(trip: Trip, start: { lat: number; lon: number } | null, at: Date): Promise<Plan> {
   const spot = (e: Endpoint): Spot => {
     if (e.kind === 'me') return { lat: start!.lat, lon: start!.lon }
@@ -33,6 +33,7 @@ export async function planFor(trip: Trip, start: { lat: number; lon: number } | 
     when: { type: trip.when.type === 'arrive' ? 'arrive' : 'depart', at: at.toISOString() },
     profile: trip.profile,
   })
-  const order = trip.profile === 'least-walk' ? (a: TripOption, b: TripOption) => a.walkS - b.walkS || a.durationS - b.durationS : (a: TripOption, b: TripOption) => a.durationS - b.durationS
+  const time = (o: TripOption) => o.durationS + TRANSFER_PENALTY_S * o.transfers
+  const order = trip.profile === 'least-walk' ? (a: TripOption, b: TripOption) => a.walkS - b.walkS || time(a) - time(b) : (a: TripOption, b: TripOption) => time(a) - time(b)
   return { options: [...plan.options].sort(order) }
 }

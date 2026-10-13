@@ -66,4 +66,20 @@ export function useGrantedLocation() {
       () => {},
     )
   }, [status])
+  // Off campus: keep listening, so the start appears by itself once the user is on campus. A placed pin stays.
+  // Errors are ignored: a slow fix indoors must not replace the off-campus advice.
+  useEffect(() => {
+    if (status !== 'off-campus' || !('geolocation' in navigator)) return
+    const id = navigator.geolocation.watchPosition(
+      ({ coords }) => {
+        const { start, setLocation, setStart } = useAppStore.getState()
+        const state = classifyFix({ lat: coords.latitude, lon: coords.longitude, accuracy: coords.accuracy })
+        setLocation(state)
+        if ('fix' in state && state.status !== 'off-campus' && !start) setStart({ lat: state.fix.lat, lon: state.fix.lon, source: 'gps' })
+      },
+      () => {},
+      { enableHighAccuracy: true, maximumAge: 0 },
+    )
+    return () => navigator.geolocation.clearWatch(id)
+  }, [status])
 }

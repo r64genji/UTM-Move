@@ -15,7 +15,22 @@ export const OFF_ROUTE_MS = 10_000
 const PASSED_M = 10
 /** How far ahead of the last position the route is searched while walking. */
 const LOOKAHEAD_M = 200
+/** ...and while riding (a bus covers more ground between fixes). */
+const RIDE_LOOKAHEAD_M = 1500
 const ARRIVE_M = 25
+/** You are on the bus once you are this far along its line. Until then you are still waiting to board. */
+export const BOARDED_M = 100
+/** On a bus, further than this from its line for OFF_BUS_MS is the wrong bus. */
+const OFF_BUS_M = 150
+const OFF_BUS_MS = 30_000
+/** Not on the bus this long after it was due: it was missed (or it is very late), so plan again. */
+export const MISSED_MS = 5 * 60_000
+/** A bus is not boarded before it is due, less this: another bus on the same road is not yours. */
+const EARLY_MS = 2 * 60_000
+/** "Get off" stays up until you are this far into the walk after it, so a slow GPS still shows it. */
+const ALIGHTED_M = 30
+/** A stop counts as passed this far past it. */
+const STOP_PASSED_M = 25
 
 export type Fix = LatLon & { accuracy: number; /** ms since epoch */ t: number }
 
@@ -24,6 +39,9 @@ export interface Maneuver {
   /** Metres along the whole route. */
   at: number
   location: LatLon
+  kind?: 'board' | 'alight'
+  /** Alight: metres along the route of each stop after boarding, the last one is where you get off. */
+  stopsAt?: number[]
 }
 
 export interface Navigation {
@@ -44,29 +62,39 @@ export interface NavState {
   offSince: number | null
   rerouted: boolean
   arrived: boolean
+  /** Time of the last fix used, ms; null before the first. */
+  lastT: number | null
 }
 
-export type NavEvent = { type: 'step'; text: string } | { type: 'reroute'; from: Fix } | { type: 'arrive' }
+export type NavEvent = { type: 'step'; text: string } | { type: 'reroute'; from: Fix; why: 'off-route' | 'missed-bus' } | { type: 'arrive' }
 
-export const startState: NavState = { alongM: 0, next: -1, offSince: null, rerouted: false, arrived: false }
+export const startState: NavState = { alongM: 0, next: -1, offSince: null, rerouted: false, arrived: false, lastT: null }
+
+/** GPS noise: on the first fix, where the path doubles back, the earliest pass this close to the nearest wins. */
+const FIRST_SLACK_M = 25
+/** After that, progress moves no faster than this (m/s) plus the same slack: a noisy fix must not jump to where the path comes back. */
+const WALK_MAX_MPS = 3
+const BUS_MAX_MPS = 30
 
 interface Hit { along: number; dist: number }
 
-/** Nearest point on path segments lo..hi-1 to p, with its distance along the route. */
-function project(path: LatLon[], cum: number[], p: LatLon, lo: number, hi: number): Hit {
+/** Nearest point on path segments lo..hi-1 to p, with its distance along the route. With `slack`, the earliest point no more than that further away. */
+function project(path: LatLon[], cum: number[], p: LatLon, lo: number, hi: number, slack = 0): Hit {
   const mLat = 111_195
   const mLon = mLat * Math.cos((p.lat * Math.PI) / 180)
   let best: Hit = { along: cum[lo], dist: Infinity }
+  const hits: Hit[] = []
   for (let i = lo; i < hi; i++) {
     const ax = (path[i].lon - p.lon) * mLon, ay = (path[i].lat - p.lat) * mLat
     const bx = (path[i + 1].lon - p.lon) * mLon, by = (path[i + 1].lat - p.lat) * mLat
     const dx = bx - ax, dy = by - ay
     const len2 = dx * dx + dy * dy
     const t = len2 ? Math.max(0, Math.min(1, -(ax * dx + ay * dy) / len2)) : 0
-    const dist = Math.hypot(ax + t * dx, ay + t * dy)
-    if (dist < best.dist) best = { dist, along: cum[i] + t * (cum[i + 1] - cum[i]) }
+    const hit = { dist: Math.hypot(ax + t * dx, ay + t * dy), along: cum[i] + t * (cum[i + 1] - cum[i]) }
+    hits.push(hit)
+    if (hit.dist < best.dist) best = hit
   }
-  return best
+  return hits.find((h) => h.dist <= best.dist + slack) ?? best
 }
 
 export function createNavigation(option: TripOption): Navigation {
@@ -94,8 +122,16 @@ export function createNavigation(option: TripOption): Navigation {
     if (leg.kind === 'bus') {
       // Headsigns often start with "To" already ("To Cluster (T02)"); do not say "to To".
       const to = (leg.headsign ?? leg.to.name).replace(/^to /i, '')
-      maneuvers.push({ text: `Board route ${leg.route?.id} to ${to}`, at: legAt[i], location: leg.from.location })
-      maneuvers.push({ text: `Get off at ${leg.to.name}`, at: legAt[i + 1], location: leg.to.location })
+      maneuvers.push({ text: `Board route ${leg.route?.id} to ${to}`, at: legAt[i], location: leg.from.location, kind: 'board' })
+      // Each stop on the line, in order; a loop can pass near a stop twice, so search on from the last one.
+      let from = lo
+      const stopsAt = (leg.stops ?? []).slice(1, -1).map((st) => {
+        const hit = project(path, cum, st.location, from, Math.max(from, hi))
+        while (from < hi - 1 && cum[from + 1] <= hit.along) from++
+        return hit.along
+      })
+      stopsAt.push(legAt[i + 1])
+      maneuvers.push({ text: `Get off at ${leg.to.name}`, at: legAt[i + 1], location: leg.to.location, kind: 'alight', stopsAt })
       return
     }
     let from = lo
@@ -121,28 +157,60 @@ function legIndex(nav: Navigation, along: number): number {
   return i
 }
 
-/** Feed one fix. Returns the next state and what happened. */
-export function follow(nav: Navigation, state: NavState, fix: Fix): { state: NavState; events: NavEvent[] } {
-  if (fix.accuracy > MAX_ACCURACY_M || !nav.path.length) return { state, events: [] }
+/** On leg `i`, a bus, and already moving with it. */
+const riding = (nav: Navigation, i: number, along: number) => nav.option.legs[i].kind === 'bus' && along >= nav.legAt[i] + BOARDED_M
+
+/** The next bus leg not boarded yet, or -1. */
+const nextBus = (nav: Navigation, along: number) => nav.option.legs.findIndex((l, i) => l.kind === 'bus' && along < nav.legAt[i] + BOARDED_M)
+
+/** A maneuver is behind you once you are past it; a bus is only boarded once you move with it. */
+const passed = (m: Maneuver, along: number) => along >= m.at + (m.kind === 'board' ? BOARDED_M : m.kind === 'alight' ? ALIGHTED_M : PASSED_M)
+
+/** Feed one fix. `now` (ms) is the clock for the missed bus: a phone standing still sends no new fixes. Returns the next state and what happened. */
+export function follow(nav: Navigation, state: NavState, fix: Fix, now = fix.t): { state: NavState; events: NavEvent[] } {
+  // After arrival nothing changes: noise around the door must not start guidance again.
+  if (fix.accuracy > MAX_ACCURACY_M || !nav.path.length || state.arrived) return { state, events: [] }
   const events: NavEvent[] = []
   const leg = legIndex(nav, state.alongM)
-  const walking = nav.option.legs[leg].kind === 'walk'
 
+  // Search a little behind the last position and a stretch ahead, never the whole route: a bus line can loop back near itself.
   const lo = Math.max(0, nav.cum.findIndex((c) => c >= state.alongM - 20) - 1)
   let hi = nav.path.length - 1
-  if (walking) while (hi > lo + 1 && nav.cum[hi - 1] > state.alongM + LOOKAHEAD_M) hi--
-  const hit = project(nav.path, nav.cum, fix, lo, Math.max(lo, hi))
-  const alongM = Math.max(state.alongM, hit.along)
+  // On a bus, not past its last stop: the walk after it often runs beside the road the bus is still on.
+  const ahead = riding(nav, leg, state.alongM) ? Math.min(state.alongM + RIDE_LOOKAHEAD_M, nav.legAt[leg + 1] + 2 * PASSED_M) : state.alongM + LOOKAHEAD_M
+  while (hi > lo + 1 && nav.cum[hi - 1] > ahead) hi--
+  // The first fix has no speed to check against: where the path doubles back, take the earliest pass within GPS noise.
+  const hit = project(nav.path, nav.cum, fix, lo, Math.max(lo, hi), state.lastT === null ? FIRST_SLACK_M : 0)
+  const reach = state.lastT === null ? Infinity : state.alongM + FIRST_SLACK_M + (Math.max(0, fix.t - state.lastT) / 1000) * (nav.option.legs[leg].kind === 'bus' ? BUS_MAX_MPS : WALK_MAX_MPS)
+  let alongM = Math.max(state.alongM, Math.min(hit.along, reach))
+  const waitFor = nextBus(nav, state.alongM)
+  if (waitFor >= 0 && now < nav.option.legs[waitFor].departAt.getTime() - EARLY_MS) alongM = Math.min(alongM, Math.max(state.alongM, nav.legAt[waitFor] + BOARDED_M - 1))
 
-  const offWalk = nav.option.legs[legIndex(nav, alongM)].kind === 'walk' && hit.dist > OFF_ROUTE_M
-  const offSince = offWalk ? (state.offSince ?? fix.t) : null
+  const cur = legIndex(nav, alongM)
+  const onBus = riding(nav, cur, alongM)
+  const waiting = nav.option.legs[cur].kind === 'bus' && !onBus
+  // At the stop or on a bus, only far from the bus line for a while is off route (GPS is rougher there, and you may wait a few metres away).
+  const off = hit.dist > (onBus || waiting ? OFF_BUS_M : OFF_ROUTE_M)
+
+  const offSince = off ? (state.offSince ?? fix.t) : null
   let rerouted = state.rerouted
-  if (offSince !== null && fix.t - offSince >= OFF_ROUTE_MS && !rerouted) {
+  // A phone standing still may send no new fix: then the clock decides, once the fix is clearly off (not one noisy reading).
+  const offLimit = onBus || waiting ? OFF_BUS_M : OFF_ROUTE_M
+  const confirmed = (offSince !== null && fix.t > offSince) || hit.dist > 2 * offLimit
+  if (offSince !== null && confirmed && now - offSince >= (onBus || waiting ? OFF_BUS_MS : OFF_ROUTE_MS) && !rerouted) {
     rerouted = true
-    events.push({ type: 'reroute', from: fix })
+    events.push({ type: 'reroute', from: fix, why: 'off-route' })
+  }
+  const due = nextBus(nav, alongM)
+  // Missed: the bus is MISSED_MS overdue, or it is due and you cannot reach the stop within MISSED_MS of its time even if it is late.
+  const dueAt = due >= 0 ? nav.option.legs[due].departAt.getTime() : 0
+  const reachAt = now + (Math.max(0, nav.legAt[due] - alongM) / WALK_SPEED) * 1000
+  if (due >= 0 && !rerouted && (now - dueAt >= MISSED_MS || (now > dueAt && reachAt > dueAt + MISSED_MS))) {
+    rerouted = true
+    events.push({ type: 'reroute', from: fix, why: 'missed-bus' })
   }
 
-  let next = nav.maneuvers.findIndex((m) => m.at > alongM - PASSED_M)
+  let next = nav.maneuvers.findIndex((m) => !passed(m, alongM))
   if (next < 0) next = nav.maneuvers.length
   next = Math.max(state.next, next)
   if (next !== state.next && next < nav.maneuvers.length) events.push({ type: 'step', text: nav.maneuvers[next].text })
@@ -150,7 +218,7 @@ export function follow(nav: Navigation, state: NavState, fix: Fix): { state: Nav
   const arrived = state.arrived || (distanceM(fix, nav.path[nav.path.length - 1]) <= ARRIVE_M && alongM >= nav.totalM - ARRIVE_M * 2)
   if (arrived && !state.arrived) events.push({ type: 'arrive' })
 
-  return { state: { alongM, next, offSince, rerouted, arrived }, events }
+  return { state: { alongM, next, offSince, rerouted, arrived, lastT: fix.t }, events }
 }
 
 export interface BusWarning { text: string; /** You will not make it at walking pace. */ late: boolean }
@@ -159,6 +227,8 @@ export interface View {
   next: Maneuver | null
   then: Maneuver | null
   distanceToNextM: number
+  /** Riding to the next maneuver (get off): stops still to come, the last one is yours. */
+  stopsLeft: number | null
   /** 0..1 of the route covered. */
   progress: number
   remainingM: number
@@ -180,30 +250,32 @@ export function view(nav: Navigation, state: NavState, now: Date): View {
   let t = now.getTime()
   legs.forEach((leg, i) => {
     if (i < cur) return
-    if (leg.kind === 'bus' && i > cur) t = Math.max(t, leg.departAt.getTime())
+    // A bus never leaves early: not the next ones, nor the one you are waiting for.
+    if (leg.kind === 'bus' && (i > cur || !riding(nav, i, state.alongM))) t = Math.max(t, leg.departAt.getTime())
     const span = nav.legAt[i + 1] - nav.legAt[i]
     const left = i === cur && span > 0 ? Math.max(0, nav.legAt[i + 1] - state.alongM) / span : 1
     t += leg.durationS * 1000 * left
   })
 
-  // The next bus we still have to board.
-  const busIdx = legs.findIndex((l, i) => l.kind === 'bus' && state.alongM < nav.legAt[i] + PASSED_M)
+  // The next bus we still have to board. None while riding: the ride is not a walk.
+  const busIdx = nextBus(nav, state.alongM)
   let busWarning: BusWarning | null = null
-  if (busIdx >= 0 && !state.arrived) {
+  if (busIdx >= 0 && !state.arrived && !riding(nav, cur, state.alongM)) {
     const leavesMs = legs[busIdx].departAt.getTime() - now.getTime()
     const needS = Math.max(0, nav.legAt[busIdx] - state.alongM) / WALK_SPEED
     const needMin = Math.ceil(needS / 60)
-    const text =
-      leavesMs <= 0 ? 'The bus has left. Check the next departures.'
-      : needMin === 0 ? `Bus leaves in ${min(leavesMs)} min.`
-      : `Bus leaves in ${min(leavesMs)} min. You need ${needMin} min to walk.`
-    busWarning = { text, late: leavesMs <= 0 || needS * 1000 > leavesMs }
+    // Times are estimates: a bus due now may still come. MISSED_MS after it was due, follow() plans again.
+    const leaves = min(leavesMs) <= 0 ? 'Bus due now.' : `Bus leaves in ${min(leavesMs)} min.`
+    const spare = min(leavesMs) - needMin
+    const text = needMin === 0 ? leaves : `${leaves} You need ${needMin} min to walk.${spare >= 0 && spare <= 1 ? ' Go now.' : ''}`
+    busWarning = { text, late: needMin > 0 && needS * 1000 > leavesMs }
   }
 
   return {
     next,
     then,
     distanceToNextM: next ? Math.max(0, next.at - state.alongM) : 0,
+    stopsLeft: next?.stopsAt && riding(nav, cur, state.alongM) ? next.stopsAt.filter((a) => a > state.alongM + STOP_PASSED_M).length || 1 : null,
     progress: nav.totalM ? Math.min(1, state.alongM / nav.totalM) : 1,
     remainingM: Math.max(0, nav.totalM - state.alongM),
     eta: new Date(t),

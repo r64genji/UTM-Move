@@ -3392,3 +3392,9 @@ html[data-nav] :is(.map-top, .map-bar, .plan-top) {
     transform: none;
   }
 }
+
+.guide-note {
+  padding: 2px 16px 8px;
+  color: rgb(255 255 255 / 0.75);
+  font-size: 0.75rem;
+}
