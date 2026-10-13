@@ -72,10 +72,11 @@ function useFollowMap(fix: Fix | null) {
   const desktop = useMedia(DESKTOP)
   // Keep the user between the guidance banner and the bottom bar (the steps list makes the bar taller).
   useEffect(() => {
-    const top = document.querySelector('.nav-top')
-    const bar = document.querySelector('.nav-bar')
+    const top = document.querySelector<HTMLElement>('.nav-top')
+    const bar = document.querySelector<HTMLElement>('.nav-bar')
     if (!map || desktop || !top || !bar) return
-    const measure = () => setInset(map, { top: Math.round(top.getBoundingClientRect().bottom) + 16, bottom: Math.round(window.innerHeight - bar.getBoundingClientRect().top) + 16 }, 'follow')
+    // Layout sizes, not on-screen boxes: both slide in when the page opens, and the camera should aim at where they end up.
+    const measure = () => setInset(map, { top: top.offsetTop + top.offsetHeight + 16, bottom: bar.offsetHeight + 16 }, 'follow')
     measure()
     const watch = new ResizeObserver(measure)
     watch.observe(top)

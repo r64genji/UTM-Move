@@ -2883,6 +2883,21 @@ html[data-nav] :is(.map-top, .map-bar, .plan-top) {
   box-shadow: 0 -2px 14px rgb(0 0 0 / 0.14);
 }
 
+/* Starting a trip: the bar rises from the bottom edge as the tab bar sinks away. Opening Steps fades them in. */
+@keyframes nav-bar-in {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+.nav-bar {
+  animation: nav-bar-in var(--dur-slow) var(--ease-out) backwards;
+}
+
+.nav-steps {
+  animation: row-rise var(--dur) var(--ease-out) backwards;
+}
+
 .nav-bar progress {
   grid-column: 1 / -1;
   width: 100%;
@@ -2969,6 +2984,10 @@ html[data-nav] :is(.map-top, .map-bar, .plan-top) {
   .guide-alert,
   .guide-icon,
   .guide-now span {
+    animation: none;
+  }
+
+  .nav-bar {
     animation: none;
   }
 
