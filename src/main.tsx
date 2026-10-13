@@ -6,34 +6,18 @@ import { createBrowserRouter, RouterProvider, type NavigateOptions, type To } fr
 import { routes } from './App.tsx'
 import './ui/app.css'
 
-// Every move to another page cross-fades the panel (View Transitions; browsers without them just cut).
-// <html data-nav> says which way the new page slides in. <html data-vt> lets the panel be captured, only while it is needed.
+// Every move to another page eases the new page in. <html data-nav> says which way it comes from; the first load has none.
+// (Not View Transitions: while one runs, the browser sends every tap to <html>, so quick taps were lost.)
 const TABS = ['/', '/routes', '/plan', '/contribute']
 const html = document.documentElement
-let timer: ReturnType<typeof setTimeout>
-const mark = (nav: 'fwd' | 'back' | 'tab') => {
-  html.dataset.nav = nav
-  html.dataset.vt = ''
-  clearTimeout(timer)
-  timer = setTimeout(() => delete html.dataset.vt, 600)
-}
 
 // Back and forward (buttons, swipes) are told apart by the router's own position in the history.
 let at: number = history.state?.idx ?? 0
 addEventListener('popstate', () => {
   const idx = history.state?.idx ?? 0
-  mark(idx < at ? 'back' : 'fwd')
+  html.dataset.nav = idx < at ? 'back' : 'fwd'
   at = idx
 })
-
-// A tap during a transition skips it, which rejects its `ready` promise. Nobody awaits that one, so it would surface as an error.
-const startTransition = document.startViewTransition?.bind(document)
-if (startTransition)
-  document.startViewTransition = (cb) => {
-    const t = startTransition(cb)
-    t.ready.catch(() => {})
-    return t
-  }
 
 const router = createBrowserRouter(routes)
 router.subscribe(() => (at = history.state?.idx ?? at))
@@ -42,10 +26,7 @@ router.navigate = ((to: To | number | null, opts?: NavigateOptions) => {
   if (typeof to === 'number') return navigate(to)
   const path = (typeof to === 'string' ? to : to?.pathname)?.split(/[?#]/)[0]
   // Same page with new search parameters (planning a trip, picking a chip) stays still.
-  if (path?.startsWith('/') && path !== location.pathname) {
-    mark(TABS.includes(path) ? 'tab' : 'fwd')
-    opts = { ...opts, viewTransition: opts?.viewTransition ?? true }
-  }
+  if (path?.startsWith('/') && path !== location.pathname) html.dataset.nav = TABS.includes(path) ? 'tab' : 'fwd'
   return navigate(to, opts)
 }) as typeof navigate
 

@@ -197,28 +197,6 @@ button {
   transition: opacity var(--dur-fast) var(--ease-in), visibility 0s var(--dur-fast);
 }
 
-/* Moving to another page: the panel cross-fades (main.tsx turns this on for the moment). Only the panel is captured,
-   so the live map underneath is never frozen into a snapshot. */
-html[data-vt] .panel {
-  view-transition-name: panel;
-}
-
-::view-transition-group(root) {
-  animation: none;
-}
-
-::view-transition-old(root) {
-  display: none;
-}
-
-::view-transition-new(root) {
-  animation: none;
-}
-
-::view-transition-group(panel) {
-  animation-duration: var(--dur);
-}
-
 .tabbar {
   position: fixed;
   inset: auto 0 0 0;
@@ -1001,6 +979,11 @@ html[data-nav='fwd'] .page-body {
 
 html[data-nav='back'] .page-body {
   --nav-x: -28px;
+}
+
+/* Pages over the map: their floating bars fade in (the sheet slides up on its own). */
+html[data-nav] :is(.map-top, .map-bar, .plan-top) {
+  animation: swap-fade var(--dur) var(--ease-out);
 }
 
 /* Routes list */

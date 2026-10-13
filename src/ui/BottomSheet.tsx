@@ -8,6 +8,8 @@ type Size = 'min' | 'mid' | 'full'
 type Drag = { y0: number; h0: number; y: number; t: number; v: number; lo: number; hi: number; to: number; rb: number; moved: boolean; handle: boolean }
 const MIN_H = 96
 const token = (name: string) => getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+/** A duration token in ms. The build minifies `220ms` to `.22s`. */
+const ms = (name: string) => (token(name).endsWith('ms') ? 1 : 1000) * parseFloat(token(name))
 
 // The sheet that went away a moment ago. A loading sheet swapped for the loaded one is a new element on the same page:
 // the new one grows from where the old one ended instead of sliding in again.
@@ -20,7 +22,7 @@ const offset = (node: HTMLElement) => new DOMMatrix(getComputedStyle(node).trans
 function glide(node: HTMLElement, from: number) {
   node.getAnimations().forEach((a) => a.cancel())
   if (!from || matchMedia('(prefers-reduced-motion: reduce)').matches) return
-  node.animate({ transform: [`translateY(${from}px)`, 'translateY(0)'] }, { duration: Math.min(440, parseFloat(token('--dur')) + Math.abs(from) * 0.4), easing: token('--ease-out') })
+  node.animate({ transform: [`translateY(${from}px)`, 'translateY(0)'] }, { duration: Math.min(440, ms('--dur') + Math.abs(from) * 0.4), easing: token('--ease-out') })
 }
 
 /** Heights the sheet can rest at. A size that would look the same as the one below it (short content) is left out. */
@@ -53,6 +55,7 @@ export function BottomSheet({ children, label }: { children: ReactNode; label: s
   const drag = useRef<Drag | null>(null)
   const last = useRef(0)
   const minH = useRef(MIN_H)
+  const pad = useRef(() => {})
 
   useEffect(() => {
     path.current = pathname
@@ -98,9 +101,10 @@ export function BottomSheet({ children, label }: { children: ReactNode; label: s
     if (!map || !el.current) return
     const node = el.current
     // The sheet's layout jumps to its new height and only its drawing glides there, so the map eases alongside it.
-    const pad = () => setInset(map, { bottom: desktop ? 0 : node.offsetHeight })
-    pad()
-    const watch = new ResizeObserver(() => !drag.current?.moved && pad())
+    pad.current = () => setInset(map, { bottom: desktop ? 0 : node.offsetHeight })
+    pad.current()
+    // Skipped during a drag; `end` pads once the sheet lets go (its final height may equal the last one seen here).
+    const watch = new ResizeObserver(() => !drag.current?.moved && pad.current())
     watch.observe(node)
     return () => {
       watch.disconnect()
@@ -169,6 +173,7 @@ export function BottomSheet({ children, label }: { children: ReactNode; label: s
     glide(node, h - from - d.rb)
     last.current = h
     setSize(next)
+    requestAnimationFrame(() => pad.current())
   }
 
   return (
