@@ -9,3 +9,4 @@ public/data/
 test-results/
 playwright-report/
 .DS_Store
+.playwright-mcp/

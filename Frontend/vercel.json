@@ -1,0 +1,7 @@
+{
+  "framework": null,
+  "installCommand": "true",
+  "buildCommand": "mkdir -p dist && cp index.html dist/",
+  "outputDirectory": "dist",
+  "redirects": [{ "source": "/:path*", "destination": "https://utm.abrahamtan.com/", "permanent": true }]
+}
