@@ -108,7 +108,8 @@ function useSourceData(id: string, data: FeatureCollection, selectedKey?: string
       setTimeout(() => {
         if (claims.get(source) !== mine || !map.getContainer().isConnected) return
         source.setData(fc([]))
-        if (isCurrent(map, id, token)) fadeTo(map, id, 1, 0)
+        // Back to full strength only once the empty data is drawn; sooner, the old lines flash back for a few frames.
+        whenLoaded(map, id, () => isCurrent(map, id, token) && fadeTo(map, id, 1, 0))
       }, reducedMotion() ? 0 : OUT_MS)
     }
   }, [map, id])
