@@ -8,7 +8,8 @@ test('fake GPS, search a place (with a typo), plan a trip, navigate and watch th
 
   // From: Your Location (fake GPS on campus). The device already allows it, so the fix arrives without a tap.
   await expect(page.getByRole('button', { name: 'From: Your Location' })).toBeVisible()
-  await expect(page.getByRole('img', { name: /Your start point/ })).toBeVisible()
+  // An accurate fix needs no start pin: the blue dot already shows where you are.
+  await expect(page.getByRole('img', { name: /Your start point/ })).toHaveCount(0)
 
   // To: search a place by name (offline index).
   await page.getByRole('button', { name: /^To:/ }).click()
@@ -46,7 +47,7 @@ test('home: greeting, the nearest stop with its next buses, and a route filter',
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Good Morning, Student')
   const nearest = page.getByRole('region', { name: 'Nearest stop' })
   await expect(nearest.getByRole('heading', { name: 'Jalan Amal 1' })).toBeVisible()
-  await expect(nearest.getByText(/: \d+ min/).first()).toBeVisible()
+  await expect(nearest.getByText(/^(\d+ min|Now)$/).first()).toBeVisible()
   await page.getByRole('button', { name: 'Route F' }).click()
   await expect(page.getByRole('button', { name: 'Route F' })).toHaveAttribute('aria-pressed', 'true')
   await expect(page.getByRole('button', { name: 'All Routes' })).toHaveAttribute('aria-pressed', 'false')
