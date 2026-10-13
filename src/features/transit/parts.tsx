@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import type { LatLon, Stop } from '../../domain/schemas.ts'
 import { MarkerLayer } from '../map/layers.tsx'
-import { toLngLat } from '../map/geo.ts'
+import { setFit } from '../map/camera.ts'
 import { useMap } from '../map/MapContext.tsx'
 import { DESKTOP, useMedia } from '../../ui/hooks.ts'
 
@@ -23,28 +23,16 @@ export function StopMarkers({ stops, selectedId }: { stops: Stop[]; selectedId?:
   return <MarkerLayer markers={markers} onSelect={(m) => navigate(`/stop/${encodeURIComponent(m.id)}`)} />
 }
 
-/** Move the map to show these points (clear of the top card on phones, the sheet's padding is already on the map). */
+/** Show these points above the sheet and clear of the floating cards. The camera lands once (see map/camera.ts). */
 export function FitTo({ points, maxZoom = 17 }: { points: LatLon[]; maxZoom?: number }) {
   const map = useMap()
   const desktop = useMedia(DESKTOP)
   const key = points.map((p) => `${p.lat},${p.lon}`).join(';')
   useEffect(() => {
     if (!map || !points.length) return
-    // The bottom sheet eases the map padding on mount; wait so that move does not cancel ours.
-    const timer = setTimeout(() => {
-      if (points.length === 1) {
-        map.easeTo({ center: toLngLat(points[0]), zoom: Math.max(map.getZoom(), 16.5), duration: 400 })
-        return
-      }
-      const lons = points.map((p) => p.lon)
-      const lats = points.map((p) => p.lat)
-      const sw = toLngLat({ lat: Math.min(...lats), lon: Math.min(...lons) })
-      const ne = toLngLat({ lat: Math.max(...lats), lon: Math.max(...lons) })
-      // Clear of whatever floats on top of the map on phones (search bar, directions card).
-      const covered = desktop ? 0 : (document.querySelector('.map-top, .map-bar, .plan-top, .nav-top')?.getBoundingClientRect().bottom ?? 0)
-      map.fitBounds([sw, ne], { padding: { top: Math.max(80, covered + 24), right: 64, bottom: 48, left: 48 }, maxZoom, duration: 400 })
-    }, 350)
-    return () => clearTimeout(timer)
+    // Clear of whatever floats on top of the map on phones (search bar, directions card).
+    const covered = desktop ? 0 : (document.querySelector('.map-top, .map-bar, .plan-top, .nav-top')?.getBoundingClientRect().bottom ?? 0)
+    return setFit(map, { points, maxZoom, top: Math.max(80, covered + 24) })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, key, maxZoom, desktop])
   return null

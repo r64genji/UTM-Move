@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useAppStore } from '../app/store.ts'
 import { Icon } from '../../ui/icons.tsx'
+import { go } from '../map/camera.ts'
 import { toLngLat } from '../map/geo.ts'
 import { useMap } from '../map/MapContext.tsx'
 import { requestLocation } from './useUserLocation.ts'
@@ -13,7 +14,7 @@ export function LocateButton() {
   useEffect(() => {
     if (!wanted.current || !map || !('fix' in location)) return
     wanted.current = false
-    map.easeTo({ center: toLngLat(location.fix), zoom: Math.max(map.getZoom(), 16.5), duration: 500 })
+    go(map, { center: toLngLat(location.fix), zoom: Math.max(map.getZoom(), 16.5) })
   }, [map, location])
   return (
     <button

@@ -55,6 +55,19 @@ const outsideCampus: Feature<Polygon> = {
   geometry: { type: 'Polygon', coordinates: [world, ...boundary.features[0].geometry.coordinates] },
 }
 
+/**
+ * Where the tiles end the map is flat land colour with a hard cut through roads and water. Stacked translucent frames
+ * of that colour fade the data out over the last ~700 m instead.
+ */
+const tileFade: FeatureCollection<Polygon> = {
+  type: 'FeatureCollection',
+  features: Array.from({ length: 6 }, (_, i) => {
+    const d = i * 0.0011 // degrees in from the tile edge
+    const [w, s, e, n] = [TILE_BOUNDS[0] + d, TILE_BOUNDS[1] + d, TILE_BOUNDS[2] - d, TILE_BOUNDS[3] - d]
+    return { type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [world, [[w, s], [w, n], [e, n], [e, s], [w, s]]] } }
+  }),
+}
+
 const empty: FeatureCollection = { type: 'FeatureCollection', features: [] }
 
 const flavor = {
@@ -67,6 +80,7 @@ const flavor = {
 }
 
 const overlay: LayerSpecification[] = [
+  { id: 'utm-tile-fade', type: 'fill', source: 'utm-tile-fade', paint: { 'fill-color': '#f4f1ea', 'fill-opacity': 0.3, 'fill-antialias': false } },
   { id: 'utm-outside', type: 'fill', source: 'utm-campus', paint: { 'fill-color': '#e9e4da', 'fill-opacity': 0.55 } },
   {
     id: 'utm-boundary',
@@ -106,9 +120,8 @@ const overlay: LayerSpecification[] = [
     filter: ['==', ['get', 'mode'], 'walk'],
     layout: { 'line-cap': 'round', 'line-join': 'round' },
     paint: {
-      'line-color': COLORS.walk,
-      // An unverified shortcut is the same dots, faded.
-      'line-opacity': ['case', ['==', ['get', 'style'], 'likely'], 0.45, 1],
+      // An unverified shortcut is the same dots, faded (in the colour, so the layer opacity stays free to fade in).
+      'line-color': ['case', ['==', ['get', 'style'], 'likely'], 'rgba(26, 115, 232, 0.45)', COLORS.walk],
       'line-width': ['interpolate', ['linear'], ['zoom'], 14, 5, 18, 11],
       'line-dasharray': [0, 1.8],
     },
@@ -127,13 +140,6 @@ const overlay: LayerSpecification[] = [
       'icon-ignore-placement': true,
     },
     paint: { 'icon-color': ['get', 'color'] },
-  },
-  {
-    id: 'utm-user-accuracy',
-    type: 'fill',
-    source: 'utm-user',
-    filter: ['==', ['geometry-type'], 'Polygon'],
-    paint: { 'fill-color': COLORS.user, 'fill-opacity': 0.12, 'fill-outline-color': COLORS.user },
   },
   {
     id: 'utm-stops',
@@ -174,13 +180,6 @@ const overlay: LayerSpecification[] = [
     },
     paint: { 'text-color': '#1f1a17', 'text-halo-color': COLORS.casing, 'text-halo-width': 2 },
   },
-  {
-    id: 'utm-user-dot',
-    type: 'circle',
-    source: 'utm-user',
-    filter: ['==', ['geometry-type'], 'Point'],
-    paint: { 'circle-radius': 7, 'circle-color': COLORS.user, 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 3 },
-  },
 ]
 
 /** Full map style. Every URL points at this origin: no tile, font or sprite CDN at runtime. */
@@ -192,9 +191,9 @@ export function buildStyle(origin: string): StyleSpecification {
     sources: {
       protomaps: { type: 'vector', url: `pmtiles://${origin}/basemap/campus.pmtiles`, attribution: ATTRIBUTION },
       'utm-campus': { type: 'geojson', data: outsideCampus },
+      'utm-tile-fade': { type: 'geojson', data: tileFade },
       'utm-route': { type: 'geojson', data: empty },
       'utm-markers': { type: 'geojson', data: empty },
-      'utm-user': { type: 'geojson', data: empty },
     },
     layers: [...(layers('protomaps', flavor, { lang: 'en' }) as LayerSpecification[]), ...overlay],
   }
