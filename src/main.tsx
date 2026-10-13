@@ -1,5 +1,6 @@
 import '@fontsource-variable/inter'
 import '@fontsource-variable/lexend'
+import { inject } from '@vercel/analytics'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createBrowserRouter, RouterProvider, type NavigateOptions, type To } from 'react-router'
@@ -18,6 +19,8 @@ addEventListener('popstate', () => {
   html.dataset.nav = idx < at ? 'back' : 'fwd'
   at = idx
 })
+
+inject()
 
 const router = createBrowserRouter(routes)
 router.subscribe(() => (at = history.state?.idx ?? at))
