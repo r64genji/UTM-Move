@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from 'react'
+import { setInset } from '../features/map/camera.ts'
 import { useMap } from '../features/map/MapContext.tsx'
 import { DESKTOP, useMedia } from './hooks.ts'
 
@@ -23,23 +24,14 @@ export function BottomSheet({ children, label }: { children: ReactNode; label: s
   useEffect(() => {
     if (!map || !el.current) return
     const node = el.current
-    const root = document.documentElement.style
-    let timer: ReturnType<typeof setTimeout>
-    const pad = () => {
-      const bottom = desktop ? 0 : node.offsetHeight
-      // The map buttons sit just above the sheet. They follow every frame; the map itself eases once the sheet settles.
-      root.setProperty('--sheet-h', `${bottom}px`)
-      clearTimeout(timer)
-      timer = setTimeout(() => map.easeTo({ padding: { top: 0, left: 0, right: 0, bottom }, duration: 250 }), drag.current ? 0 : 300)
-    }
-    pad()
-    const watch = new ResizeObserver(() => !drag.current?.moved && pad())
+    const pad = (how: 'ease' | 'follow') => setInset(map, { bottom: desktop ? 0 : node.offsetHeight }, how)
+    // Mounting is one eased move (shared with any fit). While the sheet resizes, the map follows it frame by frame.
+    pad('ease')
+    const watch = new ResizeObserver(() => !drag.current?.moved && pad('follow'))
     watch.observe(node)
     return () => {
-      clearTimeout(timer)
       watch.disconnect()
-      root.removeProperty('--sheet-h')
-      map.easeTo({ padding: { top: 0, left: 0, right: 0, bottom: 0 }, duration: 0 })
+      setInset(map, { bottom: 0 })
     }
   }, [map, desktop])
 

@@ -6,6 +6,7 @@ import { klDateTime } from '../../domain/transit/departures.ts'
 import { DESKTOP, useMedia } from '../../ui/hooks.ts'
 import { Icon, type IconName } from '../../ui/icons.tsx'
 import { watchLocation } from '../location/useUserLocation.ts'
+import { go, setInset, trackTo } from '../map/camera.ts'
 import { useMap } from '../map/MapContext.tsx'
 import { MarkerLayer, RouteLayer } from '../map/layers.tsx'
 import { toLngLat } from '../map/geo.ts'
@@ -24,11 +25,11 @@ export function Guidance({ v, rerouting }: { v: View; rerouting?: boolean }) {
   return (
     <section className="guidance" aria-label="Guidance">
       <div className="guide-main">
-        <Icon name={v.next ? turnIcon(v.next.text) : 'flag'} size={40} className="guide-icon" />
+        <Icon key={v.next?.text} name={v.next ? turnIcon(v.next.text) : 'flag'} size={40} className="guide-icon" />
         <div>
           <p className="guide-dist">{v.distanceToNextM < 10 ? 'Now' : `In ${metres(v.distanceToNextM)}`}</p>
           <p className="guide-now" aria-live="polite">
-            {v.next?.text ?? 'Arrived'}
+            <span key={v.next?.text}>{v.next?.text ?? 'Arrived'}</span>
           </p>
         </div>
       </div>
@@ -56,24 +57,45 @@ export function Guidance({ v, rerouting }: { v: View; rerouting?: boolean }) {
 function useFollowMap(fix: Fix | null) {
   const map = useMap()
   const [free, setFree] = useState(false)
+  const arrived = useRef(false) // false until the first move onto the user, and again after they pan away
+  const lastAt = useRef(0)
   useEffect(() => {
     if (!map) return
-    const drag = (e: { originalEvent?: unknown }) => e.originalEvent && setFree(true)
+    const drag = (e: { originalEvent?: unknown }) => {
+      if (!e.originalEvent) return
+      arrived.current = false
+      setFree(true)
+    }
     map.on('dragstart', drag)
     return () => void map.off('dragstart', drag)
   }, [map])
   const desktop = useMedia(DESKTOP)
+  // Keep the user between the guidance banner and the bottom bar (the steps list makes the bar taller).
   useEffect(() => {
-    if (!map || desktop) return
-    map.easeTo({ padding: { top: 160, bottom: 96, left: 0, right: 0 }, duration: 0 })
-    return () => void map.easeTo({ padding: { top: 0, bottom: 0, left: 0, right: 0 }, duration: 0 })
+    const top = document.querySelector('.nav-top')
+    const bar = document.querySelector('.nav-bar')
+    if (!map || desktop || !top || !bar) return
+    const measure = () => setInset(map, { top: Math.round(top.getBoundingClientRect().bottom) + 16, bottom: Math.round(window.innerHeight - bar.getBoundingClientRect().top) + 16 }, 'follow')
+    measure()
+    const watch = new ResizeObserver(measure)
+    watch.observe(top)
+    watch.observe(bar)
+    return () => {
+      watch.disconnect()
+      setInset(map, { top: 0, bottom: 0 })
+    }
   }, [map, desktop])
   const lat = fix?.lat
   const lon = fix?.lon
   useEffect(() => {
-    if (map && !free && lat !== undefined && lon !== undefined) {
-      map.easeTo({ center: toLngLat({ lat, lon }), zoom: Math.max(map.getZoom(), 17.5), duration: 600 })
-    }
+    if (!map || free || lat === undefined || lon === undefined) return
+    const now = performance.now()
+    const center = toLngLat({ lat, lon })
+    if (!arrived.current) {
+      arrived.current = true
+      go(map, { center, zoom: Math.max(map.getZoom(), 17.5) })
+    } else trackTo(map, center, Math.min(1200, Math.max(300, now - lastAt.current)))
+    lastAt.current = now
   }, [map, free, lat, lon])
   return { free, recentre: () => setFree(false) }
 }
@@ -194,12 +216,11 @@ export function NavigatePage() {
         )}
       </header>
       <footer className="nav-bar">
-        {free && !state.arrived && (
-          <button type="button" className="btn nav-recentre" onClick={recentre}>
-            <Icon name="navigate" size={18} />
-            Re-centre
-          </button>
-        )}
+        {/* Always mounted so it can slide in and out; hidden from taps and screen readers while the map follows you. */}
+        <button type="button" className="btn nav-recentre" data-show={(free && !state.arrived) || undefined} tabIndex={free && !state.arrived ? 0 : -1} aria-hidden={!(free && !state.arrived)} onClick={recentre}>
+          <Icon name="navigate" size={18} />
+          Re-centre
+        </button>
         {showSteps && nav && (
           <div className="nav-steps">
             <TripSteps option={nav.option} current={state.arrived ? undefined : legNow} />

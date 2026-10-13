@@ -268,7 +268,7 @@ button {
 .map-locate {
   position: absolute;
   right: 12px;
-  bottom: calc(var(--tab) + min(var(--sheet-h, 0px), 55%) + 12px);
+  bottom: calc(var(--tab) + var(--sheet-h, 0px) + 12px);
   z-index: 6;
   display: grid;
   place-items: center;
@@ -281,20 +281,158 @@ button {
   border-radius: 50%;
   box-shadow: var(--shadow);
   cursor: pointer;
+  transition:
+    opacity var(--dur) var(--ease-out),
+    transform var(--dur) var(--ease-out),
+    visibility 0s;
+}
+
+.map-locate:active {
+  transform: scale(0.92);
+}
+
+/* No room left above the sheet: the button fades away instead of covering it. */
+:root[data-no-room] .map-locate {
+  visibility: hidden;
+  opacity: 0;
+  transform: scale(0.8);
+  pointer-events: none;
+  transition:
+    opacity var(--dur-fast) var(--ease-in),
+    transform var(--dur-fast) var(--ease-in),
+    visibility 0s var(--dur-fast);
 }
 
 .shell:has(.page-full, .navigating) .map-locate {
   display: none;
 }
 
+/* The blue "you are here" dot: a soft halo, and an accuracy circle that fades in. Moved by script, so no transform here. */
+.user-dot {
+  width: 18px;
+  height: 18px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-slow) var(--ease-out);
+}
+
+.user-dot.in {
+  opacity: 1;
+}
+
+.user-core,
+.user-halo {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+}
+
+.user-core {
+  background: #2563c9;
+  border: 3px solid #fff;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.3);
+}
+
+.user-halo {
+  background: #2563c9;
+  animation: user-pulse 2.6s var(--ease-out) infinite;
+}
+
+.user-acc {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--acc, 0px);
+  height: var(--acc, 0px);
+  background: rgb(37 99 201 / 0.12);
+  border: 1px solid rgb(37 99 201 / 0.35);
+  border-radius: 50%;
+  opacity: 0;
+  transform: translate(-50%, -50%);
+  transition: opacity var(--dur-slow) var(--ease-out);
+}
+
+.user-dot.in .user-acc {
+  opacity: 1;
+}
+
+@keyframes user-pulse {
+  from {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(3.2);
+  }
+}
+
+/* The start pin: a teardrop whose point is the start. It drops in, and lifts while you drag it. */
 .start-pin {
-  width: 20px;
-  height: 20px;
+  width: 28px;
+  height: 34px;
+  cursor: grab;
+  transition: opacity var(--dur-fast) var(--ease-in);
+}
+
+.start-pin.leaving {
+  opacity: 0;
+}
+
+.start-pin::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  width: 12px;
+  height: 5px;
+  margin-left: -6px;
+  background: rgb(0 0 0 / 0.28);
+  border-radius: 50%;
+  filter: blur(1.5px);
+}
+
+.start-pin-head {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 28px;
   background: #1e8e3e;
   border: 3px solid #fff;
+  border-radius: 50% 50% 50% 0;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.35);
+  transform: rotate(-45deg);
+  transition: transform var(--dur-fast) var(--ease-out);
+  animation: pin-drop 380ms var(--ease-spring) backwards;
+}
+
+.start-pin-head::after {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  background: #fff;
   border-radius: 50%;
-  box-shadow: 0 1px 6px #0006;
-  cursor: grab;
+}
+
+.start-pin.lift .start-pin-head {
+  transform: translate(3px, -3px) rotate(-45deg) scale(1.1);
+}
+
+@keyframes pin-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-16px) rotate(-45deg) scale(0.7);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .user-halo {
+    animation: none;
+    opacity: 0;
+  }
+
+  .start-pin-head {
+    animation: none;
+  }
 }
 
 /* ── Shared bits ───────────────────────────────────────── */
@@ -2077,6 +2215,39 @@ button {
   background: var(--brand);
   border-radius: 18px;
   box-shadow: 0 4px 16px rgb(0 0 0 / 0.25);
+  animation: guide-in var(--dur-slow) var(--ease-out) backwards;
+}
+
+/* The banner slides down from the top edge. A new instruction crossfades in; the distance just ticks. */
+@keyframes guide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+}
+
+@keyframes guide-swap {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+.guide-icon,
+.guide-now span {
+  display: inline-block;
+  animation: guide-swap var(--dur) var(--ease-out) backwards;
+}
+
+.guide-then,
+.guide-alert {
+  animation: guide-fade var(--dur) var(--ease-out) backwards;
+}
+
+@keyframes guide-fade {
+  from {
+    opacity: 0;
+  }
 }
 
 .guide-main {
@@ -2192,6 +2363,11 @@ button {
   background: #fdecea;
 }
 
+.nav-bar progress::-webkit-progress-value {
+  transition: width 1s linear;
+}
+
+/* Always in the page: slides up and fades while the map is free, and back down once it follows you again. */
 .nav-recentre {
   position: absolute;
   bottom: calc(100% + 12px);
@@ -2199,6 +2375,37 @@ button {
   color: var(--brand);
   background: var(--surface);
   box-shadow: var(--shadow);
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(10px) scale(0.96);
+  transition:
+    opacity var(--dur-fast) var(--ease-in),
+    transform var(--dur-fast) var(--ease-in),
+    visibility 0s var(--dur-fast);
+}
+
+.nav-recentre[data-show] {
+  visibility: visible;
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity var(--dur) var(--ease-out),
+    transform var(--dur) var(--ease-out),
+    visibility 0s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .guidance,
+  .guide-then,
+  .guide-alert,
+  .guide-icon,
+  .guide-now span {
+    animation: none;
+  }
+
+  .nav-recentre {
+    transform: none;
+  }
 }
 
 /* ── Update toast ──────────────────────────────────────── */
@@ -2520,10 +2727,15 @@ button {
 
   .nav-recentre {
     position: static;
+    display: none;
     grid-column: 1 / -1;
     justify-self: start;
     box-shadow: none;
     background: var(--brand-soft);
+  }
+
+  .nav-recentre[data-show] {
+    display: inline-flex;
   }
 
   .update-toast {
