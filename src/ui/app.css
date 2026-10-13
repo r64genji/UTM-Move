@@ -154,6 +154,13 @@ button {
   pointer-events: none;
 }
 
+/* Anything sliding or stretching past the panel (a sheet gliding in) stays inside it: it must never draw over the tab bar. */
+@media (max-width: 899px) {
+  .panel {
+    overflow: clip;
+  }
+}
+
 .panel > article:not(.page-full) {
   display: contents;
 }
@@ -179,8 +186,37 @@ button {
   pointer-events: auto;
 }
 
+.panel {
+  transition: opacity var(--dur) var(--ease-out);
+}
+
+/* Picking a start on the map: the panel fades out of the way, then stops catching taps. */
 .shell[data-picking] .panel {
   visibility: hidden;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-in), visibility 0s var(--dur-fast);
+}
+
+/* Moving to another page: the panel cross-fades (main.tsx turns this on for the moment). Only the panel is captured,
+   so the live map underneath is never frozen into a snapshot. */
+html[data-vt] .panel {
+  view-transition-name: panel;
+}
+
+::view-transition-group(root) {
+  animation: none;
+}
+
+::view-transition-old(root) {
+  display: none;
+}
+
+::view-transition-new(root) {
+  animation: none;
+}
+
+::view-transition-group(panel) {
+  animation-duration: var(--dur);
 }
 
 .tabbar {
@@ -199,18 +235,24 @@ button {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 1px;
+  padding-top: 4px;
   color: var(--muted);
   font-size: 0.6875rem;
   font-weight: 500;
+  transition: color var(--dur);
 }
 
 .tab svg {
+  position: relative; /* above the sliding pill */
   box-sizing: content-box;
   padding: 2px 16px;
-  border-radius: 999px;
-  transition: background-color 150ms;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.tab:active svg {
+  transform: scale(0.88);
 }
 
 .tab[aria-current] {
@@ -218,11 +260,44 @@ button {
   font-weight: 700;
 }
 
-.tab[aria-current] svg {
+/* One pill behind the icons, sliding to the active tab. Each tab is a quarter of the bar wide. */
+.tab-pill {
+  position: absolute;
+  top: 4px;
+  left: 0;
+  display: grid;
+  place-items: center;
+  width: 25%;
+  height: 28px;
+  transform: translateX(calc(var(--tab-i, 0) * 100%));
+  transition: transform var(--dur) var(--ease-out);
+  pointer-events: none;
+}
+
+.tab-pill::before {
+  content: '';
+  width: 56px;
+  height: 28px;
   background: var(--brand-soft);
+  border-radius: 999px;
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--rise));
+  }
+}
+
+@keyframes pop-out {
+  to {
+    opacity: 0;
+    transform: translateY(var(--rise));
+  }
 }
 
 .pick-banner {
+  --rise: -12px;
   position: fixed;
   top: calc(var(--top) + 12px);
   left: 12px;
@@ -238,6 +313,11 @@ button {
   border-left: 5px solid var(--brand);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
+  animation: pop-in var(--dur) var(--ease-out);
+}
+
+.pick-banner[data-leaving] {
+  animation: pop-out var(--dur-fast) var(--ease-in) forwards;
 }
 
 /* Map controls. Phones pinch to zoom, so the zoom buttons only show on desktop. */
@@ -249,6 +329,7 @@ button {
   right: auto;
   bottom: calc(var(--tab) + var(--sheet-h, 0px));
   left: 0;
+  transition: bottom var(--dur-slow) var(--ease-out);
 }
 
 .maplibregl-ctrl-bottom-right .maplibregl-ctrl {
@@ -282,6 +363,7 @@ button {
   box-shadow: var(--shadow);
   cursor: pointer;
   transition:
+    bottom var(--dur-slow) var(--ease-out),
     opacity var(--dur) var(--ease-out),
     transform var(--dur) var(--ease-out),
     visibility 0s;
@@ -449,10 +531,12 @@ button {
   border: 0;
   border-radius: 50%;
   cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-out), background-color var(--dur-fast);
 }
 
-.icon-btn:hover {
-  background: rgb(0 0 0 / 0.06);
+.icon-btn:active {
+  background: rgb(0 0 0 / 0.1);
+  transform: scale(0.94);
 }
 
 .btn {
@@ -468,6 +552,11 @@ button {
   border: 0;
   border-radius: 999px;
   cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-out), background-color var(--dur-fast), opacity var(--dur);
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 .btn:disabled {
@@ -480,13 +569,32 @@ button {
   background: var(--brand);
 }
 
-.btn-primary:hover {
+.btn-primary:active:not(:disabled) {
   background: var(--brand-strong);
 }
 
 .btn-quiet {
   color: var(--brand);
   background: var(--brand-soft);
+}
+
+.btn-quiet:active:not(:disabled) {
+  background: #f0d5db;
+}
+
+/* Hover only where there is a pointer to hover with. */
+@media (hover: hover) {
+  .icon-btn:hover {
+    background: rgb(0 0 0 / 0.06);
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background: var(--brand-strong);
+  }
+
+  .btn-quiet:hover:not(:disabled) {
+    background: #f0d5db;
+  }
 }
 
 .btn-wide {
@@ -871,6 +979,28 @@ button {
   flex-direction: column;
   gap: 16px;
   padding: 16px;
+}
+
+/* A page's content eases in as the page cross-fades: forward from the right, back from the left, tabs in place.
+   The page itself stays opaque, so the map never shows through. main.tsx sets data-nav; the first load has none. */
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateX(var(--nav-x));
+  }
+}
+
+html[data-nav] .page-body {
+  --nav-x: 0px;
+  animation: page-in var(--dur) var(--ease-out);
+}
+
+html[data-nav='fwd'] .page-body {
+  --nav-x: 28px;
+}
+
+html[data-nav='back'] .page-body {
+  --nav-x: -28px;
 }
 
 /* Routes list */
@@ -1445,7 +1575,9 @@ button {
 
 /* ── Bottom sheet ──────────────────────────────────────── */
 
+/* Height changes are laid out at once and glided with a transform (BottomSheet.tsx), so nothing here transitions. */
 .sheet {
+  position: relative;
   display: flex;
   flex: none;
   flex-direction: column;
@@ -1454,16 +1586,29 @@ button {
   background: var(--bg);
   border-radius: 20px 20px 0 0;
   box-shadow: 0 -2px 14px rgb(0 0 0 / 0.14);
-  transition: max-height 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* While the sheet glides or is pulled past its ends, its own colour fills the gap under it (the tab bar covers the rest). */
+@media (max-width: 899px) {
+  .sheet::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: 100vh;
+    background: var(--bg);
+    pointer-events: none;
+  }
 }
 
 .sheet[data-size='full'] {
   max-height: 88%;
 }
 
-/* Nearly hidden: the handle and the first line (or the Start button) stay in reach. */
+/* Nearly hidden: the handle and the first line (or the Start button) stay in reach. BottomSheet.tsx sets --min-h to end right under that line. */
 .sheet[data-size='min'] {
-  max-height: 96px;
+  max-height: var(--min-h, 96px);
 }
 
 .sheet[data-size='min'] .sheet-body {
@@ -1489,6 +1634,15 @@ button {
   height: 4px;
   background: #d6cecc;
   border-radius: 999px;
+}
+
+/* The header drags the sheet too, so a finger there must not scroll. */
+@media (max-width: 899px) {
+  .sheet-head,
+  .sheet-title {
+    touch-action: none;
+    user-select: none;
+  }
 }
 
 .sheet-body {
@@ -2812,26 +2966,46 @@ button {
 
 /* ── Update toast ──────────────────────────────────────── */
 
+/* Floats on the map just above the locate button and the sheet, so it never sits on the sheet's rows. */
 .update-toast {
+  --rise: 12px;
   position: fixed;
-  bottom: calc(var(--tab) + 12px);
+  bottom: calc(var(--tab) + min(var(--sheet-h, 0px), 55vh) + 72px);
   left: 12px;
   right: 12px;
   z-index: 40;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
   padding: 8px 8px 8px 16px;
   color: #fff;
   background: #2b2526;
   border-radius: var(--radius);
   box-shadow: 0 8px 24px rgb(0 0 0 / 0.3);
+  animation: pop-in var(--dur) var(--ease-out);
 }
 
-.update-toast .btn-primary {
+.update-toast[data-leaving] {
+  animation: pop-out var(--dur-fast) var(--ease-in) forwards;
+}
+
+.update-toast span {
+  flex: 1;
+}
+
+.update-toast .btn-primary:not(:disabled) {
   color: #2b2526;
   background: var(--gold);
+}
+
+.update-toast .icon-btn {
+  color: #fff;
+}
+
+@media (max-width: 899px) {
+  .shell:has(.page-full) .update-toast {
+    bottom: calc(var(--tab) + 12px);
+  }
 }
 
 /* ── Desktop: sidebar ──────────────────────────────────── */
@@ -3152,10 +3326,28 @@ button {
   }
 }
 
+/* Reduced motion: nothing slides, scales or travels. Fades stay (the page cross-fade, banner and toast), the sheet
+   and its size changes just happen (BottomSheet.tsx checks this too). */
 @media (prefers-reduced-motion: reduce) {
-  .sheet,
+  .pick-banner,
+  .update-toast {
+    --rise: 0px;
+  }
+
+  html[data-nav] .page-body {
+    --nav-x: 0px;
+  }
+
+  .tab-pill,
+  .tab svg,
   .map-locate,
   .shell .maplibregl-ctrl-bottom-right {
     transition: none;
+  }
+
+  .tab:active svg,
+  .btn:active:not(:disabled),
+  .icon-btn:active {
+    transform: none;
   }
 }

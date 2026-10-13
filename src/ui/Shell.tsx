@@ -5,17 +5,18 @@ import { useUserLocation } from '../features/location/useUserLocation.ts'
 import { LocateButton } from '../features/location/LocateButton.tsx'
 import { LocationLayers } from '../features/location/LocationLayers.tsx'
 import { MapProvider } from '../features/map/MapContext.tsx'
-import { DESKTOP, useDragScroll, useMedia } from './hooks.ts'
+import { DESKTOP, useDragScroll, useMedia, usePresence } from './hooks.ts'
 import { Icon } from './icons.tsx'
-import { TabBar } from './TabBar.tsx'
+import { TabBar, useActiveTab } from './TabBar.tsx'
 import { UpdateToast } from './UpdateToast.tsx'
 
 // MapLibre is the heaviest chunk; load it after the panel so the page is usable at once.
 const MapView = lazy(() => import('../features/map/MapView.tsx'))
 
-function Sidebar() {
-  const { pathname } = useLocation()
-  const directions = /^\/(plan|navigate|search)/.test(pathname)
+function Sidebar({ tab }: { tab: number }) {
+  // Explore and Routes are one mode here, Navigate is the other. Contribute and the disclaimer are neither.
+  const directions = tab === 2
+  const routes = tab < 2
   return (
     <>
       <header className="side-head">
@@ -25,7 +26,7 @@ function Sidebar() {
         </p>
       </header>
       <div className="mode-switch" role="group" aria-label="Mode">
-        <Link to="/" aria-current={directions ? undefined : 'page'}>
+        <Link to="/" aria-current={routes ? 'page' : undefined}>
           <Icon name="map" size={18} />
           Routes
         </Link>
@@ -38,10 +39,10 @@ function Sidebar() {
   )
 }
 
-function PickBanner() {
+function PickBanner({ leaving }: { leaving: boolean }) {
   const { cancelPick } = useUserLocation()
   return (
-    <div className="pick-banner" role="status">
+    <div className="pick-banner" role="status" data-leaving={leaving || undefined}>
       Tap the map where you are starting.
       <button type="button" className="btn btn-quiet" onClick={cancelPick}>
         Cancel
@@ -54,6 +55,8 @@ export function Shell() {
   useDragScroll()
   const desktop = useMedia(DESKTOP)
   const picking = useAppStore((s) => s.picking)
+  const banner = usePresence(picking)
+  const tab = useActiveTab()
   // Live navigation takes the whole screen, like a car sat-nav: no tab bar.
   const navigating = useLocation().pathname.startsWith('/navigate')
   return (
@@ -65,7 +68,7 @@ export function Shell() {
         <LocationLayers />
         <LocateButton />
         <div className="side">
-          {desktop && <Sidebar />}
+          {desktop && <Sidebar tab={tab} />}
           <main className="panel">
             <Outlet />
           </main>
@@ -77,8 +80,8 @@ export function Shell() {
             </footer>
           )}
         </div>
-        {!desktop && !navigating && <TabBar />}
-        {picking && <PickBanner />}
+        {!desktop && !navigating && <TabBar active={tab} />}
+        {banner.mounted && <PickBanner leaving={banner.leaving} />}
         <UpdateToast />
       </div>
     </MapProvider>

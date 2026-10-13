@@ -1,4 +1,4 @@
-import { useEffect, useSyncExternalStore } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 
 const onResize = (cb: () => void) => {
   window.addEventListener('resize', cb)
@@ -48,4 +48,16 @@ export function useDragScroll(selector = '.chips, .when-days') {
       document.removeEventListener('pointercancel', up)
     }
   }, [selector])
+}
+
+/** Keeps something mounted for `ms` after it should go, so its exit animation can play. Match `ms` to the CSS duration. */
+export function usePresence(show: boolean, ms = 140) {
+  const [mounted, setMounted] = useState(show)
+  if (show && !mounted) setMounted(true)
+  useEffect(() => {
+    if (show || !mounted) return
+    const t = setTimeout(() => setMounted(false), ms)
+    return () => clearTimeout(t)
+  }, [show, mounted, ms])
+  return { mounted, leaving: mounted && !show }
 }
