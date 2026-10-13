@@ -1,24 +1,12 @@
 # v2 blockers
 
-## #3 Vercel preview for branch `v2` fails
+## #3 Vercel (resolved 2026-10-13)
 
-- The Vercel project `r64genjis-projects/utm-move` is linked to GitHub. It built
-  a Preview for the `v2` push (commit 61b19da), but the deployment failed:
-  https://vercel.com/r64genjis-projects/utm-move/DbuwoMgBFC4VgEURo9JRDoQbpzDq
-- GitHub Actions CI on the same commit is green.
-- The Vercel CLI on this machine is not logged in (`vercel whoami` hangs waiting
-  for login), so the build log could not be read.
-- Likely cause: the project's Root Directory is `Frontend` (v1 kept its
-  `vercel.json` there). v2 has no `Frontend/`; the app is at the repo root.
-
-To fix (needs a human with Vercel access, without touching production):
-
-1. Run `npx vercel inspect dpl_DbuwoMgBFC4VgEURo9JRDoQbpzDq --logs` to confirm
-   the cause.
-2. If it is the Root Directory: the setting is per project, and production (v1,
-   `main`) still needs `Frontend`. Either create a second Vercel project for v2
-   (root `.`, framework Vite, output `dist`) linked to the same repo, or change
-   the root at cutover (#33).
+The app is hosted at https://utm.abrahamtan.com (`npm run deploy:home`), not on Vercel.
+The Vercel project `r64genjis-projects/utm-move` builds `Frontend/` (its Root Directory), and its
+production branch is `without-navigation`. On both `main` and `without-navigation`, `Frontend/` now
+holds only a redirect, so https://utm-move.vercel.app sends users to https://utm.abrahamtan.com.
+Pushes to `main` make Vercel previews only.
 
 ## #5/#6 Bus timetable for session 2026/2027
 
@@ -43,7 +31,7 @@ Removed by user decision 2026-10-12: no Google Form.
 ## #34 Weekly data rebuild: first scheduled run
 
 `.github/workflows/weekly-data.yml` and `npm run data:weekly` are done and the script was run locally (report in `data/raw/reports/weekly.md`).
-"The first scheduled run opens a PR" can only be checked after `v2` is pushed (the user controls pushes), and scheduled workflows only run from the default branch, so it also needs the workflow on `main` at cutover (#33), or a manual `workflow_dispatch` run once the workflow is on a pushed branch.
+"The first scheduled run opens a PR" can only be checked after `v2` is pushed (the user controls pushes), and scheduled workflows only run from the default branch, the workflow is on `main` since 2026-10-13 and checks out `main`.
 Also needed: repo setting Actions > Workflow permissions > "Allow GitHub Actions to create and approve pull requests".
 No `build:places` script exists on `v2` yet; the workflow runs it with `--if-present`, so places are rebuilt once the places branch is merged.
 PRs opened with the default `GITHUB_TOKEN` do not trigger CI; run the checks locally or use a PAT.
