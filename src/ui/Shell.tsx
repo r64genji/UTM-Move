@@ -5,7 +5,7 @@ import { useUserLocation } from '../features/location/useUserLocation.ts'
 import { LocateButton } from '../features/location/LocateButton.tsx'
 import { LocationLayers } from '../features/location/LocationLayers.tsx'
 import { MapProvider } from '../features/map/MapContext.tsx'
-import { DESKTOP, useMedia } from './hooks.ts'
+import { DESKTOP, useDragScroll, useMedia } from './hooks.ts'
 import { Icon } from './icons.tsx'
 import { TabBar } from './TabBar.tsx'
 import { UpdateToast } from './UpdateToast.tsx'
@@ -51,6 +51,7 @@ function PickBanner() {
 }
 
 export function Shell() {
+  useDragScroll()
   const desktop = useMedia(DESKTOP)
   const picking = useAppStore((s) => s.picking)
   // Live navigation takes the whole screen, like a car sat-nav: no tab bar.

@@ -1,10 +1,11 @@
 // One end of a trip: shows the chosen place and opens a search to change it.
 // Searches places and stops with the same offline index as /search.
-import { useEffect, useId, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { z } from 'zod'
 import { dataUrl } from '../../dataUrl.ts'
 import { Place } from '../../domain/schemas.ts'
 import { search } from '../../domain/search.ts'
+import { Icon } from '../../ui/icons.tsx'
 import { useSearchIndex } from '../places/useSearch.ts'
 import { useTransit } from '../transit/useTransit.ts'
 import type { Endpoint } from './tripParams.ts'
@@ -41,53 +42,69 @@ export function useEndpointName(e: Endpoint | null): string | null {
   return places.find((p) => p.id === e.id)?.name ?? `Place ${e.id}`
 }
 
-type Hit = { key: string; name: string; hint: string; endpoint: Endpoint }
+type Hit = { key: string; name: string; hint: string; endpoint: Endpoint; kind: 'place' | 'stop' }
 
-export function PlacePicker({ label, value, onChange }: { label: 'From' | 'To'; value: Endpoint | null; onChange: (e: Endpoint) => void }) {
-  const [open, setOpen] = useState(false)
+export function PlacePicker({ label, value, open, onOpenChange, onChange }: { label: 'From' | 'To'; value: Endpoint | null; open: boolean; onOpenChange: (open: boolean) => void; onChange: (e: Endpoint) => void }) {
   const [query, setQuery] = useState('')
   const index = useSearchIndex()
   const name = useEndpointName(value)
   const listId = useId()
+  const root = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const away = (e: PointerEvent) => {
+      if (!root.current?.contains(e.target as Node)) onOpenChange(false)
+    }
+    document.addEventListener('pointerdown', away)
+    return () => document.removeEventListener('pointerdown', away)
+  }, [open, onOpenChange])
 
   const q = query.trim()
   const hits: Hit[] = !q || !index ? [] : search(index, q, null, 8).map((h) => ({
-    key: h.id, name: h.name, hint: h.code || h.category, endpoint: { kind: h.kind, id: h.ref },
+    key: h.id, name: h.name, hint: h.code || h.category, endpoint: { kind: h.kind, id: h.ref }, kind: h.kind,
   }))
 
   const choose = (e: Endpoint) => {
     onChange(e)
-    setOpen(false)
+    onOpenChange(false)
     setQuery('')
   }
 
   return (
-    <div className="picker" data-end={label}>
-      <button type="button" className="picker-value" aria-expanded={open} aria-label={`${label}: ${name ?? 'not set'}`} onClick={() => setOpen(!open)}>
+    <div className="picker" data-end={label} ref={root}>
+      <button type="button" className="picker-value" aria-expanded={open} aria-label={`${label}: ${name ?? 'not set'}`} onClick={() => onOpenChange(!open)}>
         <span className="picker-dot" aria-hidden="true" />
         <span className="picker-label">{label}:</span>
         <span className={name ? 'picker-name' : 'picker-name picker-empty'}>{name ?? (label === 'To' ? 'Where to?' : 'Choose a place')}</span>
       </button>
       {open && (
-        <div className="picker-panel">
-          <input
-            className="field"
+        <div className="picker-panel" data-end={label}>
+          <label className="picker-search">
+            <span className="picker-dot" aria-hidden="true" />
+            <input
+              className="picker-input"
             type="search"
             autoFocus
-            placeholder="Building, block code or bus stop"
-            aria-label={`Search ${label.toLowerCase()}`}
-            aria-controls={listId}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
+              placeholder="Building, block code or bus stop"
+              aria-label={`Search ${label.toLowerCase()}`}
+              aria-controls={listId}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </label>
           <ul id={listId} className="list picker-list">
             <li>
-              <button type="button" onClick={() => choose({ kind: 'me' })}>Your Location</button>
+              <button type="button" onClick={() => choose({ kind: 'me' })}>
+                <span className="picker-icon picker-icon-me" aria-hidden="true"><Icon name="locate" size={20} /></span>
+                <span className="picker-text">Your Location</span>
+              </button>
             </li>
             {hits.map((h) => (
               <li key={h.key}>
                 <button type="button" onClick={() => choose(h.endpoint)}>
-                  {h.name}
+                  <span className="picker-icon" aria-hidden="true"><Icon name={h.kind === 'stop' ? 'bus' : 'building'} size={20} /></span>
+                  <span className="picker-text">{h.name}</span>
                   <span className="list-code">{h.hint}</span>
                 </button>
               </li>

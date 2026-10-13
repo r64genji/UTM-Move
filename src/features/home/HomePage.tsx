@@ -11,17 +11,32 @@ import { RouteLayer, type RouteLeg } from '../map/layers.tsx'
 import { routeColor } from '../transit/palette.ts'
 import { StopMarkers } from '../transit/parts.tsx'
 import { useNow, useTransit } from '../transit/useTransit.ts'
+import { type NearbyKind, NearbyChips, NearbyMarkers, NearbyPanel, useNearbyPlaces } from './Nearby.tsx'
 import { greeting, nearestStop, nextPerRoute } from './nearest.ts'
 
 const walkMinutes = (m: number) => Math.max(1, Math.round(m / 80))
 
-function NearestStopCard() {
+const HIDE_HINT_KEY = 'utm-hide-location-hint'
+
+function useNearest() {
   const { data } = useTransit()
   const location = useAppStore((s) => s.location)
-  const now = useNow(30_000)
   const fix = location.status === 'ok' || location.status === 'low-accuracy' ? location.fix : null
-  const near = data && fix ? nearestStop(data.stops, fix) : null
-  if (!near || !data) return <LocationControl />
+  return { data, fix, near: data && fix ? nearestStop(data.stops, fix) : null }
+}
+
+function NearestStopCard({ onHide }: { onHide: () => void }) {
+  const { data, near } = useNearest()
+  const now = useNow(30_000)
+  if (!near || !data)
+    return (
+      <>
+        <LocationControl />
+        <button type="button" className="btn-link" onClick={onHide}>
+          Don&apos;t show again
+        </button>
+      </>
+    )
   const etas = nextPerRoute(data, near.stop.id, now)
   return (
     <section className="nearest" aria-label="Nearest stop">
@@ -69,6 +84,15 @@ export function HomePage() {
   const showStops = useAppStore((s) => s.showStops)
   const setShowStops = useAppStore((s) => s.setShowStops)
   const [filter, setFilter] = useState<string | null>(null)
+  const [hideHint, setHideHint] = useState(() => localStorage.getItem(HIDE_HINT_KEY) === '1')
+  const { near, fix } = useNearest()
+  const [category, setCategory] = useState<NearbyKind | null>(null)
+  const [placeId, setPlaceId] = useState<string | null>(null)
+  const nearby = useNearbyPlaces(category, fix)
+  const pickCategory = (c: NearbyKind | null) => {
+    setCategory(c)
+    setPlaceId(null)
+  }
 
   useGrantedLocation()
 
@@ -90,13 +114,15 @@ export function HomePage() {
 
   return (
     <article className="home">
-      <RouteLayer legs={legs} arrows={false} />
-      <StopMarkers stops={stops} />
+      <RouteLayer legs={category ? [] : legs} arrows={false} />
+      {category ? <NearbyMarkers places={nearby} selectedId={placeId} from={fix} onSelect={setPlaceId} /> : <StopMarkers stops={stops} />}
       {desktop ? (
         <>
-          {showStopsButton}
-          <h1 className="section-title">Select a route</h1>
-          <ul className="route-grid">
+          <NearbyChips kind={category} onChange={pickCategory} />
+          {category && <NearbyPanel kind={category} places={nearby} located={!!fix} selectedId={placeId} onSelect={setPlaceId} />}
+          {!category && showStopsButton}
+          {!category && <h1 className="section-title">Select a route</h1>}
+          {!category && <ul className="route-grid">
             {data?.routes.map((r) => (
               <li key={r.id}>
                 <Link to={`/route/${r.id}`} className="route-tile">
@@ -108,7 +134,7 @@ export function HomePage() {
                 </Link>
               </li>
             ))}
-          </ul>
+          </ul>}
         </>
       ) : (
         <>
@@ -119,7 +145,8 @@ export function HomePage() {
               <span>Find stop or location...</span>
               <Icon name="search" size={22} />
             </Link>
-            <div className="chips" role="group" aria-label="Show routes on the map">
+            <NearbyChips kind={category} onChange={pickCategory} />
+            {!category && <div className="chips" role="group" aria-label="Show routes on the map">
               {showStopsButton}
               <button type="button" className="chip chip-all" aria-pressed={filter === null} onClick={() => setFilter(null)}>
                 All Routes
@@ -137,11 +164,22 @@ export function HomePage() {
                   {r.name}
                 </button>
               ))}
-            </div>
+            </div>}
           </header>
-          <BottomSheet label="Near you">
-            <NearestStopCard />
-          </BottomSheet>
+          {category ? (
+            <BottomSheet label="Explore">
+              <NearbyPanel kind={category} places={nearby} located={!!fix} selectedId={placeId} onSelect={setPlaceId} />
+            </BottomSheet>
+          ) : (near || !hideHint) && (
+            <BottomSheet label="Near you">
+              <NearestStopCard
+                onHide={() => {
+                  localStorage.setItem(HIDE_HINT_KEY, '1')
+                  setHideHint(true)
+                }}
+              />
+            </BottomSheet>
+          )}
         </>
       )}
     </article>

@@ -4,6 +4,7 @@ import { Category } from '../../domain/schemas.ts'
 import { search, type SearchHit } from '../../domain/search.ts'
 import { Icon } from '../../ui/icons.tsx'
 import { Page, Pending } from '../../ui/Page.tsx'
+import { usePlaces } from '../plan-trip/PlacePicker.tsx'
 import { useSearchIndex } from './useSearch.ts'
 
 const RECENT_KEY = 'utm-recent-searches'
@@ -26,7 +27,17 @@ export function SearchPage() {
   const [category, setCategory] = useState<Category | null>(null)
   const [recent, setRecent] = useState(readRecent)
 
-  const hits = useMemo(() => (index ? search(index, query, category) : []), [index, query, category])
+  const places = usePlaces()
+  const searching = query.trim() !== ''
+
+  // No query: browse every place, or just the chosen category, A to Z.
+  const hits = useMemo<SearchHit[]>(() => {
+    if (searching) return index ? search(index, query, category) : []
+    return places
+      .filter((p) => !category || p.category === category)
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map((p) => ({ id: `place:${p.id}`, kind: 'place', ref: p.id, name: p.name, category: p.category, code: p.blockCode ?? '', lat: p.location.lat, lon: p.location.lon }))
+  }, [index, places, query, category, searching])
 
   const remember = () => {
     const q = query.trim()
@@ -62,9 +73,9 @@ export function SearchPage() {
         ))}
       </div>
       {!index && <Pending>Loading the place index...</Pending>}
-      {index && query.trim() && (
+      {index && (searching || hits.length > 0 || category) && (
         <section aria-label="Results">
-          <h2 className="eyebrow-lg">Search results ({hits.length})</h2>
+          <h2 className="eyebrow-lg">{searching ? 'Search results' : (category ?? 'All locations')} ({hits.length})</h2>
           <ul className="rows">
             {hits.map((h) => (
               <li key={h.id}>
@@ -79,11 +90,11 @@ export function SearchPage() {
                 </Link>
               </li>
             ))}
-            {hits.length === 0 && <li className="pending">Nothing matches "{query}".</li>}
+            {hits.length === 0 && <li className="pending">{searching ? `Nothing matches "${query}".` : 'No places in this category.'}</li>}
           </ul>
         </section>
       )}
-      {index && !query.trim() && recent.length > 0 && (
+      {index && !searching && !category && recent.length > 0 && (
         <section aria-label="Recent searches">
           <h2 className="eyebrow-lg">Recent</h2>
           <ul className="rows">

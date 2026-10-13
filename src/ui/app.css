@@ -15,7 +15,7 @@
   --red: #c5221f;
   --radius: 14px;
   --shadow: 0 1px 3px rgb(0 0 0 / 0.18), 0 2px 8px rgb(0 0 0 / 0.1);
-  --tab: calc(64px + env(safe-area-inset-bottom));
+  --tab: calc(52px + env(safe-area-inset-bottom));
   --top: env(safe-area-inset-top);
   --side-w: 400px;
 
@@ -190,15 +190,15 @@ button {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 1px;
   color: var(--muted);
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   font-weight: 500;
 }
 
 .tab svg {
   box-sizing: content-box;
-  padding: 3px 18px;
+  padding: 2px 16px;
   border-radius: 999px;
   transition: background-color 150ms;
 }
@@ -239,7 +239,6 @@ button {
   right: auto;
   bottom: calc(var(--tab) + var(--sheet-h, 0px));
   left: 0;
-  transition: bottom 250ms;
 }
 
 .maplibregl-ctrl-bottom-right .maplibregl-ctrl {
@@ -272,7 +271,6 @@ button {
   border-radius: 50%;
   box-shadow: var(--shadow);
   cursor: pointer;
-  transition: bottom 250ms;
 }
 
 .shell:has(.page-full, .navigating) .map-locate {
@@ -295,8 +293,8 @@ button {
   display: grid;
   place-items: center;
   flex: none;
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   padding: 0;
   color: var(--text);
   background: none;
@@ -497,9 +495,9 @@ button {
 /* Chips: one scrolling row that floats over the map. */
 .chips {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   margin: 0 -12px;
-  padding: 2px 12px 6px;
+  padding: 2px 12px 4px;
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -515,10 +513,10 @@ button {
   flex: none;
   align-items: center;
   gap: 6px;
-  height: 34px;
-  padding: 0 14px;
+  height: 30px;
+  padding: 0 12px;
   color: var(--text);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 500;
   white-space: nowrap;
   background: var(--surface);
@@ -974,18 +972,18 @@ button {
   display: flex;
   flex: none;
   flex-direction: column;
-  gap: 10px;
-  padding: calc(var(--top) + 10px) 12px 0;
+  gap: 6px;
+  padding: calc(var(--top) + 6px) 12px 0;
 }
 
 .search-pill {
   display: flex;
   align-items: center;
   gap: 12px;
-  height: 52px;
-  padding: 0 16px 0 11px;
+  height: 44px;
+  padding: 0 14px 0 9px;
   color: var(--muted);
-  font-size: 1rem;
+  font-size: 0.9375rem;
   background: var(--surface);
   border-radius: 999px;
   box-shadow: var(--shadow);
@@ -1006,7 +1004,7 @@ button {
   flex: none;
   align-items: center;
   gap: 8px;
-  padding: calc(var(--top) + 10px) 12px 0;
+  padding: calc(var(--top) + 6px) 12px 0;
 }
 
 .map-bar .icon-btn {
@@ -1018,9 +1016,9 @@ button {
   display: flex;
   align-items: center;
   gap: 10px;
-  height: 44px;
-  padding: 0 18px;
-  font-size: 1.0625rem;
+  height: 40px;
+  padding: 0 16px;
+  font-size: 1rem;
   font-weight: 700;
   background: var(--surface);
   border-radius: 999px;
@@ -1064,12 +1062,14 @@ button {
   display: grid;
   flex: none;
   place-items: center;
-  height: 28px;
+  width: 100%;
+  height: 40px;
   padding: 0;
   background: none;
   border: 0;
   cursor: grab;
   touch-action: none;
+  user-select: none;
 }
 
 .sheet-handle span {
@@ -1082,8 +1082,8 @@ button {
 .sheet-body {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 2px 16px 16px;
+  gap: 10px;
+  padding: 0 16px 12px;
   overflow-y: auto;
 }
 
@@ -1119,17 +1119,17 @@ button {
 /* Start / Steps: always in reach at the bottom of the sheet. */
 .sheet-actions {
   position: sticky;
-  bottom: -16px;
+  bottom: -12px;
   display: flex;
   gap: 8px;
-  margin: 0 -16px -16px;
-  padding: 10px 16px 14px;
+  margin: 0 -16px -12px;
+  padding: 8px 16px 10px;
   background: var(--bg);
   border-top: 1px solid var(--line);
 }
 
 .sheet-actions .btn {
-  min-height: 48px;
+  min-height: 42px;
 }
 
 .sheet-actions .btn-primary {
@@ -1138,6 +1138,33 @@ button {
 }
 
 /* ── Home ──────────────────────────────────────────────── */
+
+.chip-place {
+  padding-left: 10px;
+}
+
+.chip-place svg {
+  flex: none;
+}
+
+.nearby {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.nearby .btn-primary {
+  justify-content: center;
+  gap: 8px;
+}
+
+.nearby-away {
+  flex: none;
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
 
 .nearest {
   display: flex;
@@ -1223,6 +1250,17 @@ button {
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.btn-link {
+  align-self: center;
+  min-height: 36px;
+  padding: 0 12px;
+  color: var(--muted);
+  font-size: 0.875rem;
+  background: none;
+  border: 0;
+  cursor: pointer;
 }
 
 .loc-msg {
@@ -1407,7 +1445,7 @@ button {
   flex: none;
   flex-direction: column;
   gap: 8px;
-  padding: calc(var(--top) + 10px) 12px 0;
+  padding: calc(var(--top) + 6px) 12px 0;
 }
 
 .side-title {
@@ -1422,10 +1460,10 @@ button {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 2px;
-  padding: 6px 2px;
+  gap: 0;
+  padding: 4px 0;
   background: var(--surface);
-  border-radius: 18px;
+  border-radius: 16px;
   box-shadow: var(--shadow);
 }
 
@@ -1433,7 +1471,7 @@ button {
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   min-width: 0;
 }
 
@@ -1442,9 +1480,9 @@ button {
   align-items: center;
   gap: 12px;
   width: 100%;
-  min-height: 44px;
+  min-height: 36px;
   padding: 0 12px;
-  font-size: 1rem;
+  font-size: 0.9375rem;
   text-align: left;
   background: var(--surface-2);
   border: 0;
@@ -1486,52 +1524,124 @@ button {
 /* The search list spans the whole trip card. */
 .picker-panel {
   position: absolute;
-  top: calc(100% + 6px);
+  top: calc(100% + 8px);
   right: 0;
   left: 0;
   z-index: 10;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: 8px;
+  padding: 10px;
   background: var(--surface);
-  border-radius: 16px;
-  box-shadow: 0 8px 28px rgb(0 0 0 / 0.22);
+  border-radius: 20px;
+  box-shadow: 0 12px 32px rgb(0 0 0 / 0.24);
+}
+
+/* The marker beside the input matches the one on the row: ring = from, red dot = to. */
+.picker-search {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 14px;
+  background: var(--surface-2);
+  border: 2px solid transparent;
+  border-radius: 14px;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.picker-search:focus-within {
+  background: var(--surface);
+  border-color: var(--brand);
+}
+
+.picker-panel[data-end='To'] .picker-search:focus-within {
+  border-color: var(--red);
+}
+
+.picker-panel[data-end='To'] .picker-dot {
+  background: var(--red);
+  border-color: var(--red);
+}
+
+.picker-input {
+  flex: 1;
+  min-width: 0;
+  min-height: 48px;
+  padding: 0;
+  color: var(--text);
+  font: inherit;
+  background: none;
+  border: 0;
+  outline: 0;
+}
+
+.picker-input::placeholder {
+  color: var(--muted);
 }
 
 .picker-list {
   max-height: min(50vh, 360px);
+  padding-top: 4px;
   overflow-y: auto;
+  border-top: 1px solid var(--line);
 }
 
 .picker-list button {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
   width: 100%;
-  min-height: 44px;
-  padding: 0 10px;
+  min-height: 52px;
+  padding: 0 8px;
   color: var(--text);
   text-align: left;
   background: none;
   border: 0;
-  border-radius: 8px;
+  border-radius: 12px;
   cursor: pointer;
 }
 
-.picker-list button:hover {
+.picker-list button:hover,
+.picker-list button:focus-visible {
   background: var(--surface-2);
 }
 
+.picker-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  color: var(--muted);
+  background: var(--surface-2);
+  border-radius: 50%;
+}
+
+.picker-icon-me {
+  color: #fff;
+  background: var(--walk, #1a73e8);
+}
+
+.picker-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .picker-list .list-code {
+  flex: none;
+  padding: 2px 8px;
   color: var(--muted);
   font-size: 0.75rem;
   text-transform: capitalize;
+  background: var(--surface-2);
+  border-radius: 999px;
 }
 
 .picker-none {
-  padding: 10px;
+  padding: 14px 10px;
   color: var(--muted);
 }
 
@@ -1539,8 +1649,167 @@ button {
   pointer-events: none;
 }
 
-.when-field {
-  box-shadow: var(--shadow);
+.when {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sheet[data-size='min'] .when {
+  display: none;
+}
+
+.when-switch {
+  display: flex;
+  gap: 6px;
+}
+
+.when-switch button {
+  height: 30px;
+  padding: 0 12px;
+  color: var(--text);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  white-space: nowrap;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.when-switch button[aria-checked='true'] {
+  color: #fff;
+  background: var(--brand);
+  border-color: var(--brand);
+}
+
+.when-picker {
+  display: flex;
+  flex: 1 0 100%;
+  min-width: 0;
+  max-width: 100%;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.when-days {
+  display: flex;
+  gap: 6px;
+  margin: 0 -16px;
+  padding: 0 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.when-days .chip {
+  box-shadow: none;
+}
+
+.when-time {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 14px;
+  color: var(--text);
+  font-family: var(--display);
+  font-size: 1.125rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  background: var(--surface-2);
+  border: 0;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.when-time svg {
+  color: var(--brand);
+}
+
+/* Time popup: two snapping wheels. */
+.popup-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: end center;
+  padding-bottom: env(safe-area-inset-bottom);
+  background: rgb(0 0 0 / 0.4);
+}
+
+.popup {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(100%, 420px);
+  padding: 16px 16px 14px;
+  background: var(--bg);
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -2px 14px rgb(0 0 0 / 0.14);
+}
+
+.popup-wheels {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.wheel-band {
+  position: absolute;
+  inset: calc(50% - 22px) 0 auto;
+  height: 44px;
+  background: var(--brand-soft);
+  border-radius: 12px;
+}
+
+.wheel {
+  position: relative;
+  width: 88px;
+  height: 220px;
+  padding: 88px 0;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: none;
+  overscroll-behavior: contain;
+  cursor: grab;
+  user-select: none;
+  -webkit-mask-image: linear-gradient(transparent, #000 30%, #000 70%, transparent);
+  mask-image: linear-gradient(transparent, #000 30%, #000 70%, transparent);
+}
+
+.wheel-item {
+  display: grid;
+  place-items: center;
+  height: 44px;
+  color: var(--brand);
+  font-family: var(--display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  scroll-snap-align: center;
+  cursor: pointer;
+}
+
+.wheel-colon {
+  position: relative;
+  color: var(--brand);
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.popup-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.popup-actions .btn {
+  min-height: 42px;
+}
+
+.popup-actions .btn-primary {
+  flex: 1;
 }
 
 .options {
@@ -1785,7 +2054,7 @@ button {
   flex: none;
   flex-direction: column;
   gap: 8px;
-  padding: calc(var(--top) + 10px) 12px 0;
+  padding: calc(var(--top) + 6px) 12px 0;
 }
 
 .nav-top:empty {

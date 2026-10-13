@@ -10,6 +10,7 @@ import { useGrantedLocation } from '../location/useUserLocation.ts'
 import { MarkerLayer, RouteLayer } from '../map/layers.tsx'
 import { FitTo } from '../transit/parts.tsx'
 import { useTransit } from '../transit/useTransit.ts'
+import { WhenPicker } from './WhenPicker.tsx'
 import { PlacePicker, useEndpointName } from './PlacePicker.tsx'
 import { OptionList, optionToRoute, TripSteps } from './TripOptions.tsx'
 import { planFor } from './routerClient.ts'
@@ -42,6 +43,7 @@ export function PlanPage() {
   const [result, setResult] = useState<Result | null>(null)
   const [selected, setSelected] = useState(0)
   const [detail, setDetail] = useState(false)
+  const [openEnd, setOpenEnd] = useState<'From' | 'To' | null>(null)
   const toName = useEndpointName(trip.to)
   useGrantedLocation()
 
@@ -85,34 +87,23 @@ export function PlanPage() {
 
   const ends = option && [option.legs[0].from.location, option.legs[option.legs.length - 1].to.location]
 
-  const controls = (
-    <>
-      <div className="chips plan-chips">
-        <div className="chip-group" role="radiogroup" aria-label="When">
-          {WHEN.map((w) => (
-            <button key={w.id} type="button" className="chip" role="radio" aria-checked={when.type === w.id} onClick={() => setWhen(w.id)}>
-              {w.label}
-            </button>
-          ))}
-        </div>
-        <div className="chip-group" role="radiogroup" aria-label="Route type">
-          {PROFILES.map((p) => (
-            <button key={p.id} type="button" className="chip" role="radio" aria-checked={trip.profile === p.id} onClick={() => update({ profile: p.id })}>
-              {p.label}
-            </button>
-          ))}
-        </div>
+  const whenControls = (
+    <div className="when">
+      <div className="when-switch" role="radiogroup" aria-label="When">
+        {WHEN.map((w) => (
+          <button key={w.id} type="button" role="radio" aria-checked={when.type === w.id} onClick={() => setWhen(w.id)}>
+            {w.label}
+          </button>
+        ))}
       </div>
       {when.type !== 'now' && (
-        <input
-          className="field when-field"
-          type="datetime-local"
-          aria-label={when.type === 'arrive' ? 'Arrive by (Malaysia time)' : 'Depart at (Malaysia time)'}
+        <WhenPicker
           value={when.time}
-          onChange={(e) => e.target.value && update({ when: { type: when.type as 'depart' | 'arrive', time: e.target.value } })}
+          label={when.type === 'arrive' ? 'Arrive by (Malaysia time)' : 'Depart at (Malaysia time)'}
+          onChange={(time) => update({ when: { type: when.type as 'depart' | 'arrive', time } })}
         />
       )}
-    </>
+    </div>
   )
 
   return (
@@ -137,14 +128,22 @@ export function PlanPage() {
             <Icon name="back" size={22} />
           </Link>
           <div className="trip-pickers">
-            <PlacePicker label="From" value={trip.from} onChange={(from) => update({ from })} />
-            <PlacePicker label="To" value={trip.to} onChange={(to) => update({ to })} />
+            <PlacePicker label="From" value={trip.from} open={openEnd === 'From'} onOpenChange={(o) => setOpenEnd(o ? 'From' : null)} onChange={(from) => update({ from })} />
+            <PlacePicker label="To" value={trip.to} open={openEnd === 'To'} onOpenChange={(o) => setOpenEnd(o ? 'To' : null)} onChange={(to) => update({ to })} />
           </div>
           <button type="button" className="icon-btn" onClick={swap} aria-label="Swap from and to">
             <Icon name="swap" size={22} />
           </button>
         </div>
-        {controls}
+        <div className="chips plan-chips">
+          <div className="chip-group" role="radiogroup" aria-label="Route type">
+            {PROFILES.map((p) => (
+              <button key={p.id} type="button" className="chip" role="radio" aria-checked={trip.profile === p.id} onClick={() => update({ profile: p.id })}>
+                {p.label}
+              </button>
+            ))}
+          </div>
+        </div>
       </header>
 
       {(ready || needsStart) && (
@@ -152,6 +151,7 @@ export function PlanPage() {
           {needsStart && <LocationControl />}
           {ready && (
             <>
+              {!detail && whenControls}
               {!current && (
                 <p className="pending" role="status">
                   Finding routes…

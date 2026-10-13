@@ -1,4 +1,4 @@
-import { Marker } from 'maplibre-gl'
+import type { Marker } from 'maplibre-gl'
 import { useEffect } from 'react'
 import { useAppStore } from '../app/store.ts'
 import { useMap } from '../map/MapContext.tsx'
@@ -18,16 +18,26 @@ export function LocationLayers() {
   const lon = start?.lon
   useEffect(() => {
     if (!map || lat === undefined || lon === undefined) return
-    const el = document.createElement('div')
-    el.className = 'start-pin'
-    el.setAttribute('role', 'img')
-    el.setAttribute('aria-label', 'Your start point. Drag to move it.')
-    const marker = new Marker({ element: el, draggable: true, anchor: 'bottom' }).setLngLat([lon, lat]).addTo(map)
-    marker.on('dragend', () => {
-      const p = marker.getLngLat()
-      setStart({ lat: p.lat, lon: p.lng, source: 'pin' })
+    let marker: Marker | undefined
+    let live = true
+    // maplibre is already loaded by the map; importing it here keeps it out of the first bundle.
+    import('maplibre-gl').then(({ Marker }) => {
+      if (!live) return
+      const el = document.createElement('div')
+      el.className = 'start-pin'
+      el.setAttribute('role', 'img')
+      el.setAttribute('aria-label', 'Your start point. Drag to move it.')
+      const m = new Marker({ element: el, draggable: true, anchor: 'bottom' }).setLngLat([lon, lat]).addTo(map)
+      m.on('dragend', () => {
+        const p = m.getLngLat()
+        setStart({ lat: p.lat, lon: p.lng, source: 'pin' })
+      })
+      marker = m
     })
-    return () => void marker.remove()
+    return () => {
+      live = false
+      marker?.remove()
+    }
   }, [map, lat, lon, setStart])
 
   // "Pick on map": the next tap sets the start.

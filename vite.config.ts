@@ -42,12 +42,25 @@ function dataAssets(files: Record<string, string>): Plugin {
   }
 }
 
+/** `vite preview` gzips every response, even a byte range, and the browser then cannot decode the map slice. Serve the map as is. */
+const rawMapTiles: Plugin = {
+  name: 'utm-raw-pmtiles',
+  configurePreviewServer(server) {
+    server.middlewares.use((req, _res, next) => {
+      if (req.url?.split('?')[0].endsWith('.pmtiles')) delete req.headers['accept-encoding']
+      next()
+    })
+  },
+}
+
 export default defineConfig(({ command }) => {
   const files = command === 'build' ? hashedData() : {}
   return {
+    server: { allowedHosts: ['utm.abrahamtan.com'] },
     plugins: [
       react(),
       dataAssets(files),
+      rawMapTiles,
       VitePWA({
         strategies: 'injectManifest',
         srcDir: 'src',
