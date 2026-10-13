@@ -7,6 +7,7 @@ import { Place } from '../../domain/schemas.ts'
 import { search } from '../../domain/search.ts'
 import { Icon } from '../../ui/icons.tsx'
 import { useSearchIndex } from '../places/useSearch.ts'
+import { useExit } from '../transit/motion.ts'
 import { useTransit } from '../transit/useTransit.ts'
 import type { Endpoint } from './tripParams.ts'
 
@@ -50,6 +51,7 @@ export function PlacePicker({ label, value, open, onOpenChange, onChange }: { la
   const name = useEndpointName(value)
   const listId = useId()
   const root = useRef<HTMLDivElement>(null)
+  const panel = useExit(open)
 
   useEffect(() => {
     if (!open) return
@@ -78,14 +80,14 @@ export function PlacePicker({ label, value, open, onOpenChange, onChange }: { la
         <span className="picker-label">{label}:</span>
         <span className={name ? 'picker-name' : 'picker-name picker-empty'}>{name ?? (label === 'To' ? 'Where to?' : 'Choose a place')}</span>
       </button>
-      {open && (
-        <div className="picker-panel" data-end={label}>
+      {panel.present && (
+        <div className="picker-panel" data-end={label} data-leaving={panel.leaving || undefined}>
           <label className="picker-search">
             <span className="picker-dot" aria-hidden="true" />
             <input
               className="picker-input"
-            type="search"
-            autoFocus
+              type="search"
+              autoFocus
               placeholder="Building, block code or bus stop"
               aria-label={`Search ${label.toLowerCase()}`}
               aria-controls={listId}

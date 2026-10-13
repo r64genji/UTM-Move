@@ -8,6 +8,7 @@ import { BackButton } from '../../ui/Page.tsx'
 import { BottomSheet } from '../../ui/BottomSheet.tsx'
 import { Icon } from '../../ui/icons.tsx'
 import { RouteLayer } from '../map/layers.tsx'
+import { useThumb } from '../transit/motion.ts'
 import { routeColor } from '../transit/palette.ts'
 import { FitTo, Note, StopMarkers } from '../transit/parts.tsx'
 import { useNow, useTransit } from '../transit/useTransit.ts'
@@ -27,6 +28,7 @@ export function RoutePage() {
   const now = useNow(30_000)
   const [picked, setPicked] = useState<{ pattern?: string; trip?: string }>({})
   const [schedule, setSchedule] = useState(false)
+  const thumb = useThumb<HTMLDivElement>()
   const route = data?.routes.find((r) => r.id === id)
   const head = (title: string, color?: string) => (
     <header className="map-bar">
@@ -75,7 +77,7 @@ export function RoutePage() {
       {head(route.name, color)}
       <BottomSheet label={`${route.name} timetable`}>
         {patterns.length > 1 && (
-          <div className="segmented segmented-scroll" role="radiogroup" aria-label="Direction">
+          <div ref={thumb} className="segmented segmented-scroll has-thumb" role="radiogroup" aria-label="Direction">
             {patterns.map((p) => (
               <button key={p.id} type="button" role="radio" aria-checked={p.id === pattern.id} onClick={() => setPicked({ pattern: p.id })}>
                 {p.headsign}
@@ -84,14 +86,16 @@ export function RoutePage() {
           </div>
         )}
         {trip ? (
-          <>
+          <div key={pattern.id} className="swap">
             <div className="next-bus">
               <p className="eyebrow">
                 {trip === next ? 'Next bus' : 'Selected trip'}
                 {remaining.length === 0 && <span className="status" data-status="Service Ended">No more buses</span>}
               </p>
               <p className="next-time">
-                <time>{first(trip)}</time>
+                <time key={first(trip)} className="num-roll">
+                  {first(trip)}
+                </time>
                 <span className="muted">Departing · {trip.stopTimes.length} stops</span>
               </p>
             </div>
@@ -135,7 +139,7 @@ export function RoutePage() {
                 </li>
               ))}
             </ol>
-          </>
+          </div>
         ) : (
           <p className="notice" role="status">
             <strong>No service on this route.</strong> The timetable has no later days for it.

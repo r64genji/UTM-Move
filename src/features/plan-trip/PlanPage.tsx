@@ -8,6 +8,7 @@ import { useAppStore } from '../app/store.ts'
 import { LocationControl } from '../location/LocationControl.tsx'
 import { useGrantedLocation } from '../location/useUserLocation.ts'
 import { MarkerLayer, RouteLayer } from '../map/layers.tsx'
+import { useThumb } from '../transit/motion.ts'
 import { FitTo } from '../transit/parts.tsx'
 import { useTransit } from '../transit/useTransit.ts'
 import { WhenPicker } from './WhenPicker.tsx'
@@ -45,6 +46,7 @@ export function PlanPage() {
   const [detail, setDetail] = useState(false)
   const [openEnd, setOpenEnd] = useState<'From' | 'To' | null>(null)
   const toName = useEndpointName(trip.to)
+  const thumb = useThumb<HTMLDivElement>()
   useGrantedLocation()
 
   const update = (patch: Partial<Trip>) => {
@@ -89,7 +91,7 @@ export function PlanPage() {
 
   const whenControls = (
     <div className="when">
-      <div className="when-switch" role="radiogroup" aria-label="When">
+      <div ref={thumb} className="when-switch has-thumb" role="radiogroup" aria-label="When">
         {WHEN.map((w) => (
           <button key={w.id} type="button" role="radio" aria-checked={when.type === w.id} onClick={() => setWhen(w.id)}>
             {w.label}
@@ -153,9 +155,13 @@ export function PlanPage() {
             <>
               {!detail && whenControls}
               {!current && (
-                <p className="pending" role="status">
-                  Finding routes…
-                </p>
+                <>
+                  <p className="pending" role="status">
+                    Finding routes…
+                  </p>
+                  <div className="skel skel-option" aria-hidden="true" />
+                  <div className="skel skel-option" aria-hidden="true" />
+                </>
               )}
               {current?.error && (
                 <p className="notice notice-error" role="alert">

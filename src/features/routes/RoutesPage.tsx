@@ -4,6 +4,7 @@ import { klDateTime, nextDate, tripsOn } from '../../domain/transit/departures.t
 import type { Route, TransitData, Trip } from '../../domain/schemas.ts'
 import { Icon } from '../../ui/icons.tsx'
 import { Page, Pending } from '../../ui/Page.tsx'
+import { useThumb } from '../transit/motion.ts'
 import { routeColor } from '../transit/palette.ts'
 import { useNow, useTransit } from '../transit/useTransit.ts'
 
@@ -44,6 +45,7 @@ export function RoutesPage() {
   const [kind, setKind] = useState<Kind>(() => (isWeekend(klDateTime(new Date()).date) ? 'weekend' : 'weekday'))
   const today = klDateTime(now)
   const date = dayOfKind(today.date, kind)
+  const thumb = useThumb<HTMLDivElement>()
 
   return (
     <Page
@@ -55,7 +57,7 @@ export function RoutesPage() {
         </Link>
       }
     >
-      <div className="segmented" role="tablist" aria-label="Day type">
+      <div ref={thumb} className="segmented has-thumb" role="tablist" aria-label="Day type">
         {(['weekday', 'weekend'] as const).map((k) => (
           <button key={k} type="button" role="tab" aria-selected={kind === k} onClick={() => setKind(k)}>
             {k === 'weekday' ? 'Weekday' : 'Weekend'}
@@ -63,7 +65,8 @@ export function RoutesPage() {
         ))}
       </div>
       {!data && <Pending>{error ? 'The bus timetable could not be loaded.' : 'Loading the timetable...'}</Pending>}
-      <ul className="cards">
+      <ul key={kind} className="cards">
+        {!data && !error && [0, 1, 2, 3].map((i) => <li key={i} aria-hidden="true"><div className="skel" /></li>)}
         {data?.routes.map((r) => {
           const color = routeColor(r.id)
           const s = summarize(data, r, date, today)

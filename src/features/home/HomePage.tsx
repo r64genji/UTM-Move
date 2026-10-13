@@ -9,12 +9,16 @@ import { LocationControl } from '../location/LocationControl.tsx'
 import { useGrantedLocation } from '../location/useUserLocation.ts'
 import { RouteLayer, type RouteLeg } from '../map/layers.tsx'
 import { routeColor } from '../transit/palette.ts'
-import { StopMarkers } from '../transit/parts.tsx'
+import { CAMPUS_BOUNDS } from '../map/style.ts'
+import { countdown, FitTo, StopMarkers } from '../transit/parts.tsx'
 import { useNow, useTransit } from '../transit/useTransit.ts'
 import { type NearbyKind, NearbyChips, NearbyMarkers, NearbyPanel, useNearbyPlaces } from './Nearby.tsx'
 import { greeting, nearestStop, nextPerRoute } from './nearest.ts'
 
 const walkMinutes = (m: number) => Math.max(1, Math.round(m / 80))
+
+const [W, S, E, N] = CAMPUS_BOUNDS
+const CAMPUS = [{ lat: S, lon: W }, { lat: N, lon: E }]
 
 const HIDE_HINT_KEY = 'utm-hide-location-hint'
 
@@ -64,7 +68,9 @@ function NearestStopCard({ onHide }: { onHide: () => void }) {
                 {e.routeId}
               </span>
               <span className="eta-to">{e.headsign ?? `Route ${e.routeId}`}</span>
-              <span className="eta-min">: {e.minutes} min</span>
+              <span key={e.minutes} className="eta-min">
+                {countdown(e.minutes)}
+              </span>
             </li>
           ))}
         </ul>
@@ -89,9 +95,12 @@ export function HomePage() {
   const [category, setCategory] = useState<NearbyKind | null>(null)
   const [placeId, setPlaceId] = useState<string | null>(null)
   const nearby = useNearbyPlaces(category, fix)
+  // Closing a chip sends the camera back to the whole campus.
+  const [overview, setOverview] = useState(false)
   const pickCategory = (c: NearbyKind | null) => {
     setCategory(c)
     setPlaceId(null)
+    setOverview(c === null)
   }
 
   useGrantedLocation()
@@ -115,6 +124,7 @@ export function HomePage() {
   return (
     <article className="home">
       <RouteLayer legs={category ? [] : legs} arrows={false} />
+      {overview && !category && <FitTo points={CAMPUS} />}
       {category ? <NearbyMarkers places={nearby} selectedId={placeId} from={fix} onSelect={setPlaceId} /> : <StopMarkers stops={stops} />}
       {desktop ? (
         <>
@@ -146,7 +156,7 @@ export function HomePage() {
               <Icon name="search" size={22} />
             </Link>
             <NearbyChips kind={category} onChange={pickCategory} />
-            {!category && <div className="chips" role="group" aria-label="Show routes on the map">
+            <div className="chips chips-fold" role="group" aria-label="Show routes on the map" data-folded={category ? '' : undefined} inert={!!category}>
               {showStopsButton}
               <button type="button" className="chip chip-all" aria-pressed={filter === null} onClick={() => setFilter(null)}>
                 All Routes
@@ -164,7 +174,7 @@ export function HomePage() {
                   {r.name}
                 </button>
               ))}
-            </div>}
+            </div>
           </header>
           {category ? (
             <BottomSheet label="Explore">

@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { Category } from '../../domain/schemas.ts'
 import { search, type SearchHit } from '../../domain/search.ts'
-import { Icon } from '../../ui/icons.tsx'
+import { Icon, type IconName } from '../../ui/icons.tsx'
 import { Page, Pending } from '../../ui/Page.tsx'
 import { usePlaces } from '../plan-trip/PlacePicker.tsx'
 import { useSearchIndex } from './useSearch.ts'
@@ -16,6 +16,18 @@ function readRecent(): string[] {
   } catch {
     return []
   }
+}
+
+const CATEGORY_ICON: Partial<Record<Category, IconName>> = {
+  Library: 'book',
+  Food: 'food',
+  Prayer: 'prayer',
+  Sport: 'sport',
+  Health: 'health',
+  'Bank/ATM': 'card',
+  'Shop/Service': 'shop',
+  Parking: 'parking',
+  'Gate/Entrance': 'flag',
 }
 
 /** Where a result leads: a place gets directions from here, a stop shows its departures. */
@@ -81,7 +93,7 @@ export function SearchPage() {
               <li key={h.id}>
                 <Link to={hitPath(h)} onClick={remember}>
                   <span className="row-icon" data-kind={h.kind}>
-                    <Icon name={h.kind === 'stop' ? 'bus' : 'building'} size={22} />
+                    <Icon name={h.kind === 'stop' ? 'bus' : (CATEGORY_ICON[h.category] ?? 'building')} size={22} />
                   </span>
                   <span className="row-text">
                     <strong>{h.name}</strong>

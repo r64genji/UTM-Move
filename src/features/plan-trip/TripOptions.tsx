@@ -53,7 +53,22 @@ export function RouteBadge({ route }: { route: { id: string; color?: string } })
 export function OptionCard({ option, selected, onSelect }: { option: TripOption; selected: boolean; onSelect: () => void }) {
   const walkMin = minutes(option.walkS)
   return (
-    <button type="button" role="radio" aria-checked={selected} className="option" onClick={onSelect}>
+    <button
+      type="button"
+      role="radio"
+      aria-checked={selected}
+      className="option"
+      onClick={(e) => {
+        onSelect()
+        // The Start bar floats over the bottom of the list; bring the choice clear of it.
+        e.currentTarget.scrollIntoView({ block: 'nearest', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })
+      }}
+    >
+      {selected && (
+        <span className="option-check" aria-hidden="true">
+          <Icon name="check" size={14} />
+        </span>
+      )}
       <span className="option-main">
         <span className="option-legs">
           {option.kind === 'walk' ? (

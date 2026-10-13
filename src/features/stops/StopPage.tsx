@@ -61,13 +61,18 @@ export function StopPage() {
               <span>Route {rid}</span>
             </h2>
             <ul className="deps">
-              {deps.slice(0, 3).map((d) => (
-                <li key={d.tripId}>
-                  <span className="dep-to">{d.headsign}</span>
-                  <time className="dep-time">{d.time}</time>
-                  <span className="dep-in">{countdown(minutesBetween(time, d.time))}</span>
-                </li>
-              ))}
+              {deps.slice(0, 3).map((d) => {
+                const left = countdown(minutesBetween(time, d.time))
+                return (
+                  <li key={d.tripId}>
+                    <span className="dep-to">{d.headsign}</span>
+                    <time className="dep-time">{d.time}</time>
+                    <span key={left} className="dep-in num-roll">
+                      {left}
+                    </span>
+                  </li>
+                )
+              })}
             </ul>
           </section>
         ))}

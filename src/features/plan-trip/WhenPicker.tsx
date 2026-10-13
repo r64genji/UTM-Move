@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { klDateTime } from '../../domain/transit/departures.ts'
 import { Icon } from '../../ui/icons.tsx'
+import { useExit } from '../transit/motion.ts'
 
 const DAYS = 7
 
@@ -70,11 +71,11 @@ function Wheel({ count, value, label, onChange }: { count: number; value: number
 }
 
 /** The time popup: two wheels, hours and minutes. */
-function TimePopup({ time, onDone, onClose }: { time: string; onDone: (time: string) => void; onClose: () => void }) {
+function TimePopup({ time, leaving, onDone, onClose }: { time: string; leaving: boolean; onDone: (time: string) => void; onClose: () => void }) {
   const [h, setH] = useState(Number(time.slice(0, 2)))
   const [m, setM] = useState(Number(time.slice(3)))
   return createPortal(
-    <div className="popup-backdrop" onClick={onClose}>
+    <div className="popup-backdrop" data-leaving={leaving || undefined} onClick={onClose}>
       <div className="popup" role="dialog" aria-label="Pick a time" onClick={(e) => e.stopPropagation()}>
         <div className="popup-wheels">
           <div className="wheel-band" aria-hidden />
@@ -110,6 +111,7 @@ export function WhenPicker({ value, label, onChange }: { value: string; label: s
     return new Date(`${d}T00:00:00Z`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', timeZone: 'UTC' })
   }
   const [open, setOpen] = useState(false)
+  const popup = useExit(open)
 
   return (
     <div className="when-picker" role="group" aria-label={label}>
@@ -124,7 +126,7 @@ export function WhenPicker({ value, label, onChange }: { value: string; label: s
         <Icon name="clock" size={20} />
         {time}
       </button>
-      {open && <TimePopup time={time} onClose={() => setOpen(false)} onDone={(t) => (setOpen(false), onChange(`${date}T${t}`))} />}
+      {popup.present && <TimePopup time={time} leaving={popup.leaving} onClose={() => setOpen(false)} onDone={(t) => (setOpen(false), onChange(`${date}T${t}`))} />}
     </div>
   )
 }

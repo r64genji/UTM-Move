@@ -55,7 +55,9 @@ export function NearbyChips({ kind, onChange }: { kind: NearbyKind | null; onCha
         <button key={n.label} type="button" className="chip chip-place" aria-pressed={kind === n.label} onClick={() => onChange(kind === n.label ? null : n.label)}>
           <Icon name={n.icon} size={16} />
           {n.label}
-          {kind === n.label && <Icon name="close" size={14} />}
+          <span className="chip-x">
+            <Icon name="close" size={14} />
+          </span>
         </button>
       ))}
     </div>
