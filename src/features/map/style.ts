@@ -2,6 +2,7 @@ import { layers, namedFlavor } from '@protomaps/basemaps'
 import type { Feature, FeatureCollection, Polygon } from 'geojson'
 import type { LayerSpecification, StyleSpecification } from 'maplibre-gl'
 import boundaryRaw from '../../../data/campus-boundary.geojson?raw'
+import buildingLabelsRaw from '../../../data/osm/building-labels.geojson?raw'
 
 /** UTM boundary extent (west, south, east, north). */
 export const CAMPUS_BOUNDS: [number, number, number, number] = [103.6156, 1.5478, 103.6603, 1.5765]
@@ -77,6 +78,31 @@ const flavor = {
   buildings: '#e4ddd0',
   school: '#efeadc',
   water: '#b9d3df',
+}
+
+const buildingLabels: LayerSpecification = {
+  id: 'utm-building-labels',
+  type: 'symbol',
+  source: 'utm-buildings',
+  minzoom: 16,
+  layout: {
+    'text-field': [
+      'step', ['zoom'],
+      ['format', ['case', ['==', ['get', 'code'], ''], ['get', 'name'], ['get', 'code']], {}],
+      17,
+      [
+        'format',
+        ['get', 'code'], {},
+        ['case', ['all', ['!=', ['get', 'code'], ''], ['!=', ['get', 'name'], '']], '\n', ''], {},
+        ['get', 'name'], { 'text-font': ['literal', ['Noto Sans Regular']], 'font-scale': 0.85 },
+      ],
+    ],
+    'text-font': ['Noto Sans Medium'],
+    'text-size': ['interpolate', ['linear'], ['zoom'], 16, 11, 18, 13],
+    'text-max-width': 8,
+    'text-padding': 2,
+  },
+  paint: { 'text-color': '#5c4f45', 'text-halo-color': COLORS.casing, 'text-halo-width': 1.5 },
 }
 
 const overlay: LayerSpecification[] = [
@@ -194,7 +220,8 @@ export function buildStyle(origin: string): StyleSpecification {
       'utm-tile-fade': { type: 'geojson', data: tileFade },
       'utm-route': { type: 'geojson', data: empty },
       'utm-markers': { type: 'geojson', data: empty },
+      'utm-buildings': { type: 'geojson', data: JSON.parse(buildingLabelsRaw) as FeatureCollection },
     },
-    layers: [...(layers('protomaps', flavor, { lang: 'en' }) as LayerSpecification[]), ...overlay],
+    layers: [...(layers('protomaps', flavor, { lang: 'en' }) as LayerSpecification[]), buildingLabels, ...overlay],
   }
 }

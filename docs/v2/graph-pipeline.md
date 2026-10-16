@@ -13,6 +13,8 @@
 | `data/shortcuts/scored.geojson` | `npm run score:shortcuts` | `verified` and `likely` only; `private` access dropped; stairs become `steps` |
 | `data/overrides/indoor/*.geojson` | #16 | `Point` = door (kind `door`, joined to the nearest path within 40 m); `LineString` = indoor link (kind `indoor`, or `properties.kind`), ends snap to the network within 20 m. Properties: `name`, `hours` (OpeningHours), `stepFree` (default true) |
 
+`extract.ts` also writes `data/osm/building-labels.geojson`, the map's building labels (not a graph input). Each campus building gets its block code (from the OSM `name`, `ref` or `addr:housenumber`) and a name (the rest of the OSM name, `alt_name`, or the owner in the curated place `Block <code>, <owner>`). A building with no OSM name or code gets no label. Re-run it after `places.curated.json` changes, or new `Block` places stay unnamed on the map.
+
 Steps: ways to junction-to-junction edges, then **gap closing**, then doors/indoor/shortcuts snapped in (edges are split), keep the largest connected component (islands are listed and drawn red in `data/raw/reports/graph.html`), connect stops and entrances with short connector edges, then climb per edge: DEM sampled every 10 m, 3-point smoothing, wobble under 0.5 m ignored, net height change always kept. Bridges and tunnels interpolate between their ends. Geometry is simplified to 0.7 m.
 
 Stop V01 (Taman Universiti) is outside the OSM extract, so it joins through a long connector (warned in the build output).
